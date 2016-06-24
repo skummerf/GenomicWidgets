@@ -1,0 +1,9 @@
+Package: chipVis
+Type: Package
+Title: what the package does (short one line)
+Version: 0.0.1
+Date: 2016-06-24
+Author: Alicia Schep
+Maintainer: Alicia Schep <schepa@gene.com>
+Description: more in detail description of what the package does (usually more than one line)
+License: file GNE_LICENSE

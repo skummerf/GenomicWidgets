@@ -1,0 +1,5 @@
+Ids	Gender	Age	Disease
+1	10	male	35	Asthma
+2	25	female	69	Cancer
+3	46	female	22	Cancer
+4	78	male	56	Asthma
