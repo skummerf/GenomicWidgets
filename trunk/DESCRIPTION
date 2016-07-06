@@ -11,7 +11,7 @@ License: file GNE_LICENSE
 Imports: 
     rtracklayer,
     GenomicRanges,
-    utils
+    Gviz
 RoxygenNote: 5.0.1
 Suggests: 
     testthat,

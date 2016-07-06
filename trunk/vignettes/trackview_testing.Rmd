@@ -1,0 +1,59 @@
+---
+title: "trackview_testing"
+author: "Justin Finkle"
+date: "7/5/2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(chipVis)
+library(rtracklayer)
+```
+
+## R Markdown
+
+This is intended to demonstrate how the chipVis package displays local views.
+```{r Load Data}
+info_dir <- "~/CARROLL_PR/data/"
+s_file <- paste(info_dir, "samples.txt", sep='')
+p_file <- paste(info_dir, "pairs.txt", sep='')
+fi <- getChipFileInfo(s_file, p_file)
+
+symbol <- "ENO1"
+org <- "human"
+genome <- "GRCh38"
+mart <- ifelse (genome %in% c("GRCh38","GRCm38"), "igis", "igis2.3")
+dat.exon <- igisExonlist(symbol,org=org, mart=mart)
+
+```
+
+```{r Load BigWig}
+range.gene <- GRanges(seqnames=dat.exon[1,"chr"],
+                        ranges=IRanges(start=min(dat.exon$start),
+                                       end=max(dat.exon$end)),
+                        strand=dat.exon[1,"strand"])
+extension <- 50000
+start(range.gene) <- start(range.gene) - extension
+end(range.gene) <- end(range.gene) + extension
+# range.gene <- grAddChr(range.gene)
+cvg <- lapply(fi[2:5, "File.bw"], function(x) import.bw(x, which=range.gene))
+# cvg <- import.bw(fi[2:3, "File.bw"])
+cvg <- GRangesList(cvg)
+names(cvg) <- fi[2:5, "Sample.Name"]
+```
+
+```{r Basic Track}
+chipVis::plotGeneCoverage(cvg, symbol="ENO1", org="human", genome='GRCh38',
+                          sync = TRUE, extend=extension)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
