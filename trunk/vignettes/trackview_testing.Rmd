@@ -36,13 +36,13 @@ range.gene <- getViewRange(symbol, org, genome)
 range.gene <- extendGRange(range.gene, extension)
 
 # Get the exon list
-full.exon <- chipVis::igisExonlist(range.gene, org=org, genome=genome)
+full.exon <- chipVis::igisExonlist(symbol, org=org, genome=genome)
 
 # Get the coverage
 input <- fi[2, 'Sample.Control']
 input_idx <- which(fi$Sample.Name==input)
 idx <- c(2:4, input_idx)
-shortened_names <- c(fi[idx[1:3], "Sample.Name"], "Input")
+shortened_names <- c(fi[idx[1:length(idx)-1], "Sample.Name"], "Input")
 cvg <- getCoverageInRange(fi[idx, "File.bw"], range.gene, shortened_names)
 ```
 

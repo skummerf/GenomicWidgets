@@ -21,7 +21,7 @@
 ##' @author Justin Finkle
 plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome, 
                              col='blue', ymax, bg.title='black', sync=FALSE, 
-                             scale.group=1) {
+                             scale.group=1, hm.thresh=4) {
   
   # Get the chromosome
   chr <- as.character(seqnames(target.range))
@@ -47,38 +47,39 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome,
     names(score.max) <- names(grl)
   }
   
+  dtrack <- makeDataTracks(grl, target.range, genome, chr, bg.title, colors, 
+                           score.max = score.max, hm.thresh=hm.thresh)
+  
   # Add title
   bg.title <- rep(bg.title, length.out=length(grl))
   names(bg.title) <- names(grl)
-  
-  # Compile sample coverages as datatracks
-  dtrack <- list()
-  for (g in names(grl)) {
-    dtrack[[g]] <- DataTrack(start=start(grl[[g]]),end=end(grl[[g]]),
-                             data=score(grl[[g]]), chromosome=chr, type='hist',
-                             ylim=c(0,score.max[g]),background.title=bg.title[g],
-                             genome=genome, name=g,col.histogram=colors[g],
-                             fill.histogram=colors[g])
-  }
   
   # Add genome tracks
   grtrack.color <- 'lightslateblue'
   gtrack <- GenomeAxisTrack()
   target.range <- grAddChr(target.range)
   options(ucscChromosomeNames = FALSE)
+  if (length(dtrack)==1){
+    ann.size = 0.25
+  } else {
+    ann.size =NULL
+  }
   grtrack <- GeneRegionTrack(dat.exon, genome=genome, chromosome=chr, name=symbol,
                              background.title=grtrack.color, fill=grtrack.color,
-                             transcriptAnnotation="symbol")
+                             transcriptAnnotation="symbol", size=ann.size)
   # Add tracks
   tracklist <- list()
-  tracklist <- c(gtrack,grtrack)
-  for (g in names(grl)) {
-    tracklist <- c(tracklist,dtrack[[g]])
-  }
-  
+  tracklist <- c(gtrack,grtrack, dtrack)
+  # if (length(dtrack) >1){
+  #   for (g in names(grl)) {
+  #     tracklist <- c(tracklist,dtrack[[g]])
+  #   }
+  # }
   # Plot tracks
-  plotTracks(tracklist,main=symbol,
-             from=start(target.range),to=end(target.range))
+  ptype <- ifelse(length(grl) > hm.thresh, 'heatmap', 'histogram')
+  plotTracks(tracklist,main=symbol, from=start(target.range),
+             to=end(target.range))# showSampleNames = TRUE, 
+             # cex.sampleNames = 0.6)
   
 }
 
@@ -230,4 +231,43 @@ getViewRange <- function(symbol, org, genome, chr=NULL, start=NULL, end=NULL,
                           strand = strand)
   }
   return(view.range)
+}
+
+
+binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score", 
+                               scaling=log){
+  # Bin Range, currently only supports 1 range
+  tiled.range <- tile(gr, width=binwidth)[[1]]
+  
+  for(g in names(cvg.L)){
+    # Find overlap between the coverage and the tiled range
+    overlap <- findOverlaps(cvg[[g]], tiled.range)
+    
+    # Split scores from coverage range into their appropriate bin and sum
+    bin.split <- splitAsList(mcols(cvg[[g]])[[val]][queryHits(overlap)],
+                             factor(subjectHits(overlap)))
+    bin.score <- scaling(sum(bin.split))
+    elementMetadata(tiled.range)[[g]] <- bin.score
+  }
+  return(tiled.range)
+}
+
+makeDataTracks <- function(cvg.L, gr, genome, chr, bg.title, colors,score.max,
+                           hm.thresh=4, binwidth=1000, val="score",
+                           scaling=log, ...){
+  # Compile sample coverages as datatracks
+  dtrack <- list()
+  if(length(cvg.L) > hm.thresh){
+    binned.cvg <- binCoverageInRange(cvg.L, gr, binwidth, val, scaling)
+    dtrack[[1]] <- DataTrack(binned.cvg, type='heatmap', chromosome=chr)
+  } else {
+    for (g in names(cvg.L)) {
+      dtrack[[g]] <- DataTrack(start=start(cvg.L[[g]]),end=end(cvg.L[[g]]),
+                               data=score(cvg.L[[g]]), chromosome=chr, type='hist',
+                               ylim=c(0,score.max[g]),background.title=bg.title[g],
+                               genome=genome, name=g, col.histogram=colors[g],
+                               fill.histogram=colors[g]) 
+    }
+  }
+  return(dtrack)
 }
