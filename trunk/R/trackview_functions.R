@@ -19,74 +19,22 @@
 ##' @import IRanges
 ##' @export
 ##' @author Justin Finkle
-plotGeneCoverage <- function(grl,symbol,org,genome,extend=0,
-                             col='blue',bg.title='black',
-                             sync=FALSE,ymax,scale.group=1,
-                             dat.exon, ...) {
-  
-  # Check that the genome is available
-  if(!speciesGenomeMatch(org, genome))
-    return(NULL)
-  
-  # Select the correct genome
-  mart <- ifelse (genome %in% c("GRCh38","GRCm38"), "igis", "igis2.3")
-  
-  # Import exon data if missing
-  if ( missing(dat.exon) ) {
-    dat.exon <- igisExonlist(symbol,org=org, mart=mart, ...)
-  }
-  
-  # Exit if no exon data was provided or imported
-  if ( nrow(dat.exon) == 0 ) {
-    warning(paste("no exon data for",symbol,"\n"))
-    return(NULL)
-  }
-  
-  # Make the GRange object for the gene
-  range.gene <- GRanges(seqnames=dat.exon[1,"chr"],
-                        ranges=IRanges(start=min(dat.exon$start),
-                                       end=max(dat.exon$end)),
-                        strand=dat.exon[1,"strand"])
-  
-  # range.gene <- grAddChr(range.gene)
-  
-  # Ensure that the extension is a length 2 vector
-  if (length(extend) == 1) {
-    extend <- rep(extend,2)
-  } else if ( length(extend) > 2) {
-    warning("extend should be a vector of length 1 or 2")
-    return(NULL)
-  }
-  
-  # Add the extension to the gene range for each strand
-  if (as.character(strand(range.gene)) == '+') {
-    start(range.gene) <- start(range.gene) - extend[1]
-    end(range.gene) <- end(range.gene) + extend[2]
-  } else if ( as.character(strand(range.gene)) == '-' ) {
-    end(range.gene) <- end(range.gene) + extend[1]
-    start(range.gene) <- start(range.gene) - extend[2]
-  }
+plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome, 
+                             col='blue', ymax, bg.title='black', sync=FALSE, 
+                             scale.group=1) {
   
   # Get the chromosome
-  chr <- as.character(seqnames(range.gene))
+  chr <- as.character(seqnames(target.range))
   
   # Make colors for the plots
   colors <- rep(col,length.out=length(grl))
   names(colors) <- names(grl)
   
-  # Get the gene coverage for each sample supplied
-  gene.cov <- list()
-  for (g in names(grl) ) {
-    # grl[[g]] <- grAddChr(grl[[g]])
-    gene.overlap <- findOverlaps(query=range.gene, grl[[g]])
-    gene.cov[[g]] <- grl[[g]][as.data.frame(gene.overlap)[,2],]
-  }
-  
   # Scale data range
   if ( missing(ymax) ) {
-    score.max <- sapply(gene.cov, function(x) { max(score(x)) } )
+    score.max <- sapply(grl, function(x) { max(score(x)) } )
     if ( sync ) {
-      scale.group <- rep(scale.group, length.out=length(gene.cov))
+      scale.group <- rep(scale.group, length.out=length(grl))
       grps <- unique(scale.group)
       for (g in grps) {
         index.g <- which(scale.group == g)
@@ -106,17 +54,21 @@ plotGeneCoverage <- function(grl,symbol,org,genome,extend=0,
   # Compile sample coverages as datatracks
   dtrack <- list()
   for (g in names(grl)) {
-    dtrack[[g]] <- DataTrack(start=start(gene.cov[[g]]),end=end(gene.cov[[g]]),
-                             data=score(gene.cov[[g]]), chromosome=chr, type='hist',
+    dtrack[[g]] <- DataTrack(start=start(grl[[g]]),end=end(grl[[g]]),
+                             data=score(grl[[g]]), chromosome=chr, type='hist',
                              ylim=c(0,score.max[g]),background.title=bg.title[g],
                              genome=genome, name=g,col.histogram=colors[g],
                              fill.histogram=colors[g])
   }
   
   # Add genome tracks
+  grtrack.color <- 'lightslateblue'
   gtrack <- GenomeAxisTrack()
-  grtrack <- GeneRegionTrack(dat.exon, genome=genome,chromosome=chr,
-                             name=symbol,background.title='orange')
+  target.range <- grAddChr(target.range)
+  options(ucscChromosomeNames = FALSE)
+  grtrack <- GeneRegionTrack(dat.exon, genome=genome, chromosome=chr, name=symbol,
+                             background.title=grtrack.color, fill=grtrack.color,
+                             transcriptAnnotation="symbol")
   # Add tracks
   tracklist <- list()
   tracklist <- c(gtrack,grtrack)
@@ -126,14 +78,156 @@ plotGeneCoverage <- function(grl,symbol,org,genome,extend=0,
   
   # Plot tracks
   plotTracks(tracklist,main=symbol,
-             from=start(range.gene),to=end(range.gene))
+             from=start(target.range),to=end(target.range))
   
 }
 
-# Make track
+#' Title
+#'
+#' @param dat.exon 
+#'
+#' @author Justin Finkle
+#' @return
+#' @export
+#'
+#' @examples
+getGeneRange <- function(dat.exon){
+  # Make the range
+  range.gene <- GRanges(seqnames=dat.exon[1,"chr"],
+                        ranges=IRanges(start=min(dat.exon$start),
+                                       end=max(dat.exon$end)),
+                        strand=dat.exon[1,"strand"])
+  return(range.gene)
+}
 
-# 1. Genome track
-# 2. Annotation Track
-# 3. Chip Coverage
-# 4. RNA Coverage
+#' Title
+#'
+#' @param gr
+#' @param extend 
+#'
+#' @return
+#' @export
+#' @author Justin Finkle
+#'
+#' @examples
+extendGRange <- function(gr, extend=0){
+  if (length(extend) == 1) {
+    extend <- rep(extend,2)
+  } else if ( length(extend) > 2) {
+    warning("extend should be a vector of length 1 or 2. extension set to 0.")
+    extend <- rep(0,2)
+  }
+  
+  # Add the extension to the gene range for each strand
+  if (as.character(strand(gr)) == '+') {
+    start(gr) <- start(gr) - extend[1]
+    end(gr) <- end(gr) + extend[2]
+  } else if ( as.character(strand(gr)) == '-' ) {
+    end(gr) <- end(gr) + extend[1]
+    start(gr) <- start(gr) - extend[2]
+  }
+  
+  return(gr)
+}
 
+
+#' Title
+#'
+#' @param bwList 
+#' @param target.range 
+#' @param names 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getCoverageInRange <- function(bwList, target.range, names){
+  # Import only the range that matches target.ange
+  cvg <- lapply(bwList, function(x) import.bw(x, which=range.gene))
+  cvg <- GRangesList(cvg)
+  
+  # Name the list
+  if (!missing(names)){
+    names(cvg) <- names
+  }
+  return(cvg)
+}
+
+##' get exon information from IGIS
+##'
+##' get exon information from IGIS
+##' @param ids vector of ids to retrive the exon information
+##' @param src source of id, gene|symbol
+##' @param org organism, human or mouse
+##' @param ... additional argument passed to igisGetmart()
+##' @return a data frame of exon information
+##' @import biomaRt gChipseq
+##' @export
+##' @author Jinfeng Liu
+igisExonlist <- function(target, src=c('symbol','gene'), genome,
+                         org=c('human','mouse'),...) {
+  
+  
+  org <- match.arg(org)
+  dataset <- ifelse(org == 'human', "hsapiens_gene_ensembl","mmusculus_gene_ensembl")
+  
+  attr <- c("chromosome_name","exon_chrom_start","exon_chrom_end","strand",
+            "transcript_id","gene_id","external_gene_id","exon_id","rank",
+            "cds_start","cds_end")
+  columns <- c("chr","start","end","strand",
+               "transcript","gene","symbol","exon","rank",
+               "cds_start","cds_end")
+  
+  mart <- gChipseq::igisGetmart(...)
+  mart <- biomaRt::useDataset(dataset, mart)
+  
+  if (is(target, "GRanges")){
+    region <- list(as.integer(as.character((seqnames(target)))), 
+                   min(start(target)), max(end(target)))
+    exon.table <- getBM(attributes = attr,
+                        filters = c("chromosome_name","start","end"),
+                        values = region, mart = mart)
+  } else if (is(target, "character")){
+    src <- match.arg(src)
+    src_filter <- ifelse(src == 'gene', 'gene_id', 'external_gene_id')
+    exon.table <- getBM(attributes = attr,
+                        filters = c("source",src_filter),
+                        values = list("entrez",target),mart = mart)
+  } else {
+    warning("Must use valid entrez gene id or GRanges object")
+    return(NULL)
+  }
+  
+  colnames(exon.table) <- columns
+  
+  exon.table$strand <- ifelse(exon.table$strand == 1, '+',
+                              ifelse(exon.table$strand == -1, '-',NA))
+  
+  return(exon.table)
+}
+
+#' Title
+#'
+#' @param symbol 
+#' @param org 
+#' @param genome 
+#' @param chr 
+#' @param start 
+#' @param end 
+#' @param strand 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getViewRange <- function(symbol, org, genome, chr=NULL, start=NULL, end=NULL, 
+                         strand=NULL){
+  if(!missing(symbol)){
+    exon.df <- chipVis::igisExonlist(target=symbol, org=org, genome=genome)
+    view.range <- getGeneRange(exon.df)
+  } else {
+    view.range <- GRanges(Rle(c(chr)), IRanges(start=start, end=end), 
+                          strand = strand)
+  }
+  return(view.range)
+}

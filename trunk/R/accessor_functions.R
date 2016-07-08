@@ -40,3 +40,11 @@ loadNarrowPeaks <- function(macs_peaks) {
   chr <- as.character(unique(seqnames(gr_narrowpeak)))
   
 }
+
+
+getCoverageMatrix <- function(bampath, gr, bsize=50){
+  signal <- bamsignals::bamProfile(bampath, gr, binsize=bsize)
+  signal_matrix <- bamsignals::alignSignals(signal)
+  return(t(signal_matrix))
+  
+}
