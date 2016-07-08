@@ -8,14 +8,14 @@ no_axis = list(title = "",
                showgrid = FALSE,
                ticks = "")
 
-dcolorscale <- function(x = 2){
+dcolorscale <- function(x = 2, palette = "Dark2"){
   
   if (x == 1){
-    cols = c("#1B9E77")
+    cols = RColorBrewer::brewer.pal(3, palette)[1]
   } else if (x == 2){
-    cols = c("#1B9E77","#7570B3")
+    cols = RColorBrewer::brewer.pal(3, palette)[c(1,3)]
   } else if ( x <= 8){
-    cols = RColorBrewer::brewer.pal(x, "Dark2")
+    cols = RColorBrewer::brewer.pal(x, palette)
   } else{
     cols = rainbow(x)
   }
