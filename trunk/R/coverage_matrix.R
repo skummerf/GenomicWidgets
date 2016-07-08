@@ -1,4 +1,81 @@
+#' make_coverage_matrix
+#' 
+#' @params inputs
+#' @params ranges
+#' @params binsize
+#' @params format
+#' @export
+make_coverage_matrix <- function(inputs, 
+                                 ranges, 
+                                 binsize = 1, 
+                                 format = c("auto","bigwig","bam", "rle","RData"),
+                                 ...){
+  
+  format = match.arg(format)
+  stopifnot(sum(width(ranges) == width(ranges[1])) == length(ranges)) #check for equal widths
+  if (binsize > 1 && width(ranges[1]) %% binsize != 0){
+    ranges <- resize(ranges, fix = "center", width = (width(ranges[1]) %/% binsize +1)*binsize)
+  }
+  
+  #Determine format
+  if (format == "auto"){
+    if (length(inputs) == 1){
+      tmp = inputs
+    } else{
+      tmp = inputs[[1]]
+    }
+    if (is.character(tmp)){
+      if (substr(tmp, nchar(tmp) - 6 , nchar(tmp)) == ".bigwig" || 
+          substr(tmp, nchar(tmp) - 2 , nchar(tmp)) == ".bw"){
+        format = "bigwig"
+      } else if (substr(tmp, nchar(tmp) - 3 , nchar(tmp)) == ".bam"){
+        format = "bam"
+      } else if (substr(tmp, nchar(tmp) - 5 , nchar(tmp)) == ".RData"){
+        format = "RData"
+      } else{
+        stop("Cannot determine format of inputs.")
+      }
+    } else{
+      stop("Cannot determine format of inputs. Rle method not yet implemented")
+    }
+  }
+  
+  if (format == "bigwig"){
+    # bw input
+    if (length(inputs) == 1){
+      out <- coverage_mat_from_bigwig(inputs, ranges, binsize)
+    } else{
+      out <- BiocParallel::bplapply(inputs, coverage_mat_from_bigwig, ranges, binsize)
+    }
+  } else if (format == "bam"){
+    # bam input
+    inputs = convert_to_full_path(inputs) #bamsignals seems to fail with symlinks
+    #
+    if (length(inputs) == 1){
+      out <- coverage_mat_from_bam(inputs, ranges, binsize)
+    } else{
+      out <- BiocParallel::bplapply(inputs, coverage_mat_from_bam, ranges, binsize)
+    }
+  } else if (format == "RData"){
+    out <- getCvgList(ranges, inputs, flank = width(ranges[1])%/%2, normalize.method = "none", bins = binsize, ...)
+  } else if (format == "rle"){
+    # rle input 
+    stop("not yet implemented")
+  } else {
+    stop("auto method not yet implemented")
+  }
+  return(out)
+}
 
+### TO DO:  Normalize coverage matrix 
+
+
+
+
+
+#### Helper Functions (not exported) ---------------------------------------------------------
+
+#Function to reduce size of matrix by binning columns
 bin_mat <- function(mat, binsize){
   tmp =  ncol(mat) / binsize
   tmp_mat = matrix(unlist(lapply(1:tmp, 
@@ -6,6 +83,7 @@ bin_mat <- function(mat, binsize){
                           nrow = ncol(mat), ncol = tmp)
   return(mat %*% tmp_mat)
 }
+
 
 coverage_mat_from_bigwig <- function(bigwig_file, ranges, binsize){
   stopifnot(sum(width(ranges) == width(ranges[1])) == length(ranges)) #check for equal widths
@@ -50,53 +128,25 @@ coverage_mat_from_rle <- function(rle, ranges, binsize, ...){
   }
 }
 
-
-make_coverage_matrix <- function(inputs, 
-                                 ranges, 
-                                 binsize = 1, 
-                                 format = c("auto","bigwig","bam", "rle","RData"),
-                                 ...){
-  
-  format = match.arg(format)
-  stopifnot(sum(width(ranges) == width(ranges[1])) == length(ranges)) #check for equal widths
-  if (binsize > 1 && width(ranges[1]) %% binsize != 0){
-    ranges <- resize(ranges, fix = "center", width = (width(ranges[1]) %/% binsize +1)*binsize)
+convert_to_full_path <- function(x){
+  for (i in 1:length(x)){
+    x[[i]] = system(paste0("readlink -f ", x[[i]]), intern = TRUE)
   }
-  
-  #Determine format
-  
-  if (format == "bigwig"){
-    # bw input
-    if (length(inputs) == 1){
-      out <- coverage_mat_from_bigwig(inputs, ranges, binsize)
-    } else{
-      out <- BiocParallel::bplapply(inputs, coverage_mat_from_bigwig, ranges, binsize)
-    }
-  } else if (format == "bam"){
-    # bam input
-    if (length(inputs) == 1){
-      out <- coverage_mat_from_bam(inputs, ranges, binsize)
-    } else{
-      out <- BiocParallel::bplapply(inputs, coverage_mat_from_bam, ranges, binsize)
-    }
-  } else if (format == "RData"){
-    out <- getCvgList(ranges, inputs, flank = width(ranges[1])%/%2, normalize.method = "none", bins = binsize)
-  } else if (format == "rle"){
-    # rle input 
-    stop("not yet implemented")
-  }
-  return(out)
+  x
 }
 
 
-#Is this just the same as matrix, but with one?
-get_coverage_track <- function(inputs, binsize){
-  
-  # bw input
-  
-  # bam input
-  
-  # rdata input
-  
-  
-}
+
+# 
+# 
+# #Is this just the same as matrix, but with one?
+# get_coverage_track <- function(inputs, binsize){
+#   
+#   # bw input
+#   
+#   # bam input
+#   
+#   # rdata input
+#   
+#   
+# }
