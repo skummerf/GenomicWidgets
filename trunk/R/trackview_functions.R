@@ -47,12 +47,14 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome,
     names(score.max) <- names(grl)
   }
   
+    # Add title
+  bg.title <- rep(bg.title, length.out=length(grl))
+  names(bg.title) <- names(grl)
+  
   dtrack <- makeDataTracks(grl, target.range, genome, chr, bg.title, colors, 
                            score.max = score.max, hm.thresh=hm.thresh)
   
-  # Add title
-  bg.title <- rep(bg.title, length.out=length(grl))
-  names(bg.title) <- names(grl)
+
   
   # Add genome tracks
   grtrack.color <- 'lightslateblue'
@@ -78,8 +80,8 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome,
   # Plot tracks
   ptype <- ifelse(length(grl) > hm.thresh, 'heatmap', 'histogram')
   plotTracks(tracklist,main=symbol, from=start(target.range),
-             to=end(target.range))# showSampleNames = TRUE, 
-             # cex.sampleNames = 0.6)
+             to=end(target.range), showSampleNames = TRUE, 
+              cex.sampleNames = 0.6)
   
 }
 
@@ -144,7 +146,7 @@ extendGRange <- function(gr, extend=0){
 #' @examples
 getCoverageInRange <- function(bwList, target.range, names){
   # Import only the range that matches target.ange
-  cvg <- lapply(bwList, function(x) import.bw(x, which=range.gene))
+  cvg <- lapply(bwList, function(x) import.bw(x, which=target.range))
   cvg <- GRangesList(cvg)
   
   # Name the list
@@ -241,10 +243,10 @@ binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score",
   
   for(g in names(cvg.L)){
     # Find overlap between the coverage and the tiled range
-    overlap <- findOverlaps(cvg[[g]], tiled.range)
+    overlap <- findOverlaps(cvg.L[[g]], tiled.range)
     
     # Split scores from coverage range into their appropriate bin and sum
-    bin.split <- splitAsList(mcols(cvg[[g]])[[val]][queryHits(overlap)],
+    bin.split <- splitAsList(mcols(cvg.L[[g]])[[val]][queryHits(overlap)],
                              factor(subjectHits(overlap)))
     
     # Need a better way to scale the data
@@ -270,6 +272,7 @@ makeDataTracks <- function(cvg.L, gr, genome, chr, bg.title, colors,score.max,
                                genome=genome, name=g, col.histogram=colors[g],
                                fill.histogram=colors[g]) 
     }
+    names(dtrack) = names(cvg.L)
   }
   return(dtrack)
 }
