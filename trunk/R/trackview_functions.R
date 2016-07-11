@@ -60,9 +60,9 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome,
   target.range <- grAddChr(target.range)
   options(ucscChromosomeNames = FALSE)
   if (length(dtrack)==1){
-    ann.size = 0.25
+    ann.size <- 0.25
   } else {
-    ann.size =NULL
+    ann.size <- NULL
   }
   grtrack <- GeneRegionTrack(dat.exon, genome=genome, chromosome=chr, name=symbol,
                              background.title=grtrack.color, fill=grtrack.color,
@@ -246,6 +246,8 @@ binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score",
     # Split scores from coverage range into their appropriate bin and sum
     bin.split <- splitAsList(mcols(cvg[[g]])[[val]][queryHits(overlap)],
                              factor(subjectHits(overlap)))
+    
+    # Need a better way to scale the data
     bin.score <- scaling(sum(bin.split))
     elementMetadata(tiled.range)[[g]] <- bin.score
   }
