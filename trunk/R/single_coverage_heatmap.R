@@ -58,6 +58,8 @@ single_coverage_heatmap <- function(mat,
     mat = mat[row_order,]
     signal = signal[row_order]
     y = y[row_order]
+  } else{
+    row_order = 1:nrow(mat)
   }
   
   p <- function(){
