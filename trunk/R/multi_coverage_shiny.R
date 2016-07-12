@@ -159,6 +159,6 @@ multi_coverage_shiny <- function(heatmaps,
   }
   
   # Run the application 
-  shinyApp(ui = ui, server = server, options = list(height = 1000))
+  shinyApp(ui = ui, server = server, options = list(height = 1200))
   
 }

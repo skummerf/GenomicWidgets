@@ -6,8 +6,16 @@ output: html_document
 runtime: shiny
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, cache = FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+require(gChipseq)
+require(TxDb.Mmusculus.BioMart.igis)
+require(biomaRt)
+require(rtracklayer)
+require(Gviz)
+options(ucscChromosomeNames=FALSE)
+BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
+
 ```
 
 ## Reading in the Data
@@ -15,8 +23,7 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 Example of reading in data
 
 ```{r inputs, warnings = FALSE, message = FALSE, results='hide'}
-library(gChipseq)
-library(TxDb.Mmusculus.BioMart.igis)
+
 
 file.sample <- "~/workspace/BAP1_Data/BAP1_june_2016_samples.txt"
 file.pair <- "~/workspace/BAP1_Data/BAP1_june_2016_pairs.txt"
@@ -42,7 +49,6 @@ tss_in_peaks <- subsetByOverlaps(unique_tss, merged_peaks, maxgap = 1000)
 ## Prepping Data
 ```{r bams, warnings = FALSE, message = FALSE, results='hide'}
 source('/gnet/is7/workspace/schepa/chipVis/R/coverage_matrix.R')
-BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = TRUE))
 
 bam_files <- samples$File.bam
 names(bam_files) <- samples$Sample.Name
@@ -62,10 +68,12 @@ names(cvg_files) <- samples$Sample.Name
 ## Embedded Application
 
 
-```{r shiny, echo=FALSE, cache = FALSE}
+```{r shiny, echo=FALSE, cache = FALSE, message = FALSE}
+
 source('/gnet/is7/workspace/schepa/chipVis/R/multi_coverage_shiny.R')
 source('/gnet/is7/workspace/schepa/chipVis/R/single_coverage_heatmap.R')
 source('/gnet/is7/workspace/schepa/chipVis/R/trackview_functions.R')
+
 
 multi_coverage_plot(inputs = cvg_mats,#bam_files, 
                     regions = tss_in_peaks, 
