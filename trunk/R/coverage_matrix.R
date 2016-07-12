@@ -112,7 +112,7 @@ normalize_coverage_matrix <- function(mats,
                                                       "localNonZeroMean", "PercentileMax", "scalar", "none"), 
                                       pct = 0.95, scalar = NULL){
   
-  if (length(mats) == 1){
+  if (!is.list(mats)){
     out <- normalize_coverage_matrix_single(mats, method, pct, scalar)
   } else{
     out <-BiocParallel::bplapply(mats, normalize_coverage_matrix_single, method, pct, scalar)
