@@ -3,8 +3,8 @@
 # Plotting function.  Does not do any ordering. 
 
 single_coverage_heatmap <- function(mat, 
-                                    x = ifelse(is.null(colnames(mat)),1:ncol(mat),colnames(mat)),
-                                    y = ifelse(is.null(rownames(mat)),1:nrow(mat),rownames(mat)),                    
+                                    x = default_x(mat),
+                                    y = default_y(mat),                    
                 row_order = c("none","hclust","kmeans","groups","signal"),
                 k = NULL,
                 groups = NULL,
@@ -32,6 +32,7 @@ single_coverage_heatmap <- function(mat,
     if (!is.null(k)){
       groups = cutree(dendro, k = k)[row_order]
     }
+    y = y[row_order]
   } else if (row_order == "kmeans"){
     stopifnot(!is.null(k))
     groups = kmeans(mat, centers = k)$cluster
@@ -41,6 +42,7 @@ single_coverage_heatmap <- function(mat,
     if (!is.null(signal)){
       signal = signal[row_order]
     }
+    y = y[row_order]
   } else if (row_order == "groups"){
     row_order = order(groups)
     groups = groups[row_order]
@@ -48,15 +50,18 @@ single_coverage_heatmap <- function(mat,
     if (!is.null(signal)){
       signal = signal[row_order]
     }
+    y = y[row_order]
   } else if (row_order == "signal"){
     stopifnot(!is.null(signal))
     row_order = order(signal, decreasing = FALSE)
     groups = groups[row_order]
     mat = mat[row_order,]
     signal = signal[row_order]
+    y = y[row_order]
   }
   
-  p <- single_coverage_heatmap_helper(mat,
+  p <- function(){
+    single_coverage_heatmap_helper(mat,
                                       x,
                                       y,
                                       groups,
@@ -65,14 +70,30 @@ single_coverage_heatmap <- function(mat,
                                       signal,
                                       name,
                                       source)
-  p
+  }
+  return(list(plot = p, row_order = row_order, dendro = dendro))
+}
+
+default_x <- function(mat){
+  if (is.null(colnames(mat))){
+    return(1:ncol(mat))
+  } else{
+    colnames(mat)
+  }
+}
+
+default_y <- function(mat){
+  if (is.null(rownames(mat))){
+    return(1:nrow(mat))
+  } else{
+    rownames(mat)
+  }
 }
 
 
-
 single_coverage_heatmap_helper <- function(mat,
-                                    x = ifelse(is.null(colnames(mat)),1:ncol(mat),colnames(mat)),
-                                    y = ifelse(is.null(rownames(mat)),1:nrow(mat),rownames(mat)),
+                                    x = default_x(mat),
+                                    y = default_y(mat),
                                     groups = NULL,
                                     dendro = NULL,#hclust object
                                     summary = TRUE,
@@ -85,13 +106,15 @@ single_coverage_heatmap_helper <- function(mat,
   
   out<- plot_ly(z = mat, 
                 x = x, 
+                #text = matrix(y, nrow = nrow(mat), ncol = ncol(mat), byrow = FALSE),
+                #hoverinfo="x+y+z",
                 type="heatmap",
                 colorbar = list(title = name,
                                      len = 0.3, 
                                      y = 0.6,
                                      x = 1.05), 
-                xaxis = "x1", 
-                yaxis = "y1",
+                xaxis = "x", 
+                yaxis = "y",
                 zmin = zmin,
                 zmax = zmax,
                 source = source) 

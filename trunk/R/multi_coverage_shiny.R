@@ -8,6 +8,7 @@ multi_coverage_plot <- function(inputs,
                                 col_aggs = NULL,
                                 row_aggs = NULL,
                                 groups = NULL,
+                                cvg_files = NULL,
                                 aggregate_normalization = c("localRms", 
                                                             "localMean", 
                                                             "localNonZeroMean", 
@@ -20,7 +21,12 @@ multi_coverage_plot <- function(inputs,
                                                           "PercentileMax", 
                                                           "scalar", 
                                                           "none"),
+                                genome = "GRCm38",
+                                org = "mouse",
                                 ...){
+  
+  heatmap_normalization = match.arg(heatmap_normalization)
+  aggregate_normalization = match.arg(aggregate_normalization)
   
   if (!inherits(inputs[[1]],"matrix")){
     inputs <- make_coverage_matrix(inputs = inputs,
@@ -41,16 +47,32 @@ multi_coverage_plot <- function(inputs,
   
   if (is.null(row_aggs)){
     #log10
-    row_aggs <- lapply(inputs, function(x) log10(rowSums(x)))
+    row_aggs <- lapply(inputs, function(x) log10(rowSums(x) + 1))
   }
+  
+  heatmaps <- BiocParallel::bplapply(1:length(inputs), function(x){
+    sig <- row_aggs[[x]]
+    if (length(sig) > 500){
+      highsig <- which(sig > quantile(sig,(length(sig) - 500)/length(sig)))
+    } else{
+      highsig <- 1:length(sig)
+    }
+    out <- single_coverage_heatmap(inputs_normed[[x]][highsig,],
+                                   y = region_names[highsig], 
+                                   row_order = "signal", 
+                            signal = sig[highsig]) 
+    out <- c(out, list(row_mapping = highsig[out$row_order]))
+    return(out)
+  })
                        
-  multi_coverage_shiny(inputs_normed, 
-                       colnames(inputs[[1]]),
-                       region_names, 
-                       col_aggs = col_aggs, 
-                       row_aggs = row_aggs,
-                       ranges = regions,
-                       groups = groups)
+  multi_coverage_shiny(heatmaps,
+                       positions = colnames(inputs[[1]]),
+                       region_names,
+                       col_aggs = col_aggs,
+                       regions = regions,
+                       cvg_files = cvg_files,
+                       genome = genome,
+                       org = org)
   
 }
 
@@ -58,13 +80,14 @@ multi_coverage_plot <- function(inputs,
 
 
 #Probably want a wrapper around this one
-multi_coverage_shiny <- function(mats, 
-                                 positions, 
+multi_coverage_shiny <- function(heatmaps, 
+                                 positions,
                                  region_names, 
                                  col_aggs,
-                                 row_aggs,
-                                 groups = NULL, 
-                                 ranges = NULL){
+                                 cvg_files = NULL,
+                                 regions = NULL,
+                                 genome = NULL,
+                                 org = NULL){
   require(shiny)
   require(plotly)  
   
@@ -82,9 +105,9 @@ multi_coverage_shiny <- function(mats,
         column(6, plotlyOutput("agg")),
         column(6, plotlyOutput("heat"))
         
-      )#,
+      ),
       
-    #fluidRow( plotOutput("tracks"))
+    fluidRow( column(12,plotOutput("tracks")))
     
     )
   
@@ -93,10 +116,10 @@ multi_coverage_shiny <- function(mats,
     
     output$agg <- renderPlotly({
        
-      plot_ly(x = rep(positions, length(mats)),
+      plot_ly(x = rep(positions, length(col_aggs)),
               y = unlist(col_aggs, use.names = FALSE),
-              color = rep(names(mats), each = length(positions)),
-              text = rep(names(mats), each = length(positions)),
+              color = rep(names(col_aggs), each = length(positions)),
+              text = rep(names(col_aggs), each = length(positions)),
               mode = "lines",
               source = "agg") %>% layout(hovermode = "closest",
                                          xaxis = list(title = "Position"),
@@ -105,35 +128,37 @@ multi_coverage_shiny <- function(mats,
       
     })
     
+    
+    
     output$heat <- renderPlotly({
-      s <- event_data("plotly_click", source="agg")
-      if (length(s) != 0){
-        sel <- s$curve + 1
-        sig <- row_aggs[[sel]]
-        highsig <- which(rank(sig) > length(sig) - 1000)
-        single_coverage_heatmap(mats[[sel]][highsig,], x = positions, y = region_names, row_order = "signal", 
-                                signal = sig[highsig]) %>% layout(title = names(mats)[sel])
-        
-      } else{
-        plotly_empty()
-      }
+      s1 <- event_data("plotly_click", source="agg")
+      if(is.null(s1) == T) return(NULL)
+      
+      sel <- s1$curve + 1
+      heatmaps[[sel]]$plot() %>% layout(title = names(col_aggs)[sel])
+      
 
     })
-    # 
-    # output$track <- renderPrint({
-    #   s1 <- event_data("plotly_click", source="agg")
-    #   if (length(s1) != 0){
-    #     s <- event_data("plotly_click", source="HM")
-    #     if (length(s) != 0){
-    #       str(s2$y)
-    #     }
-    #   } else{
-    #     ""
-    #   }
-    # })
+
+    output$tracks <- renderPlot({
+      s1 <- event_data("plotly_click", source="agg")
+      if(is.null(s1) == T) return(NULL)
+      sel <- s1$curve + 1
+      s2 <- event_data("plotly_click", source="HM")
+        
+        # If NULL dont do anything
+      if(is.null(s2) == T) return(NULL)
+        
+      ix <- heatmaps[[sel]]$row_mapping[s2$y + 1]
+      rang <- resize(regions[ix], width = 50000, fix = "center")
+      de <- igisExonlist(rang, genome = genome, org = org)
+      grl <- getCoverageInRange(cvg_files, rang, names = names(cvg_files))
+      plotGeneCoverage(grl, de, rang, genome = genome,symbol=region_names[ix])
+
+    })
   }
   
   # Run the application 
-  shinyApp(ui = ui, server = server)
+  shinyApp(ui = ui, server = server, options = list(height = 1000))
   
 }
