@@ -29,10 +29,10 @@ file.sample <- "~/workspace/BAP1_Data/BAP1_june_2016_samples.txt"
 file.pair <- "~/workspace/BAP1_Data/BAP1_june_2016_pairs.txt"
 
 samples <- read.table(file.sample,as.is=TRUE,header=TRUE)
-samples <- expandSampleTable(samples)
+samples_exp <- expandSampleTable(samples)
 
 pairs <- read.table(file.pair,as.is=TRUE,header=TRUE)
-pairs <- expandPairedTable(pairs)
+pairs_exp <- expandPairedTable(pairs)
 
 tss <- tssFromTxdb(txdb = TxDb.Mmusculus.BioMart.igis)
 unique_tss <- unique(tss) #Remove same positions
@@ -50,11 +50,11 @@ tss_in_peaks <- subsetByOverlaps(unique_tss, merged_peaks, maxgap = 1000)
 ```{r bams, warnings = FALSE, message = FALSE, results='hide'}
 source('/gnet/is7/workspace/schepa/chipVis/R/coverage_matrix.R')
 
-bam_files <- samples$File.bam
-names(bam_files) <- samples$Sample.Name
+bam_files <- samples_exp$File.bam
+names(bam_files) <- samples$Genotype
 
-cvg_files <- samples$File.bw
-names(cvg_files) <- samples$Sample.Name
+cvg_files <- samples_exp$File.bw
+names(cvg_files) <- samples$Genotype
 
  cvg_mats <- make_coverage_matrix(inputs = bam_files,
                                   ranges = tss_in_peaks,
