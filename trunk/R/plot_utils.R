@@ -1,5 +1,5 @@
-# Plot Utils, not exported
-
+# Some utility functions for use with plotly
+# Not Exported
 
 no_axis = list(title = "",
                zeroline = FALSE,
@@ -8,6 +8,9 @@ no_axis = list(title = "",
                showgrid = FALSE,
                ticks = "")
 
+# makes a discrete color scale for plotly
+# palette should be an RColorBrewer palette name
+# x is number of colors desired
 dcolorscale <- function(x = 2, palette = "Dark2"){
   
   if (x == 1){
@@ -27,6 +30,8 @@ dcolorscale <- function(x = 2, palette = "Dark2"){
   return(out)
 }
 
+# makes x based on colnames of mat if available
+# if not available, just uses 1 to number of columns
 default_x <- function(mat){
   if (is.null(colnames(mat))){
     return(1:ncol(mat))
@@ -34,7 +39,8 @@ default_x <- function(mat){
     colnames(mat)
   }
 }
-
+# makes y based on rownames of mat if available
+# if not available, just uses 1 to number of rows
 default_y <- function(mat){
   if (is.null(rownames(mat))){
     return(1:nrow(mat))
