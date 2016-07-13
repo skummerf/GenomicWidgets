@@ -1,0 +1,99 @@
+---
+title: "plotly_tracks_experiment"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Function to convert txdb to list of data frames
+
+```{r}
+txdb_to_shapes <- function(txdb, ranges){
+  gr <- biovizBase::crunch(txdb,
+                           which = ranges)
+  gr <- biovizBase::addStepping(gr, group.name = "tx_id")
+
+  df <- biovizBase::mold(gr)
+  
+  out <- list(exons = df[which(df$type == "exon"),], 
+              introns = df[which(df$type == "gap"),],
+              utr = df[which(df$type == "utr"),])
+  return(out)
+}
+```
+
+
+## Demonstration
+
+```{r}
+library(TxDb.Mmusculus.BioMart.igis3.0)
+library(plotly)
+
+test = GenomicRanges::GRanges("14",IRanges(31240000,31270000))
+
+
+sha = txdb_to_shapes(txdb = TxDb.Mmusculus.BioMart.igis, test)
+g = ggplot() + geom_rect(data = sha$exons, 
+                         aes(xmin = start, xmax = end, 
+                             ymin = stepping - 0.4, 
+                             ymax = stepping + 0.4, text = tx_name), fill="darkgrey") + 
+  geom_segment(data = sha$introns, 
+               aes(x = start, xend = end, 
+                   y = stepping, yend = stepping, text = tx_name)) + 
+  geom_rect(data = sha$utr, 
+            aes(xmin = start, xmax = end, ymin = stepping - 0.4, 
+                ymax = stepping + 0.4, text = tx_name), fill="lightgrey") +
+  xlab("Position") 
+
+g2 = ggplotly(g) %>% layout(yaxis = list(title = "",
+                                    zeroline = FALSE,
+                                    showline = FALSE,
+                                    showticklabels = FALSE,
+                                    showgrid = FALSE,
+                                    ticks = ""),
+                            hovermode = "nearest")
+g2
+```
+
+
+## Comparison
+
+```{r}
+library(Gviz)
+
+options(ucscChromosomeNames=FALSE)
+grtrack <- GeneRegionTrack(TxDb.Mmusculus.BioMart.igis)
+
+plotTracks(grtrack, from = start(test), to = end(test), chromosome = seqnames(test))
+```
+
+One problem is that currently in plotly version if an intron/extron spans the plot boundary it may not shown
+
+
+## Can link with data
+
+```{r}
+source("~/workspace/chipVis/R/coverage_matrix.R")
+library(gChipseq)
+
+file.sample <- "~/workspace/BAP1_Data/BAP1_june_2016_samples.txt"
+
+samples <- read.table(file.sample,as.is=TRUE,header=TRUE)
+samples_exp <- expandSampleTable(samples)
+
+bam_files <- samples_exp$File.bam
+names(bam_files) <- samples$Genotype
+
+a = make_coverage_tracks(bam_files, ranges = test)
+
+ga <- plot_ly(z = a, x = start(test):end(test), y = names(bam_files), type = "heatmap",
+              colorbar = list(title = "Chip Signal", len = 0.4, y =0.5))
+
+subplot(g2, ga, shareX = TRUE, nrows = 2, which_layout = 2) %>% layout(margin = list(l = 180))
+
+```
+
+
+
