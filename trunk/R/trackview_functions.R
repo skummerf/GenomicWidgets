@@ -2,27 +2,41 @@
 ##' plot genomic coverage along the gene
 ##' Adapted from gChipseq function of the same name. Credit to Jinfeng Liu
 ##' plot genomic coverage along the gene
-##' @param grl a list of GRangesList, typically the results of importing wig/bw/... files for each sample
-##' @param symbol str; symbol to plot
-##' @param org str; organism, human|mouse
-##' @param genome str; genome build, e.g. hg19, GRCh38, etc.
-##' @param extend extend the plotting region
-##' @param col colors of the coverage plot
-##' @param bg.title background color for the title panel
-##' @param sync logical for whether to sync the ymax for all data tracks
-##' @param ymax vector ymax for the data tracks
-##' @param scale.group groups to use the same y scale
-##' @param dat.exon a data frame representing exon information, if NULL get it from IGIS
-##' @param ... 
-##' @return nothing
-##' @import Gviz gChipseq
-##' @import IRanges
+##'
+##' @param grl GRangesList: typically the results of importing wig/bw/... files for each sample
+##' @param dat.exon data.frame: exon information
+##' @param target.range GRange: range to plot 
+##' @param genome str: genome build, e.g. hg19, GRCh38, etc.
+##' @param ymax vector-optional: ymax for the data tracks
+##' @param symbol str-optional: symbol to plot
+##' @param bg.title: str-optional: background color for the title panel
+##' @param colors str-optional: colors for coverage data tracks
+##' @param sync logical-optional: whether to sync the ymax for all data tracks
+##' @param scale.group scalar-optional: groups to use the same y scale
+##' @param hm.thresh integer-optional: threshold above which a heatmap is plotted. Can change threshold or override with type
+##' @param type str-optional: type of datatrack to plot. Currently only 'hist' and 'heatmap' are supported
+##' @param dtrack.kwargs list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks
+##' @param gtrack.kwargs list-optional: additional arguments for GenomeAxisTrack
+##' @param grtrack.kwargs list-optional: additional arguments for GeneRegionTrack
+##'
+##' @return ptracks list: track objects plotted by Gviz
+##' @import Gviz gChipseq RColorBrewer
 ##' @export
 ##' @author Justin Finkle
-plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome, 
-                             ymax, bg.title='grey50', colors=NULL, sync=FALSE, type = NULL,
-                             scale.group=1, hm.thresh=4, dtrack.kwargs=list(),
-                             gtrack.kwargs=list(), grtrack.kwargs=list()) {
+plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
+                             bg.title='grey50', colors=NULL, sync=FALSE, 
+                             type = NULL, scale.group=1, hm.thresh=4, 
+                             dtrack.kwargs=list(), gtrack.kwargs=list(), 
+                             grtrack.kwargs=list()) {
+  # Get the chromosome
+  chr <- as.character(seqnames(target.range))
+  if(missing(symbol)){
+    main.title <- paste0("Chr ", chr, '>', start(target.range), ":",
+                         end(target.range))
+  } else {
+    main.title <- symbol
+  }
+  annotation.title <- "Annotation"
   
   # Decide the type of datatrack to plot if not provided
   if(is.null(type)){
@@ -52,10 +66,6 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome,
   
   gtrack.params <- modifyList(gtrack.defaults, gtrack.kwargs)
   grtrack.params <- modifyList(grtrack.defaults, grtrack.kwargs)
-  
-  
-  # Get the chromosome
-  chr <- as.character(seqnames(target.range))
 
   # Scale data range
   if ( missing(ymax) ) {
@@ -87,7 +97,7 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome,
   displayPars(gtrack) <- gtrack.params
   
   grtrack <- GeneRegionTrack(dat.exon, genome=genome, chromosome=chr, 
-                             name=symbol,transcriptAnnotation="symbol")
+                             name=annotation.title, transcriptAnnotation="symbol")
   displayPars(grtrack) <- grtrack.params
 
     # Add tracks
@@ -95,9 +105,9 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome,
   tracklist <- c(gtrack,grtrack, dtrack)
   
   # Plot tracks
-  ptracks <- plotTracks(tracklist,main=symbol, from=start(target.range),
+  ptracks <- plotTracks(tracklist, main=main.title, from=start(target.range),
                         to=end(target.range), chromosome = chr)
-  
+  return(ptracks)
 }
 
 #' Title
@@ -271,6 +281,28 @@ binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score",
   return(tiled.range)
 }
 
+#' makeDataTracks
+#' @description Builds Gviz DataTrack objects for plotting based on coverage
+#'
+#' @param cvg.L GRangesList containing coverage score
+#' @param gr GRange to plot
+#' @param genome str
+#' @param chr str
+#' @param bg.title str: color for track panel backgrounds 
+#' @param score.max scalar: scaling
+#' @param colors list-optional: colors for coverage tracks
+#' @param type str: 'hist' for multiple coverage tracks, 'heatmap' for condensed view
+#' @param binwidth scalar
+#' @param val str: value in cvg.L elements to use for binning coverage. Default is "score"
+#' @param scaling 
+#' @param dtrack.kwargs list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks
+#'
+#' @return dtrack list: DataTrack objects
+#' @export
+#' @author Justin Finkle
+#' @import Gviz
+#'
+#' @examples
 makeDataTracks <- function(cvg.L, gr, genome, chr, bg.title, score.max, colors = NULL,
                            type=NULL, binwidth=1000, val="score", scaling=log,
                            dtrack.kwargs=list()){
