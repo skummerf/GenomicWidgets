@@ -21,7 +21,7 @@
 #' heirarchical clustering
 #' performed for cols
 #' @export
-#' @import shiny
+#' @import plotly
 #' @author Alicia Schep
 cluster_heatmap <- function(mat, 
                             x = chipVis:::default_x(mat),
