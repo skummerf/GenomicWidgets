@@ -59,7 +59,7 @@ addShortNames <- function(file_info, name.vector){
 #'
 #' @examples
 addExpressionIdentifier <- function(file_info, es_identifier){
-  file_info[['ExPlot.proj']] <- es_identifier
+file_info[['ExpressSet']] <- es_identifier
   return(file_info)
 }
 
@@ -71,12 +71,18 @@ addExpressionIdentifier <- function(file_info, es_identifier){
 #' @export
 #'
 #' @examples
-getExpressionSetRPKM <- function(proj){
-  proj = ep.find.project(proj)
-  esetRPKM<- ep.ExpressionSet(proj = proj, feature.type = "gene", stat = "rpkm",
-                              attach.annot = TRUE)
-  return(esetRPKM)
-  
+getExpressionSet <- function(filename, stat=NULL){
+  # Try to load the RDS
+  if(file.exists(filename)){
+    eset <- readRDS(filename)
+  } else if (!is.null(stat)){
+    proj = ep.find.project(filename)
+    eset<- ep.ExpressionSet(proj = proj, feature.type = "gene", stat = stat,
+                            attach.annot = TRUE)
+  } else {
+    stop("No valid rds file or RNA-seq stat specified")
+  }
+  return(eset)
 }
 
 getControlSample <- function(sample, file_info){

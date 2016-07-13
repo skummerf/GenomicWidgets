@@ -47,7 +47,6 @@ cvg <- getCoverageInRange(fi[idx, "File.bw"], range.gene, shortened_names)
 ```
 
 ```{r Basic Track}
-colors <- c("blue", "firebrick", "darkgreen", "grey")
-chipVis::plotGeneCoverage(cvg, range.gene, sync = TRUE, col=colors,
-                          genome=genome, symbol=symbol, dat.exon=full.exon)
+chipVis::plotGeneCoverage(cvg, range.gene, sync = TRUE, genome=genome, 
+                          symbol=symbol, dat.exon=full.exon)
 ```

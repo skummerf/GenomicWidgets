@@ -20,16 +20,43 @@
 ##' @export
 ##' @author Justin Finkle
 plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome, 
-                             col='blue', ymax, bg.title='black', sync=FALSE, 
-                             scale.group=1, hm.thresh=4) {
+                             ymax, bg.title='grey50', colors=NULL, sync=FALSE, type = NULL,
+                             scale.group=1, hm.thresh=4, dtrack.kwargs=list(),
+                             gtrack.kwargs=list(), grtrack.kwargs=list()) {
+  
+  # Decide the type of datatrack to plot if not provided
+  if(is.null(type)){
+    type <- ifelse(length(grl)>hm.thresh, "heatmap", "hist")
+  }
+  
+  gtrack.defaults <- list()
+  grtrack.defaults <- list(fill='lightslateblue', 
+                           background.title='lightslateblue')
+  if(type=='hist'){
+    # Make colors for the plots
+    if(is.null(colors)){
+      if(length(grl)>8){
+        colors <- rep(RColorBrewer::brewer.pal(8, 'Dark2'), 
+                      length.out=length(grl))
+      } else {
+        colors <- RColorBrewer::brewer.pal(length(grl), 'Dark2')
+      }
+    }
+    colors <- rep(colors, length.out=length(grl))
+    names(colors) <- names(grl)
+  } else if(type=='heatmap'){
+    # Shrink the genome track so the heatmap is more prevalent
+    grtrack.defaults <- modifyList(grtrack.defaults, list(size=0.25))
+    
+  }
+  
+  gtrack.params <- modifyList(gtrack.defaults, gtrack.kwargs)
+  grtrack.params <- modifyList(grtrack.defaults, grtrack.kwargs)
+  
   
   # Get the chromosome
   chr <- as.character(seqnames(target.range))
-  
-  # Make colors for the plots
-  colors <- rep(col,length.out=length(grl))
-  names(colors) <- names(grl)
-  
+
   # Scale data range
   if ( missing(ymax) ) {
     score.max <- sapply(grl, function(x) { max(score(x)) } )
@@ -51,37 +78,25 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, symbol, genome,
   bg.title <- rep(bg.title, length.out=length(grl))
   names(bg.title) <- names(grl)
   
-  dtrack <- makeDataTracks(grl, target.range, genome, chr, bg.title, colors, 
-                           score.max = score.max, hm.thresh=hm.thresh)
-  
-
+  dtrack <- makeDataTracks(grl, target.range, genome, chr, bg.title, score.max = score.max, 
+                           type=type, dtrack.kwargs = dtrack.kwargs, colors = colors)
   
   # Add genome tracks
-  grtrack.color <- 'lightslateblue'
-  gtrack <- GenomeAxisTrack()
-  target.range <- grAddChr(target.range)
   options(ucscChromosomeNames = FALSE)
-  if (length(dtrack)==1){
-    ann.size <- 0.25
-  } else {
-    ann.size <- NULL
-  }
-  grtrack <- GeneRegionTrack(dat.exon, genome=genome, chromosome=chr, name=symbol,
-                             background.title=grtrack.color, fill=grtrack.color,
-                             transcriptAnnotation="symbol", size=ann.size)
-  # Add tracks
+  gtrack <- GenomeAxisTrack()
+  displayPars(gtrack) <- gtrack.params
+  
+  grtrack <- GeneRegionTrack(dat.exon, genome=genome, chromosome=chr, 
+                             name=symbol,transcriptAnnotation="symbol")
+  displayPars(grtrack) <- grtrack.params
+
+    # Add tracks
   tracklist <- list()
   tracklist <- c(gtrack,grtrack, dtrack)
-  # if (length(dtrack) >1){
-  #   for (g in names(grl)) {
-  #     tracklist <- c(tracklist,dtrack[[g]])
-  #   }
-  # }
+  
   # Plot tracks
-  ptype <- ifelse(length(grl) > hm.thresh, 'heatmap', 'histogram')
-  plotTracks(tracklist,main=symbol, from=start(target.range),
-             to=end(target.range), showSampleNames = TRUE, 
-              cex.sampleNames = 0.6)
+  ptracks <- plotTracks(tracklist,main=symbol, from=start(target.range),
+                        to=end(target.range), chromosome = chr)
   
 }
 
@@ -256,23 +271,32 @@ binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score",
   return(tiled.range)
 }
 
-makeDataTracks <- function(cvg.L, gr, genome, chr, bg.title, colors,score.max,
-                           hm.thresh=4, binwidth=1000, val="score",
-                           scaling=log, ...){
+makeDataTracks <- function(cvg.L, gr, genome, chr, bg.title, score.max, colors = NULL,
+                           type=NULL, binwidth=1000, val="score", scaling=log,
+                           dtrack.kwargs=list()){
   # Compile sample coverages as datatracks
   dtrack <- list()
-  if(length(cvg.L) > hm.thresh){
+  if(type == 'heatmap'){
+    hm.gradient <- colorRampPalette(brewer.pal(9, "BuGn"))(100)
     binned.cvg <- binCoverageInRange(cvg.L, gr, binwidth, val, scaling)
-    dtrack[[1]] <- DataTrack(binned.cvg, type='heatmap', chromosome=chr)
-  } else {
+    heatmap.params <- list(range=binned.cvg, type='heatmap', chromosome=chr,
+                           background.title='gray50', showSampleNames = TRUE,
+                           cex.sampleNames = 0.6, cex.axis=0.6, gradient = hm.gradient)
+    heatmap.params <- modifyList(heatmap.params, dtrack.kwargs)
+    dtrack[[1]] <- do.call(Gviz::DataTrack, heatmap.params)
+  } else if(type == 'hist'){
     for (g in names(cvg.L)) {
-      dtrack[[g]] <- DataTrack(start=start(cvg.L[[g]]),end=end(cvg.L[[g]]),
-                               data=score(cvg.L[[g]]), chromosome=chr, type='hist',
-                               ylim=c(0,score.max[g]),background.title=bg.title[g],
-                               genome=genome, name=g, col.histogram=colors[g],
-                               fill.histogram=colors[g]) 
+      coverage.params <- list(start=start(cvg.L[[g]]), end=end(cvg.L[[g]]),
+                              data=score(cvg.L[[g]]), chromosome=chr, type='hist',
+                              ylim=c(0,score.max[g]),background.title=bg.title[g],
+                              genome=genome, name=g, col.histogram=colors[g],
+                              fill.histogram=colors[g])
+      coverage.params <- modifyList(coverage.params, dtrack.kwargs)
+      dtrack[[g]] <- do.call(Gviz::DataTrack, coverage.params)
     }
     names(dtrack) = names(cvg.L)
+  } else {
+    stop('No valid type supplied for datatrack')
   }
   return(dtrack)
 }
