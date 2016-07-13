@@ -11,6 +11,7 @@
 #' basepairs upstream and down basepairs downstream are used.
 #' @import GenomicRanges
 #' @export
+#' @author Alicia Schep
 make_coverage_matrix <- function(inputs, 
                                  ranges, 
                                  binsize = 1, 
@@ -105,8 +106,14 @@ make_coverage_matrix <- function(inputs,
 #' normalize_coverage_matrix
 #' 
 #' @param mats
-#' @param 
+#' @param method normalization method option, see Details
+#' @param pct Percentile, only used if PercentileMax is method
+#' @param scalar vector of scalars used for normalizing each mat, only 
+#' used if scalar is method
+#' @details Normalization choices are "localRms", "localMean", 
+#' "localNonZeroMean", "PercentileMax", "scalar", and "none".  
 #' @export
+#' @author Alicia Schep
 normalize_coverage_matrix <- function(mats, 
                                       method = c("localRms", "localMean", 
                                                       "localNonZeroMean", "PercentileMax", "scalar", "none"), 
@@ -121,7 +128,8 @@ normalize_coverage_matrix <- function(mats,
 }
 
 
-## From gChipseq package
+## Modified from gChipseq package
+## not exported
 normalize_coverage_matrix_single <- function(mat, method = c("localRms", "localMean", 
                                      "localNonZeroMean", "PercentileMax", "scalar", "none"), 
           pct = 0.95, scalar = NULL) 
@@ -253,13 +261,27 @@ convert_to_full_path <- function(x){
 
 
 
-#Is this just the same as matrix, but with one?
+#' make_coverage_tracks
+#' @param inputs filenames of bigwig, bam, or RData file
+#' @param ranges ranges for which to compute coverage within
+#' @param binsize binsize to bin coverage
+#' @param format format of files, default is auto 
+#' @param up basepairs upstream of center to use
+#' @param down basepairs downstream of center to use
+#' @details up and down are 0 by default -- if not specified, actual range is used.  All ranges
+#' must be of equal width.  If up and/or down are provided, then the center of the range and up 
+#' basepairs upstream and down basepairs downstream are used.
+#' @import GenomicRanges
+#' @export
+#' @author Alicia Schep
 make_coverage_tracks <- function(inputs, ranges, 
                                binsize = 1, 
-                               format = c("auto","bigwig","bam", "rle","RData"), ...){
+                               format = c("auto","bigwig","bam", "rle","RData"), 
+                               up = 0,
+                               down = 0){
 
   stopifnot(length(ranges) == 1)
-  out <- make_coverage_matrix(inputs, ranges, binsize, format,...)
+  out <- make_coverage_matrix(inputs, ranges, binsize, format, up , down)
   out <- do.call(rbind,out)
   return(out)
 }
