@@ -1,6 +1,27 @@
 
 
-
+#' cluster_heatmap
+#' 
+#' @param mat  matrix
+#' @param x x axis labels
+#' @param y y axis labels
+#' @param row_order row order method
+#' @param col_order col order method
+#' @param row_k k to use for kmeans clustering or cutting heirarchical clustering
+#' @param col_k k to use for kmeans clustering or cutting heirarchical clustering
+#' @param row_groups pre-determined groups for rows
+#' @param col_groups pre-determined groups for col
+#' @param row_clust_dist distance function to uses for row clustering
+#' @param col_clust_dist distance function to uses for col clustering
+#' @param name name of colorbar
+#' @param source source name in plotly
+#' @return list with five components, 1) plot -- function to plot
+#' 2) row_order -- row order used, 3) dendro hclust object if heirarchical clustering
+#' performed for rows  4) col_order -- row order used, 5) dendro hclust object if 
+#' heirarchical clustering
+#' performed for cols
+#' @export
+#' @author Alicia Schep
 cluster_heatmap <- function(mat, 
                             x = default_x(mat),
                             y = default_y(mat),                   
@@ -15,7 +36,6 @@ cluster_heatmap <- function(mat,
                             row_clust_dist = stats::dist,
                             col_clust_dist = stats::dist,
                             name = "Signal",
-                            summary = TRUE,
                             source = "HM",
                             scale = TRUE){
   
