@@ -26,3 +26,19 @@ dcolorscale <- function(x = 2, palette = "Dark2"){
   colnames(out) = NULL
   return(out)
 }
+
+default_x <- function(mat){
+  if (is.null(colnames(mat))){
+    return(1:ncol(mat))
+  } else{
+    colnames(mat)
+  }
+}
+
+default_y <- function(mat){
+  if (is.null(rownames(mat))){
+    return(1:nrow(mat))
+  } else{
+    rownames(mat)
+  }
+}

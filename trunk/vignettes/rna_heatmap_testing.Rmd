@@ -1,0 +1,24 @@
+---
+title: "RNA Heatmap Example"
+author: "Alicia Schep"
+date: "7/12/2016"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r simple_heatmap, message = FALSE}
+library(plotly)
+library(Biobase)
+e <- readRDS("~/workspace/BAP1_Data/esetRPKM.RDS")
+
+source("~/workspace/chipVis/R/signal_heatmap.R")
+source("~/workspace/chipVis/R/plot_utils.R")
+
+cluster_heatmap(exprs(e)[1:500,], y = as.character(fData(e)$symbol[1:500]), x = as.character(pData(e)$TREATMENT_NAME), row_order = "kmeans", col_order = "hclust", row_k = 8, col_k = 4, col_anno = list(Genotype = list(data = matrix(as.numeric(as.factor(pData(e)$TREATMENT_NAME)),nrow = 1), colorscale = dcolorscale(4))))$plot() %>% layout(margin = list(b= 100))
+```
+
+

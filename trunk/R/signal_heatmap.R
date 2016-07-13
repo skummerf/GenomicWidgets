@@ -1,10 +1,152 @@
 
 
 
+cluster_heatmap <- function(mat, 
+                            x = default_x(mat),
+                            y = default_y(mat),                   
+                            row_order = c("none","hclust","kmeans","groups"),
+                            col_order = c("none","hclust","kmeans","groups"),
+                            row_groups = NULL,
+                            col_groups = NULL,
+                            row_anno = NULL,
+                            col_anno = NULL,
+                            row_k = NULL,
+                            col_k = NULL,
+                            row_clust_dist = stats::dist,
+                            col_clust_dist = stats::dist,
+                            name = "Signal",
+                            summary = TRUE,
+                            source = "HM",
+                            scale = TRUE){
+  
+  # TO DO: Add argument check
+  
+  row_order = match.arg(row_order)
+  col_order = match.arg(col_order)
+  # 
+  
+  row_dendro = NULL
+  col_dendro = NULL
+  
+  
+  if (scale == TRUE){
+    mat = t(scale(t(log10(mat+1))))
+  }
+  
+  #Filter out rows with NA
+  notna <- apply(mat,1, function(x) !any(is.na(x)))
+  mat = mat[notna,]
+  y = y[notna]
+  if (!is.null(row_anno)){
+    for ( i in seq_along(row_anno)){
+      row_anno[[i]]$data = row_anno[[i]]$data[not_na]
+    }
+  }
+  
+  if (row_order == "hclust"){
+    row_dendro = flashClust::hclust(row_clust_dist(mat))
+    row_order = row_dendro$order
+    mat = mat[row_order,]
+    if (!is.null(row_anno)){
+      for ( i in seq_along(row_anno)){
+       row_anno[[i]]$data = row_anno[[i]]$data[row_order,]
+      }
+    }
+    if (!is.null(row_k)){
+      row_groups = cutree(row_dendro, k = row_k)[row_order]
+    }
+    y = y[row_order]
+  } else if (row_order == "kmeans"){
+    stopifnot(!is.null(row_k))
+    row_groups = kmeans(mat, centers = row_k)$cluster
+    row_order = order(row_groups)
+    row_groups = row_groups[row_order]
+    mat = mat[row_order,]
+    if (!is.null(row_anno)){
+      for ( i in seq_along(row_anno)){
+        row_anno[[i]]$data = row_anno[[i]]$data[row_order,]
+      }
+    }
+    y = y[row_order]
+  } else if (row_order == "groups"){
+    row_order = order(groups)
+    row_groups = row_groups[row_order]
+    mat = mat[row_order,]
+    if (!is.null(row_anno)){
+      for ( i in seq_along(row_anno)){
+        row_anno[[i]]$data = row_anno[[i]]$data[row_order,]
+      }
+    }
+    y = y[row_order]
+  } else{
+    row_order = 1:nrow(mat)
+  }
+  
+  if (col_order == "hclust"){
+    col_dendro = flashClust::hclust(col_clust_dist(t(mat)))
+    col_order = col_dendro$order
+    mat = mat[,col_order]
+    if (!is.null(col_anno)){
+      for ( i in seq_along(col_anno)){
+        col_anno[[i]]$data = col_anno[[i]]$data[,col_order]
+      }
+    }
+    if (!is.null(col_k)){
+      col_groups = cutree(col_dendro, k = col_k)[col_order]
+    }
+    x = x[col_order]
+  } else if (col_order == "kmeans"){
+    stopifnot(!is.null(col_k))
+    col_groups = kmeans(t(mat), centers = col_k)$cluster
+    col_order = order(col_groups)
+    col_groups = col_groups[col_order]
+    mat = mat[,col_order]
+    if (!is.null(col_anno)){
+      for ( i in seq_along(col_anno)){
+        col_anno[[i]]$data = col_anno[[i]]$data[,col_order]
+      }
+    }
+    x = x[col_order]
+  } else if (col_order == "groups"){
+    col_order = order(groups)
+    col_groups = col_groups[col_order]
+    mat = mat[,col_order]
+    if (!is.null(col_anno)){
+      for ( i in seq_along(col_anno)){
+        col_anno[[i]]$data = col_anno[[i]]$data[,col_order]
+      }
+    }
+    x = x[col_order]
+  } else{
+    col_order = 1:ncol(mat)
+  }  
+  
+
+  p <- function(){
+    signal_heatmap_helper(mat = mat,
+                          x = x,
+                          y = y,
+                          row_groups = row_groups,
+                          col_groups = col_groups,
+                          row_dendro = row_dendro,
+                          col_dendro = col_dendro,
+                          row_anno = row_anno,
+                          col_anno = col_anno,
+                          name = name,
+                          source = source)
+  }
+  return(list(plot = p, 
+              row_order = row_order, 
+              row_dendro = row_dendro,
+              col_order = col_order,
+              col_dendro = col_dendro))
+  
+}
+
 
 signal_heatmap_helper <- function(mat,
-                                  x = ifelse(is.null(colnames(mat)),1:ncol(mat),colnames(mat)),
-                                  y = ifelse(is.null(rownames(mat)),1:nrow(mat),rownames(mat)),
+                                  x = default_x(mat),
+                                  y = default_y(mat),
                                   row_groups = NULL,
                                   col_groups = NULL,
                                   row_dendro = NULL,#hclust object
@@ -18,15 +160,14 @@ signal_heatmap_helper <- function(mat,
   
   
   out<- plot_ly(z = mat, 
-                x = x, 
                 type="heatmap",
                 colorbar = list(title = name,
                                 len = 0.3, 
                                 y = 0.93,
                                 thickness = 15,
                                 x = 1.05), 
-                xaxis = "x1", 
-                yaxis = "y1",
+                xaxis = "x", 
+                yaxis = "y",
                 zmin = zmin,
                 zmax = zmax,
                 source = source) 
@@ -124,7 +265,12 @@ signal_heatmap_helper <- function(mat,
     for ( i in seq_along(row_anno)){
       cbx <- 1.25 + (i %/% 3)*0.15
       cby <- 0.93 - ((i %% 3)-1)*0.33
-      out <- do.call(add_trace, list(out, z = row_anno[[i]]$data, 
+      if (!inherits(row_anno[[i]]$data,"matrix")){
+        tmpz <- matrix(row_anno[[i]]$data, nrow = nrow(mat)) 
+      } else{
+        tmpz <- row_anno[[i]]$data
+      }
+      out <- do.call(add_trace, list(out, z = tmpz, 
                                      type = "heatmap",
                                      colorscale = row_anno[[i]]$colorscale, 
                                      xaxis = paste0("x",3 + i),
@@ -137,14 +283,20 @@ signal_heatmap_helper <- function(mat,
     }
   }
   
-  # Col Anno? x4 +
+  # Col Anno? y4 +
   
   if (l$col_anno){
     stopifnot(is.list(col_anno))
     for ( i in seq_along(col_anno)){
-      cbx <- 1.25 + (length(row_anno) + (i %/% 3))*0.15
+      cbx <- 1.25 + (length(col_anno) + (i %/% 3))*0.15
       cby <- 0.93 - ((i %% 3)-1)*0.33
-      out <- do.call(add_trace, list(out, z = col_anno[[i]]$data, 
+      if (!inherits(col_anno[[i]]$data,"matrix")){
+        tmpz <- matrix(col_anno[[i]]$data, ncol = ncol(mat)) 
+      } else{
+        tmpz <- col_anno[[i]]$data
+      }
+      out <- do.call(add_trace, list(out, 
+                                     z = tmpz, 
                                type = "heatmap",
                                colorscale = col_anno[[i]]$colorscale, 
                                yaxis = paste0("y",3 + i),
@@ -253,7 +405,7 @@ signal_heatmap_helper <- function(mat,
     for (i in seq_along(col_anno)){
       col_anno_layout[[i]] = list(domain = c((i-1)*0.07, (i-1)*0.07+ 0.05),
                                   anchor = "x",
-                                  side = "bottom",
+                                  #side = "bottom",
                                   tickvals = 0,
                                   ticktext = names(col_anno)[i],
                                   ticks = "",
@@ -271,19 +423,19 @@ signal_heatmap_helper <- function(mat,
   
   #main
   out <- out %>% layout(xaxis = list(domain = c(xm,xm2),
-                                     anchor = "y",
+                                     anchor = ifelse(l$col_anno, paste0("y", 3 + length(col_anno)),"x"),
                                      side = "bottom",
                                      title = "",
                                      tickvals = 0:(ncol(mat)-1),
-                                     ticktext = colnames(mat),
+                                     ticktext = x,
                                      ticks = "",
                                      zeroline = FALSE,
                                      showline = FALSE,
                                      showgrid = FALSE),
                         yaxis = list(domain = c(ym,ym2),
-                                     anchor = "x",
+                                     anchor = ifelse(l$row_anno, paste0("x", 3 + length(row_anno)),"x"),
                                      tickvals = 0:(nrow(mat)-1),
-                                     ticktext = rownames(mat),
+                                     ticktext = y,
                                      ticks = "",
                                      tickangle = -90,
                                      zeroline = FALSE,

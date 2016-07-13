@@ -76,21 +76,7 @@ single_coverage_heatmap <- function(mat,
   return(list(plot = p, row_order = row_order, dendro = dendro))
 }
 
-default_x <- function(mat){
-  if (is.null(colnames(mat))){
-    return(1:ncol(mat))
-  } else{
-    colnames(mat)
-  }
-}
 
-default_y <- function(mat){
-  if (is.null(rownames(mat))){
-    return(1:nrow(mat))
-  } else{
-    rownames(mat)
-  }
-}
 
 
 single_coverage_heatmap_helper <- function(mat,
