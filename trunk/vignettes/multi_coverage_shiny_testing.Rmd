@@ -13,6 +13,7 @@ require(TxDb.Mmusculus.BioMart.igis)
 require(biomaRt)
 require(rtracklayer)
 require(Gviz)
+require(chipVis)
 options(ucscChromosomeNames=FALSE)
 BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
 
@@ -37,7 +38,7 @@ pairs_exp <- expandPairedTable(pairs)
 tss <- tssFromTxdb(txdb = TxDb.Mmusculus.BioMart.igis)
 unique_tss <- unique(tss) #Remove same positions
 
-peaks <- lapply( pairs$File.macs, readMacsPeaks, fc=5, minTags=10, fdr=0.1)
+peaks <- lapply( pairs_exp$File.macs, readMacsPeaks, fc=5, minTags=10, fdr=0.1)
 peaks <- peaks[!sapply(peaks, is.null)]
 
 merged_peaks <- reduce(do.call(c, peaks))
@@ -65,24 +66,54 @@ names(cvg_files) <- samples$Genotype
 ```
 
 
-## Embedded Application
+
+## Multi-coverage Application
 
 
-```{r shiny, echo=FALSE, cache = FALSE, message = FALSE}
+```{r shiny1, echo=FALSE, cache = FALSE, message = FALSE}
 
-source('/gnet/is7/workspace/schepa/chipVis/R/multi_coverage_shiny.R')
-source('/gnet/is7/workspace/schepa/chipVis/R/single_coverage_heatmap.R')
-source('/gnet/is7/workspace/schepa/chipVis/R/trackview_functions.R')
+#source('/gnet/is7/workspace/schepa/chipVis/R/multi_coverage_shiny.R')
+#source('/gnet/is7/workspace/schepa/chipVis/R/single_coverage_heatmap.R')
+#source('/gnet/is7/workspace/schepa/chipVis/R/trackview_functions.R')
 
 
 multi_coverage_plot(inputs = cvg_mats,#bam_files, 
                     regions = tss_in_peaks, 
                     region_names = tss_in_peaks$names, 
-                    up = 2500, 
-                    down = 2500,
+                    cvg_files = cvg_files)
+
+```
+## Single coverage Application
+
+
+```{r shiny2, echo=FALSE, cache = FALSE, message = FALSE}
+
+#source('/gnet/is7/workspace/schepa/chipVis/R/multi_coverage_shiny.R')
+#source('/gnet/is7/workspace/schepa/chipVis/R/single_coverage_heatmap.R')
+#source('/gnet/is7/workspace/schepa/chipVis/R/trackview_functions.R')
+
+
+single_coverage_plot(input = cvg_mats[[1]],#bam_files, 
+                    regions = tss_in_peaks, 
+                    region_names = tss_in_peaks$names, 
                     cvg_files = cvg_files)
 
 ```
 
+## Single coverage Application with fewer tracks
 
+
+```{r shiny3, echo=FALSE, cache = FALSE, message = FALSE}
+
+#source('/gnet/is7/workspace/schepa/chipVis/R/multi_coverage_shiny.R')
+#source('/gnet/is7/workspace/schepa/chipVis/R/single_coverage_heatmap.R')
+#source('/gnet/is7/workspace/schepa/chipVis/R/trackview_functions.R')
+
+
+single_coverage_plot(input = cvg_mats[[1]],#bam_files, 
+                    regions = tss_in_peaks, 
+                    region_names = tss_in_peaks$names, 
+                    cvg_files = cvg_files[1:10])
+
+```
 

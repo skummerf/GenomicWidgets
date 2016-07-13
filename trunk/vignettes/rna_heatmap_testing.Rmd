@@ -3,7 +3,6 @@ title: "RNA Heatmap Example"
 author: "Alicia Schep"
 date: "7/12/2016"
 output: html_document
-runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
