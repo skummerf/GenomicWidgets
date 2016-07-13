@@ -102,3 +102,12 @@ getSampleInfo <- function( sample, file_info){
   return(as.list(sample_info))
 }
 
+getScalingFactor <- function(file_info){
+  readStat1 <- ngsPipelineResult(file_info$Dir.ngs_pipeline,
+                                 file='.summary_preprocess.tab$',ncores=8)
+  readStat2 <- ngsPipelineResult(file_info$Dir.ngs_pipeline,ncores=8)
+  readStat <- rbind(readStat1,readStat2)
+  readStat.simple <- readStat[c("total_reads","analyzed"),]
+  rownames(readStat.simple) <- c("Total","Uniquely mapped")
+  return(readStat.simple)
+}

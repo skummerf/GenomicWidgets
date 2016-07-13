@@ -185,10 +185,16 @@ extendGRange <- function(gr, extend=0){
 #' @export
 #'
 #' @examples
-getCoverageInRange <- function(bwList, target.range, names){
-  # Import only the range that matches target.ange
+getCoverageInRange <- function(bwList, target.range, names, scaling.factor=NULL){
+  # Import only the range that matches target.range
   cvg <- lapply(bwList, function(x) import.bw(x, which=target.range))
   cvg <- GRangesList(cvg)
+  if(!is.null(scaling.factor)){
+    for(g in 1:length(cvg)){
+      mcols(cvg[[g]])[['score']] <- mcols(cvg[[g]])[['score']]/scaling.factor[[g]]
+    }
+  }
+  
   
   # Name the list
   if (!missing(names)){
