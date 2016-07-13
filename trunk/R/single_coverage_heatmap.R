@@ -17,8 +17,8 @@
 #' @export
 #' @author Alicia Schep
 single_coverage_heatmap <- function(mat, 
-                                    x = default_x(mat),
-                                    y = default_y(mat),                    
+                                    x = chipVis:::default_x(mat),
+                                    y = chipVis:::default_y(mat),                    
                 row_order = c("none","hclust","kmeans","groups","signal"),
                 k = NULL,
                 groups = NULL,
@@ -94,8 +94,8 @@ single_coverage_heatmap <- function(mat,
 
 
 single_coverage_heatmap_helper <- function(mat,
-                                    x = default_x(mat),
-                                    y = default_y(mat),
+                                    x = chipVis:::default_x(mat),
+                                    y = chipVis:::default_y(mat),
                                     groups = NULL,
                                     dendro = NULL,#hclust object
                                     summary = TRUE,

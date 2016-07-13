@@ -21,10 +21,11 @@
 #' heirarchical clustering
 #' performed for cols
 #' @export
+#' @import shiny
 #' @author Alicia Schep
 cluster_heatmap <- function(mat, 
-                            x = default_x(mat),
-                            y = default_y(mat),                   
+                            x = chipVis:::default_x(mat),
+                            y = chipVis:::default_y(mat),                   
                             row_order = c("none","hclust","kmeans","groups"),
                             col_order = c("none","hclust","kmeans","groups"),
                             row_groups = NULL,
@@ -165,8 +166,8 @@ cluster_heatmap <- function(mat,
 
 
 signal_heatmap_helper <- function(mat,
-                                  x = default_x(mat),
-                                  y = default_y(mat),
+                                  x = chipVis:::default_x(mat),
+                                  y = chipVis:::default_y(mat),
                                   row_groups = NULL,
                                   col_groups = NULL,
                                   row_dendro = NULL,#hclust object
