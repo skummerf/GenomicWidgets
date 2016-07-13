@@ -1,4 +1,22 @@
 
+#' mulit_coverage_plot
+#' 
+#' @params inputs either list of coverage matrices, or list of file names 
+#' @params regions the regions that will be plotted
+#' @params region_names names of regions
+#' @params binsize if inputs is filename, binsize for coverage
+#' @params up if inputs is filename, basepairs upstream of tss to compute coverage for
+#' @params down if inputs is filenames, basepairs downstream of tss to compute coverage for
+#' @params col_aggso ptionally list of column aggregate profiles, otherwise computed
+#' @params row_aggs optionally list of row aggregate profiles, otherwise computed
+#' @params groups currently ignored
+#' @params cvg_files currently accepts BigWig files
+#' @params aggregate_normalization normalization to perform for aggregate plot, see Details
+#' @params heatmap_normalization normalization to perform for heatmap, see Details
+#' @params genome genome name, eg. "GRCm38" or "hg19"
+#' @params org organism name, e.g. "mouse" or "human"
+#' @details  More details will go here.
+#' @export
 multi_coverage_plot <- function(inputs, 
                                 regions, 
                                 region_names, 
