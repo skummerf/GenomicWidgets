@@ -18,6 +18,7 @@
 ##' @param dtrack.kwargs list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks
 ##' @param gtrack.kwargs list-optional: additional arguments for GenomeAxisTrack
 ##' @param grtrack.kwargs list-optional: additional arguments for GeneRegionTrack
+##' @param snptrack.kwargs list-optional: additional arguments for the SNP DataTrack
 ##'
 ##' @return ptracks list: track objects plotted by Gviz
 ##' @import Gviz gChipseq RColorBrewer
@@ -26,8 +27,9 @@
 plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
                              bg.title='grey50', colors=NULL, sync=FALSE, 
                              type = NULL, scale.group=1, hm.thresh=4, 
+                             showSNPs=FALSE, snpDB = SNPlocs.Hsapiens.dbSNP141.GRCh38,
                              dtrack.kwargs=list(), gtrack.kwargs=list(), 
-                             grtrack.kwargs=list()) {
+                             grtrack.kwargs=list(), snptrack.kwargs=list()) {
   # Get the chromosome
   chr <- as.character(seqnames(target.range))
   if(missing(symbol)){
@@ -44,8 +46,10 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   }
   
   gtrack.defaults <- list()
-  grtrack.defaults <- list(fill='lightslateblue', 
+  grtrack.defaults <- list(fill='lightslateblue', cex.title=0.6,
                            background.title='lightslateblue')
+  snptrack.defaults <- list(fill='black', background.title='black', type='hist',
+                            genome=genome, cex.title=0.6)
   if(type=='hist'){
     # Make colors for the plots
     if(is.null(colors)){
@@ -66,6 +70,7 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   
   gtrack.params <- modifyList(gtrack.defaults, gtrack.kwargs)
   grtrack.params <- modifyList(grtrack.defaults, grtrack.kwargs)
+  snptrack.params <- modifyList(snptrack.defaults, snptrack.kwargs)
 
   # Scale data range
   if ( missing(ymax) ) {
@@ -99,14 +104,25 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   grtrack <- GeneRegionTrack(dat.exon, genome=genome, chromosome=chr, 
                              name=annotation.title, transcriptAnnotation="symbol")
   displayPars(grtrack) <- grtrack.params
-
+  
+  # Match the seqname style and remove strand info on target.range
+  if(showSNPs){
+    seqlevelsStyle(target.range) <- seqlevelsStyle(snpDB)
+    strand(target.range) <- "*"
+    snp_locs <- snpsByOverlaps(snpDB, target.range, type='within')
+    snp_counts <- binSNPInRange(snp_locs, target.range)
+    seqlevelsStyle(snp_counts) <- seqlevelsStyle(grl)
+    snptrack <- DataTrack(snp_counts, name ='# SNPs')
+    displayPars(snptrack) <- snptrack.params
+  } else{
+    snptrack=NULL
+  }
     # Add tracks
   tracklist <- list()
-  tracklist <- c(gtrack,grtrack, dtrack)
+  tracklist <- c(gtrack,grtrack, dtrack, snptrack)
   
   # Plot tracks
-  ptracks <- plotTracks(tracklist, main=main.title, from=start(target.range),
-                        to=end(target.range), chromosome = chr)
+  ptracks <- plotTracks(tracklist, main=main.title, chromosome = chr)
   return(ptracks)
 }
 
@@ -260,11 +276,33 @@ getViewRange <- function(symbol, org, genome, chr=NULL, start=NULL, end=NULL,
   return(view.range)
 }
 
+binSNPInRange <- function(snpGR, gr, binwidth=1000){
+  
+  tiled.range <- makeTiledRange(gr, binwidth=binwidth)
+  overlap <- findOverlaps(snpGR, tiled.range)
+  bin.split <- splitAsList(snpGR,factor(subjectHits(overlap)))
+  bin.score <- lapply(bin.split, function(x) length(x))
+  mcols(tiled.range)[['snpCount']] <- unlist(bin.score)
+  return(tiled.range)
+}
+
+makeTiledRange <- function(gr, binwidth){
+  # Bin Range, currently only supports 1 range
+  tiled.range <- tile(gr, width=binwidth)[[1]]
+  
+  # Remove strand information
+  strand(tiled.range) <- "*"
+  
+  return(tiled.range)
+}
 
 binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score", 
                                scaling=log){
   # Bin Range, currently only supports 1 range
   tiled.range <- tile(gr, width=binwidth)[[1]]
+  
+  # Remove strand information
+  strand(tiled.range) <- "*"
   
   for(g in names(cvg.L)){
     # Find overlap between the coverage and the tiled range

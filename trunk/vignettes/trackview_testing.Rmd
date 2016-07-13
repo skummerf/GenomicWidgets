@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(chipVis)
 library(rtracklayer)
 library(TxDb.Hsapiens.BioMart.igis)
+library(SNPlocs.Hsapiens.dbSNP141.GRCh38)
 ```
 
 ## R Markdown
@@ -27,10 +28,10 @@ genome <- "GRCh38"
 ```
 
 ```{r Load BigWig}
-extension <- 25000
+extension <- 50000
 # Create the range for viewing. Can either specify a symbol or a range
 range.gene <- getViewRange(symbol, org, genome)
-# range.gene <- getViewRange(chr = 3, start=6000, end=80000)
+# range.gene <- getViewRange(chr = 1, start=6000, end=6050)
 
 # Extend the region if desired
 range.gene <- extendGRange(range.gene, extension)
@@ -47,6 +48,6 @@ cvg <- getCoverageInRange(fi[idx, "File.bw"], range.gene, shortened_names)
 ```
 
 ```{r Basic Track}
-chipVis::plotGeneCoverage(cvg, range.gene, sync = TRUE, genome=genome, 
+track_info <- chipVis::plotGeneCoverage(cvg, range.gene, sync = TRUE, genome=genome, 
                           symbol=symbol, dat.exon=full.exon)
 ```

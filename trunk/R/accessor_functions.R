@@ -8,6 +8,7 @@
 #' @return list
 #' @import gChipseq
 #' @author Justin Finkle
+#' @export
 #' @examples
 getChipFileInfo <- function(samples_file, pairs_file){
   # Load, expand, and combine sample and pair tableb
