@@ -1,5 +1,21 @@
 
-
+#' single_coverage_plot
+#' 
+#' @param input either coverage matrix or input
+#' @params regions the regions that will be plotted
+#' @params region_names names of regions
+#' @params binsize if inputs is filename, binsize for coverage
+#' @params up if inputs is filename, basepairs upstream of tss to compute coverage for
+#' @params down if inputs is filenames, basepairs downstream of tss to compute coverage for
+#' @params row_agg optionally list of row aggregate profiles, otherwise computed
+#' @params groups currently ignored
+#' @params cvg_files currently accepts BigWig files
+#' @params heatmap_normalization normalization to perform for heatmap, see Details
+#' @params genome genome name, eg. "GRCm38" or "hg19"
+#' @params org organism name, e.g. "mouse" or "human"
+#' @return shiny app
+#' @export
+#' @author Alicia Schep
 single_coverage_plot <- function(input, 
                                 regions, 
                                 region_names, 
