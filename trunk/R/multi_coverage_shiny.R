@@ -7,7 +7,7 @@
 #' @params binsize if inputs is filename, binsize for coverage
 #' @params up if inputs is filename, basepairs upstream of tss to compute coverage for
 #' @params down if inputs is filenames, basepairs downstream of tss to compute coverage for
-#' @params col_aggso ptionally list of column aggregate profiles, otherwise computed
+#' @params col_aggs optionally list of column aggregate profiles, otherwise computed
 #' @params row_aggs optionally list of row aggregate profiles, otherwise computed
 #' @params groups currently ignored
 #' @params cvg_files currently accepts BigWig files
@@ -17,6 +17,7 @@
 #' @params org organism name, e.g. "mouse" or "human"
 #' @details  More details will go here.
 #' @export
+#' @author Alicia Schep
 multi_coverage_plot <- function(inputs, 
                                 regions, 
                                 region_names, 
