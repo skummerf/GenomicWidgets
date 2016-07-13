@@ -1,7 +1,21 @@
 
 
-# Plotting function.  Does not do any ordering. 
-
+#' single_coverage_heatmap
+#' @param mat coverage matrix
+#' @param x x axis labels
+#' @param y y axis labels
+#' @param row_order row order method
+#' @param k k to use for kmeans clustering or cutting heirarchical clustering
+#' @param groups pre-determined groups for rows
+#' @param signal signal along row
+#' @param name name of colorbar
+#' @param summary make summary plot, boolean
+#' @param source source name in plotly
+#' @return list with three components, 1) plot -- function to plot
+#' 2) row_order -- row order used, 3) dendro hclust object if heirarchical clustering
+#' performed
+#' @export
+#' @author Alicia Schep
 single_coverage_heatmap <- function(mat, 
                                     x = default_x(mat),
                                     y = default_y(mat),                    
