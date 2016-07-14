@@ -102,6 +102,15 @@ getSampleInfo <- function( sample, file_info){
   return(as.list(sample_info))
 }
 
+
+#' Title
+#'
+#' @param file_info 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getScalingFactor <- function(file_info){
   readStat1 <- ngsPipelineResult(file_info$Dir.ngs_pipeline,
                                  file='.summary_preprocess.tab$',ncores=8)

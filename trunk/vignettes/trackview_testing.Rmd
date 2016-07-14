@@ -23,7 +23,7 @@ info_dir <- "~/CARROLL_PR/data/"
 s_file <- paste(info_dir, "samples.txt", sep='')
 p_file <- paste(info_dir, "pairs.txt", sep='')
 fi <- getChipFileInfo(s_file, p_file)
-symbol <- "NRIP1"
+symbol <- "ENO1"
 org <- "human"
 genome <- "GRCh38"
 ```

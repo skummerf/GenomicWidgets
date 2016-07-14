@@ -30,11 +30,13 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
                              scaling=NULL, hm.binsize = 1000, showSNPs=FALSE,
                              snpDB = SNPlocs.Hsapiens.dbSNP141.GRCh38,
                              dtrack.kwargs=list(), gtrack.kwargs=list(),
-                             grtrack.kwargs=list(), snptrack.kwargs=list()) {
+                             grtrack.kwargs=list(), snptrack.kwargs=list(), ...) {
   # Get the chromosome
   chr <- as.character(seqnames(target.range))
+  options(ucscChromosomeNames = FALSE)
+  
   if(missing(symbol)){
-    main.title <- paste0("Chr ", chr, '>', start(target.range), ":",
+    main.title <- paste0("Chr", chr, ':', start(target.range), "-",
                          end(target.range))
   } else {
     main.title <- symbol
@@ -47,8 +49,7 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   }
   
   gtrack.defaults <- list()
-  grtrack.defaults <- list(fill='lightslateblue', cex.title=0.6,
-                           background.title='lightslateblue')
+  grtrack.defaults <- list(fill='lightslateblue', background.title='lightslateblue')
   snptrack.defaults <- list(fill='black', background.title='black', type='hist',
                             genome=genome, cex.title=0.6)
   if(type=='hist'){
@@ -65,7 +66,7 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
     names(colors) <- names(grl)
   } else if(type=='heatmap'){
     # Shrink the genome track so the heatmap is more prevalent
-    grtrack.defaults <- modifyList(grtrack.defaults, list(size=0.25))
+    grtrack.defaults <- modifyList(grtrack.defaults, list(size=0.5))
     
   }
   
@@ -94,12 +95,11 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   bg.title <- rep(bg.title, length.out=length(grl))
   names(bg.title) <- names(grl)
   
-  dtrack <- makeDataTracks(grl, target.range, genome, chr, bg.title, score.max = score.max, 
+  dtrack <- makeDataTracks(grl, target.range, genome, chr = chr, bg.title, score.max = score.max, 
                            type=type, dtrack.kwargs = dtrack.kwargs, colors = colors,
                            scaling = scaling, binwidth = hm.binsize)
   
   # Add genome tracks
-  options(ucscChromosomeNames = FALSE)
   gtrack <- GenomeAxisTrack()
   displayPars(gtrack) <- gtrack.params
   
@@ -121,10 +121,15 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   }
     # Add tracks
   tracklist <- list()
-  tracklist <- c(gtrack,grtrack, dtrack, snptrack)
+  tracklist <- c(gtrack, grtrack, dtrack, snptrack)
+  
+  # Confirm that all tracks have the same chromosome before plotting
+  if(length( unique(unlist(lapply(tracklist, function(x) {if("chromosome" %in% slotNames(x)){return(x@chromosome)}}))))!=1){
+    warning("Tracks have different chromosomes. Visualization may not be complete")
+  }
   
   # Plot tracks
-  ptracks <- plotTracks(tracklist, main=main.title, chromosome = chr)
+  ptracks <- plotTracks(tracklist, main=main.title, chromosome = chr, ...)
   return(ptracks)
 }
 
@@ -360,15 +365,14 @@ makeDataTracks <- function(cvg.L, gr, genome, chr, bg.title, score.max, colors =
   if(type == 'heatmap'){
     hm.gradient <- colorRampPalette(brewer.pal(9, "BuGn"))(100)
     binned.cvg <- binCoverageInRange(cvg.L, gr, binwidth, val, scaling)
-    heatmap.params <- list(range=binned.cvg, type='heatmap', chromosome=chr,
+    heatmap.params <- list(range=binned.cvg, type='heatmap', chromosome=chr, genome=genome,
                            background.title='gray50', showSampleNames = TRUE,
                            cex.sampleNames = 0.6, cex.axis=0.6, gradient = hm.gradient)
     heatmap.params <- modifyList(heatmap.params, dtrack.kwargs)
     dtrack[[1]] <- do.call(Gviz::DataTrack, heatmap.params)
   } else if(type == 'hist'){
     for (g in names(cvg.L)) {
-      coverage.params <- list(start=start(cvg.L[[g]]), end=end(cvg.L[[g]]),
-                              data=score(cvg.L[[g]]), chromosome=chr, type='hist',
+      coverage.params <- list(range=cvg.L[[g]], chromosome=chr, type='hist',
                               ylim=c(0,score.max[g]),background.title=bg.title[g],
                               genome=genome, name=g, col.histogram=colors[g],
                               fill.histogram=colors[g])
