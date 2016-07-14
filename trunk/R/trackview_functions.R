@@ -25,10 +25,11 @@
 ##' @export
 ##' @author Justin Finkle
 plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
-                             bg.title='grey50', colors=NULL, sync=FALSE, 
-                             type = NULL, scale.group=1, hm.thresh=4, 
-                             showSNPs=FALSE, snpDB = SNPlocs.Hsapiens.dbSNP141.GRCh38,
-                             dtrack.kwargs=list(), gtrack.kwargs=list(), 
+                             bg.title='grey50', colors=NULL, sync=FALSE,
+                             type = NULL, scale.group=1, hm.thresh=4,
+                             scaling=NULL, hm.binsize = 1000, showSNPs=FALSE,
+                             snpDB = SNPlocs.Hsapiens.dbSNP141.GRCh38,
+                             dtrack.kwargs=list(), gtrack.kwargs=list(),
                              grtrack.kwargs=list(), snptrack.kwargs=list()) {
   # Get the chromosome
   chr <- as.character(seqnames(target.range))
@@ -94,7 +95,8 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   names(bg.title) <- names(grl)
   
   dtrack <- makeDataTracks(grl, target.range, genome, chr, bg.title, score.max = score.max, 
-                           type=type, dtrack.kwargs = dtrack.kwargs, colors = colors)
+                           type=type, dtrack.kwargs = dtrack.kwargs, colors = colors,
+                           scaling = scaling, binwidth = hm.binsize)
   
   # Add genome tracks
   options(ucscChromosomeNames = FALSE)
@@ -303,7 +305,10 @@ makeTiledRange <- function(gr, binwidth){
 }
 
 binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score", 
-                               scaling=log){
+                               scaling=NULL){
+  if(is.null(scaling)){
+    scaling <- function(x){x}
+  }
   # Bin Range, currently only supports 1 range
   tiled.range <- tile(gr, width=binwidth)[[1]]
   
@@ -319,8 +324,8 @@ binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score",
                              factor(subjectHits(overlap)))
     
     # Need a better way to scale the data
-    bin.score <- scaling(sum(bin.split))
-    elementMetadata(tiled.range)[[g]] <- bin.score
+    bin.score <- lapply(bin.split, function(x) scaling(sum(x)/length(x)))
+    elementMetadata(tiled.range)[[g]] <- unlist(bin.score)
   }
   return(tiled.range)
 }
@@ -348,7 +353,7 @@ binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score",
 #'
 #' @examples
 makeDataTracks <- function(cvg.L, gr, genome, chr, bg.title, score.max, colors = NULL,
-                           type=NULL, binwidth=1000, val="score", scaling=log,
+                           type=NULL, binwidth=1000, val="score", scaling=NULL,
                            dtrack.kwargs=list()){
   # Compile sample coverages as datatracks
   dtrack <- list()
