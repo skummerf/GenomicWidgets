@@ -73,7 +73,6 @@ file_info[['ExpressSet']] <- es_identifier
 #' Can also provide the project name to retrieve from ExpressionPlot
 #' @param stat 
 #'
-#' @import ExpressionPlot
 #' @return
 #' @export
 #'
@@ -83,6 +82,10 @@ get_expression_set <- function(filename, stat=NULL){
   if(file.exists(filename)){
     eset <- readRDS(filename)
   } else if (!is.null(stat)){
+    if (!requireNamespace("ExpressionPlot", quietly = TRUE)) {
+      stop("ExpressionPlot is required to load a project. Please install it or load an ExpressionSet from RDS",
+           call. = FALSE)
+    }
     proj = ep.find.project(filename)
     eset<- ep.ExpressionSet(proj = proj, feature.type = "gene", stat = stat,
                             attach.annot = TRUE)
