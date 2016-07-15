@@ -118,11 +118,18 @@ normalize_coverage_matrix <- function(mats,
                                       method = c("localRms", "localMean", 
                                                       "localNonZeroMean", "PercentileMax", "scalar", "none"), 
                                       pct = 0.95, scalar = NULL){
-  
+  method = match.arg(method)
   if (!is.list(mats)){
     out <- normalize_coverage_matrix_single(mats, method, pct, scalar)
   } else{
-    out <-BiocParallel::bplapply(mats, normalize_coverage_matrix_single, method, pct, scalar)
+    if (method == "scalar"){
+      stopifnot(!is.null(scalar))
+        out <- lapply(1:length(mats), function(x) {
+          normalize_coverage_matrix_single(mats[[x]],method = "scalar",scalar = scalar[x])
+        })
+    } else{
+      out <- lapply(mats, normalize_coverage_matrix_single, method = method, pct = pct)
+    }
   }
   return(out)
 }

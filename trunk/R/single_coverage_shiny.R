@@ -15,6 +15,7 @@
 #' @params org organism name, e.g. "mouse" or "human"
 #' @return shiny app
 #' @export
+#' @import shiny
 #' @author Alicia Schep
 single_coverage_plot <- function(input, 
                                 regions, 

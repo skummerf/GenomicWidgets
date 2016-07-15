@@ -40,8 +40,10 @@ multi_coverage_plot <- function(inputs,
                                                           "PercentileMax", 
                                                           "scalar", 
                                                           "none"),
+                                pct = 0.95, 
                                 genome = "GRCm38",
                                 org = "mouse",
+                                scaling_factor = NULL,
                                 ...){
   
   heatmap_normalization = match.arg(heatmap_normalization)
@@ -56,12 +58,15 @@ multi_coverage_plot <- function(inputs,
   }
   
   if (is.null(col_aggs)){
-    inputs_normed = normalize_coverage_matrix(inputs, method = aggregate_normalization)
+    inputs_normed = normalize_coverage_matrix(inputs, method = aggregate_normalization, pct = pct, 
+                                              scalar = scaling_factor)
     col_aggs = lapply(inputs_normed, colSums)
+    names(col_aggs) <- names(inputs)
   }
   
   if (heatmap_normalization != aggregate_normalization){
-    inputs_normed = normalize_coverage_matrix(inputs, method = heatmap_normalization)
+    inputs_normed = normalize_coverage_matrix(inputs, method = heatmap_normalization, pct = pct, 
+                                              scalar = scaling_factor)
   }
   
   if (is.null(row_aggs)){
@@ -69,6 +74,7 @@ multi_coverage_plot <- function(inputs,
     row_aggs <- lapply(inputs, function(x) log10(rowSums(x) + 1))
   }
   
+  print("a")
   heatmaps <- BiocParallel::bplapply(1:length(inputs), function(x){
     sig <- row_aggs[[x]]
     if (length(sig) > 500){
@@ -91,7 +97,8 @@ multi_coverage_plot <- function(inputs,
                        regions = regions,
                        cvg_files = cvg_files,
                        genome = genome,
-                       org = org)
+                       org = org,
+                       scaling_factor = scaling_factor)
   
 }
 
@@ -106,7 +113,8 @@ multi_coverage_shiny <- function(heatmaps,
                                  cvg_files = NULL,
                                  regions = NULL,
                                  genome = NULL,
-                                 org = NULL){
+                                 org = NULL,
+                                 scaling_factor = NULL){
   require(shiny)
   require(plotly)  
   
@@ -170,9 +178,9 @@ multi_coverage_shiny <- function(heatmaps,
         
       ix <- heatmaps[[sel]]$row_mapping[s2$y + 1]
       rang <- resize(regions[ix], width = 50000, fix = "center")
-      de <- igisExonlist(rang, genome = genome, org = org)
-      grl <- getCoverageInRange(cvg_files, rang, names = names(cvg_files))
-      plotGeneCoverage(grl, de, rang, genome = genome,symbol=region_names[ix])
+      de <- chipVis::igisExonlist(rang, genome = genome, org = org)
+      grl <- getCoverageInRange(cvg_files, rang, names = names(cvg_files), scaling.factor = scaling_factor)
+      chipVis::plotGeneCoverage(grl, de, rang, genome = genome,symbol=region_names[ix])
 
     })
   }
