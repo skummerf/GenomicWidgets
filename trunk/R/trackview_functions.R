@@ -24,11 +24,11 @@
 ##' @import Gviz gChipseq RColorBrewer
 ##' @export
 ##' @author Justin Finkle
-plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
+plot_track_view <- function(grl, dat.exon, target.range, genome, ymax, symbol,
                              bg.title='grey50', colors=NULL, sync=FALSE,
                              type = NULL, scale.group=1, hm.thresh=4,
                              scaling=NULL, hm.binsize = 1000, showSNPs=FALSE,
-                             snpDB = SNPlocs.Hsapiens.dbSNP141.GRCh38,
+                             snpDB = NULL,
                              dtrack.kwargs=list(), gtrack.kwargs=list(),
                              grtrack.kwargs=list(), snptrack.kwargs=list(), ...) {
   # Get the chromosome
@@ -70,6 +70,7 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
     
   }
   
+  # Override defaults with arguments
   gtrack.params <- modifyList(gtrack.defaults, gtrack.kwargs)
   grtrack.params <- modifyList(grtrack.defaults, grtrack.kwargs)
   snptrack.params <- modifyList(snptrack.defaults, snptrack.kwargs)
@@ -95,7 +96,7 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   bg.title <- rep(bg.title, length.out=length(grl))
   names(bg.title) <- names(grl)
   
-  dtrack <- makeDataTracks(grl, target.range, genome, chr = chr, bg.title, score.max = score.max, 
+  dtrack <- make_data_tracks(grl, target.range, genome, chr = chr, bg.title, score.max = score.max, 
                            type=type, dtrack.kwargs = dtrack.kwargs, colors = colors,
                            scaling = scaling, binwidth = hm.binsize)
   
@@ -109,10 +110,13 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   
   # Match the seqname style and remove strand info on target.range
   if(showSNPs){
+    if(is.null(snpDB)){
+      stop("Please supply a SNP database object")
+    }
     seqlevelsStyle(target.range) <- seqlevelsStyle(snpDB)
     strand(target.range) <- "*"
     snp_locs <- snpsByOverlaps(snpDB, target.range, type='within')
-    snp_counts <- binSNPInRange(snp_locs, target.range)
+    snp_counts <- bin_snp_in_range(snp_locs, target.range)
     seqlevelsStyle(snp_counts) <- seqlevelsStyle(grl)
     snptrack <- DataTrack(snp_counts, name ='# SNPs')
     displayPars(snptrack) <- snptrack.params
@@ -133,35 +137,37 @@ plotGeneCoverage <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   return(ptracks)
 }
 
-#' Title
-#'
-#' @param dat.exon 
+#' get_gene_range
+#' 
+#' @description Make a GRange that cover the exon list
+#' @param exon.df data.frame: the exons included in the annotation
 #'
 #' @author Justin Finkle
-#' @return
+#' @return range.gene GRange: s
 #' @export
 #'
 #' @examples
-getGeneRange <- function(dat.exon){
+get_gene_range <- function(exon.df){
   # Make the range
-  range.gene <- GRanges(seqnames=dat.exon[1,"chr"],
-                        ranges=IRanges(start=min(dat.exon$start),
-                                       end=max(dat.exon$end)),
-                        strand=dat.exon[1,"strand"])
+  range.gene <- GRanges(seqnames=exon.df[1,"chr"],
+                        ranges=IRanges(start=min(exon.df$start),
+                                       end=max(exon.df$end)),
+                        strand=exon.df[1,"strand"])
   return(range.gene)
 }
 
-#' Title
+#' Extend GRange
 #'
-#' @param gr
-#' @param extend 
+#' @description extend the GRange object in either direction
+#' @param gr GRange
+#' @param extend scalar: 1 value if symmetric extension. Otherwise in order start, end
 #'
-#' @return
+#' @return gr GRange
 #' @export
 #' @author Justin Finkle
 #'
 #' @examples
-extendGRange <- function(gr, extend=0){
+extend_grange <- function(gr, extend=0){
   if (length(extend) == 1) {
     extend <- rep(extend,2)
   } else if ( length(extend) > 2) {
@@ -182,46 +188,47 @@ extendGRange <- function(gr, extend=0){
 }
 
 
-#' Title
+#' Get Coverage in Range
 #'
-#' @param bwList 
-#' @param target.range 
-#' @param names 
+#' @param bwList vector: list of files to use to get coverage. Currently only accepts BigWig files
+#' @param target.range GRange: specifies the range in which to get coverage
+#' @param names vector: names to give each GRange coverage created
+#' @param scaling.factor vector: values by which to scale each coverage value. See get_scaling_factor for more information.
 #'
-#' @return
+#' @return cvg.L GRangesList: coverage for each file supplied
 #' @export
 #'
 #' @examples
-getCoverageInRange <- function(bwList, target.range, names, scaling.factor=NULL){
+get_coverage_in_range <- function(bwList, target.range, names, scaling.factor=NULL){
   # Import only the range that matches target.range
-  cvg <- lapply(bwList, function(x) import.bw(x, which=target.range))
-  cvg <- GRangesList(cvg)
+  cvg.L <- lapply(bwList, function(x) import.bw(x, which=target.range))
+  cvg.L <- GRangesList(cvg.L)
   if(!is.null(scaling.factor)){
-    for(g in 1:length(cvg)){
-      mcols(cvg[[g]])[['score']] <- mcols(cvg[[g]])[['score']]/scaling.factor[[g]]
+    for(g in 1:length(cvg.L)){
+      mcols(cvg.L[[g]])[['score']] <- mcols(cvg.L[[g]])[['score']]/scaling.factor[[g]]
     }
   }
   
-  
   # Name the list
   if (!missing(names)){
-    names(cvg) <- names
+    names(cvg.L) <- names
   }
-  return(cvg)
+  return(cvg.L)
 }
 
 ##' get exon information from IGIS
 ##'
-##' get exon information from IGIS
-##' @param ids vector of ids to retrive the exon information
 ##' @param src source of id, gene|symbol
 ##' @param org organism, human or mouse
+##' @param target character or GRange: gene symbol or GRange object for which to get exon information 
+##' @param genome 
 ##' @param ... additional argument passed to igisGetmart()
+##'
 ##' @return a data frame of exon information
 ##' @import biomaRt gChipseq
 ##' @export
 ##' @author Jinfeng Liu
-igisExonlist <- function(target, src=c('symbol','gene'), genome,
+get_exons <- function(target, src=c('symbol','gene'), genome,
                          org=c('human','mouse'),...) {
   
   
@@ -277,11 +284,11 @@ igisExonlist <- function(target, src=c('symbol','gene'), genome,
 #' @export
 #'
 #' @examples
-getViewRange <- function(symbol, org, genome, chr=NULL, start=NULL, end=NULL, 
+get_view_range <- function(symbol, org, genome, chr=NULL, start=NULL, end=NULL, 
                          strand=NULL){
   if(!missing(symbol)){
-    exon.df <- chipVis::igisExonlist(target=symbol, org=org, genome=genome)
-    view.range <- getGeneRange(exon.df)
+    exon.df <- chipVis::get_exons(target=symbol, org=org, genome=genome)
+    view.range <- get_gene_range(exon.df)
   } else {
     view.range <- GRanges(Rle(c(chr)), IRanges(start=start, end=end), 
                           strand = strand)
@@ -289,9 +296,9 @@ getViewRange <- function(symbol, org, genome, chr=NULL, start=NULL, end=NULL,
   return(view.range)
 }
 
-binSNPInRange <- function(snpGR, gr, binwidth=1000){
+bin_snp_in_range <- function(snpGR, gr, binwidth=1000){
   
-  tiled.range <- makeTiledRange(gr, binwidth=binwidth)
+  tiled.range <- make_tiled_range(gr, binwidth=binwidth)
   overlap <- findOverlaps(snpGR, tiled.range)
   bin.split <- splitAsList(snpGR,factor(subjectHits(overlap)))
   bin.score <- lapply(bin.split, function(x) length(x))
@@ -299,7 +306,7 @@ binSNPInRange <- function(snpGR, gr, binwidth=1000){
   return(tiled.range)
 }
 
-makeTiledRange <- function(gr, binwidth){
+make_tiled_range <- function(gr, binwidth){
   # Bin Range, currently only supports 1 range
   tiled.range <- tile(gr, width=binwidth)[[1]]
   
@@ -309,7 +316,7 @@ makeTiledRange <- function(gr, binwidth){
   return(tiled.range)
 }
 
-binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score", 
+bin_coverage_in_range <- function(cvg.L, gr, binwidth=1000, val="score", 
                                scaling=NULL, weighted=TRUE){
   if(is.null(scaling)){
     scaling <- function(x){x}
@@ -338,7 +345,7 @@ binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score",
   return(tiled.range)
 }
 
-#' makeDataTracks
+#' make_data_tracks
 #' @description Builds Gviz DataTrack objects for plotting based on coverage
 #'
 #' @param cvg.L GRangesList containing coverage score
@@ -360,7 +367,7 @@ binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score",
 #' @import Gviz
 #'
 #' @examples
-makeDataTracks <- function(cvg.L, gr, genome, chr, bg.title, score.max, colors = NULL,
+make_data_tracks <- function(cvg.L, gr, genome, chr, bg.title, score.max, colors = NULL,
                            type=NULL, binwidth=1000, val="score", scaling=NULL,
                            dtrack.kwargs=list()){
   # Compile sample coverages as datatracks

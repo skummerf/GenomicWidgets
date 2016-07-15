@@ -1,24 +1,26 @@
 #' .. content for the "Description" section of the documentation ..
-#'
+#' Make data.frame that specfies where necessary files are from NGS pipeline
 #' .. content for "Details" section of the documentation ..
-#' @title getChipFileInfo
-#' @param sampl_name string
+#' @title get_chip_file_info
+#'
 #' @param samples_file string
 #' @param pairs_file string
+#'
 #' @return list
 #' @import gChipseq
 #' @author Justin Finkle
 #' @export
 #' @examples
-getChipFileInfo <- function(samples_file, pairs_file){
+get_chip_file_info <- function(samples_file, pairs_file){
   # Load, expand, and combine sample and pair tableb
-  samples <- expandSampleTable(read.delim(samples_file, 
-                                          stringsAsFactors = FALSE))
+  samples <- read.delim(samples_file, stringsAsFactors = FALSE)
+  samples_exp <- gChipseq::expandSampleTable(samples)
   
-  pairs <- expandPairedTable(read.delim(pairs_file,
+  pairs <- gChipseq::expandPairedTable(read.delim(pairs_file,
                                         stringsAsFactors = FALSE))
   
-  full_info <- merge(pairs, samples, all = TRUE)
+  full_info <- merge(pairs, samples_exp, all = TRUE)
+  full_info[['Genoytpe']] <- samples[['Genotype']]
   
   return(full_info)
 }
@@ -31,7 +33,7 @@ getChipFileInfo <- function(samples_file, pairs_file){
 #' @export
 #'
 #' @examples
-getSampleNames <- function(file_info){
+get_sample_names <- function(file_info){
   return(file_info[["Sample.Name"]])
 }
 
@@ -44,7 +46,7 @@ getSampleNames <- function(file_info){
 #' @export
 #'
 #' @examples
-addShortNames <- function(file_info, name.vector){
+add_short_names <- function(file_info, name.vector){
   file_info <- data.frame(append(file_info, list("Short.Name"=name.vector), 
                                  after=match("Sample.Name", names(file_info))))
   return(file_info)
@@ -59,20 +61,24 @@ addShortNames <- function(file_info, name.vector){
 #' @export
 #'
 #' @examples
-addExpressionIdentifier <- function(file_info, es_identifier){
+add_expression_identifier <- function(file_info, es_identifier){
 file_info[['ExpressSet']] <- es_identifier
   return(file_info)
 }
 
-#' Title
+#' Get expression set object. Either load from rds or supply expression plot 
+#' project that can be retrieved
 #'
-#' @param proj 
+#' @param filename string: preferred method -- provide rds for ExpressionSet object. 
+#' Can also provide the project name to retrieve from ExpressionPlot
+#' @param stat 
+#'
 #' @import ExpressionPlot
 #' @return
 #' @export
 #'
 #' @examples
-getExpressionSet <- function(filename, stat=NULL){
+get_expression_set <- function(filename, stat=NULL){
   # Try to load the RDS
   if(file.exists(filename)){
     eset <- readRDS(filename)
@@ -86,24 +92,26 @@ getExpressionSet <- function(filename, stat=NULL){
   return(eset)
 }
 
-getControlSample <- function(sample, file_info){
+get_control_sample <- function(sample, file_info){
   input_name <- file_info[file_info[["Sample.Name"]] == sample, "Sample.Control"]
   return(input_name)
 }
 
-checkFiles <- function(df){
+check_files <- function(df){
   sapply(grep("^File", colnames(df), value = TRUE),
          function(fileColumn) file.exists(df[, fileColumn])
   )
 }
 
-getSampleInfo <- function( sample, file_info){
+get_sample_info <- function( sample, file_info){
   sample_info <- file_info[file_info[["Sample.Name"]] == sample, ]
   return(as.list(sample_info))
 }
 
 
-#' Title
+#' Get Scaling Factor
+#' Get the scaling factor for samples provided. This is assumed to be the number
+#' of uniquely mapped reads
 #'
 #' @param file_info 
 #'
@@ -111,7 +119,7 @@ getSampleInfo <- function( sample, file_info){
 #' @export
 #'
 #' @examples
-getScalingFactor <- function(file_info){
+get_scaling_factor <- function(file_info){
   readStat1 <- ngsPipelineResult(file_info$Dir.ngs_pipeline,
                                  file='.summary_preprocess.tab$',ncores=8)
   readStat2 <- ngsPipelineResult(file_info$Dir.ngs_pipeline,ncores=8)

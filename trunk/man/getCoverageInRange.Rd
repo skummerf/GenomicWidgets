@@ -4,7 +4,7 @@
 \alias{getCoverageInRange}
 \title{Title}
 \usage{
-getCoverageInRange(bwList, target.range, names)
+getCoverageInRange(bwList, target.range, names, scaling.factor = NULL)
 }
 \arguments{
 \item{bwList}{}

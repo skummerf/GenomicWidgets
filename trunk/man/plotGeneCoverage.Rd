@@ -8,8 +8,10 @@ plot genomic coverage along the gene}
 \usage{
 plotGeneCoverage(grl, dat.exon, target.range, genome, ymax, symbol,
   bg.title = "grey50", colors = NULL, sync = FALSE, type = NULL,
-  scale.group = 1, hm.thresh = 4, dtrack.kwargs = list(),
-  gtrack.kwargs = list(), grtrack.kwargs = list())
+  scale.group = 1, hm.thresh = 4, scaling = NULL, hm.binsize = 1000,
+  showSNPs = FALSE, snpDB = SNPlocs.Hsapiens.dbSNP141.GRCh38,
+  dtrack.kwargs = list(), gtrack.kwargs = list(), grtrack.kwargs = list(),
+  snptrack.kwargs = list(), ...)
 }
 \arguments{
 \item{grl}{GRangesList: typically the results of importing wig/bw/... files for each sample}
@@ -39,6 +41,8 @@ plotGeneCoverage(grl, dat.exon, target.range, genome, ymax, symbol,
 \item{gtrack.kwargs}{list-optional: additional arguments for GenomeAxisTrack}
 
 \item{grtrack.kwargs}{list-optional: additional arguments for GeneRegionTrack}
+
+\item{snptrack.kwargs}{list-optional: additional arguments for the SNP DataTrack}
 
 \item{bg.title:}{str-optional: background color for the title panel}
 }

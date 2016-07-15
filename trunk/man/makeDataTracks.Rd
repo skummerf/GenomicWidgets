@@ -5,7 +5,7 @@
 \title{makeDataTracks}
 \usage{
 makeDataTracks(cvg.L, gr, genome, chr, bg.title, score.max, colors = NULL,
-  type = NULL, binwidth = 1000, val = "score", scaling = log,
+  type = NULL, binwidth = 1000, val = "score", scaling = NULL,
   dtrack.kwargs = list())
 }
 \arguments{

@@ -12,6 +12,7 @@ library(gChipseq)
 library(rtracklayer)
 library(TxDb.Hsapiens.BioMart.igis)
 library(SNPlocs.Hsapiens.dbSNP141.GRCh38)
+library(TxDb.Mmusculus.BioMart.igis)
 ```
 
 ## R Markdown
@@ -19,13 +20,13 @@ library(SNPlocs.Hsapiens.dbSNP141.GRCh38)
 This is intended to demonstrate how the chipVis package displays local views.
 ```{r Load Data}
 # Specify parameters
-info_dir <- "~/CARROLL_PR/data/"
-s_file <- paste(info_dir, "samples.txt", sep='')
-p_file <- paste(info_dir, "pairs.txt", sep='')
+info_dir <- "~/workspace/BAP1/"
+s_file <- paste(info_dir, "BAP1_june_2016_samples.txt", sep='')
+p_file <- paste(info_dir, "BAP1_june_2016_pairs.txt", sep='')
 fi <- getChipFileInfo(s_file, p_file)
-symbol <- "ENO1"
-org <- "human"
-genome <- "GRCh38"
+symbol <- "RNF2"
+org <- "mouse"
+genome <- "GRCm38"
 ```
 
 ```{r Load BigWig}
@@ -43,7 +44,7 @@ full.exon <- chipVis::igisExonlist(symbol, org=org, genome=genome)
 # Get the coverage
 input <- fi[2, 'Sample.Control']
 input_idx <- which(fi$Sample.Name==input)
-idx <- c(2:5, input_idx)
+idx <- c(9,10,15,16,18:23)
 shortened_names <- c(fi[idx[1:length(idx)-1], "Sample.Name"], "Input")
 
 # Get scaling factor
@@ -54,6 +55,9 @@ cvg <- getCoverageInRange(fi[idx, "File.bw"], range.gene, shortened_names, sf)
 ```
 
 ```{r Basic Track}
+grouping <- c("dRNF2-I", "RNF2-I", rep(c('dRNF2', 'RNF2'),4))
+dkwarg <- list(groups=grouping, type=c('a', 'a', 'confin', 'confin'), legend=TRUE)
 track_info <- chipVis::plotGeneCoverage(grl = cvg, range.gene, sync = TRUE, genome=genome, 
-                          symbol=symbol, dat.exon=full.exon)
+                          symbol=symbol, dat.exon=full.exon,
+                          dtrack.kwargs = dkwarg)
 ```
