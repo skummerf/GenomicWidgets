@@ -1,0 +1,143 @@
+---
+title: "iheatmap"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+```{r}
+source("~/workspace/experimental/iheatmap.R")
+source("~/workspace/chipVis/R/plot_utils.R")
+#library(dplyr)
+library(plotly)
+```
+
+# Very simple heatmap
+
+```{r}
+a = matrix(rnorm(200),ncol=10)
+b = matrix(rnorm(200),ncol=10)
+d = hclust(dist(a))
+d2 = hclust(dist(t(a)))
+
+test = make_main_hm(a, 1:nrow(a), 1:ncol(a)) 
+plot_iHeatmap(test)
+```
+
+##Add another heatmap
+
+```{r}
+
+test = make_main_hm(a, 1:nrow(a), 1:ncol(a)) %>%
+  add_main_hm(b, 1:nrow(a), 1:ncol(a), zmin = min(a), zmax = max(a), show_colorbar = FALSE) 
+
+plot_iHeatmap(test)
+```
+
+
+## Example of adding rows
+```{r}
+test = make_main_hm(a, 1:nrow(a), 1:ncol(a)) %>%
+  add_main_hm(b, 1:nrow(a), 1:ncol(a), zmin = min(a), zmax = max(a), show_colorbar = FALSE) %>%
+  add_row_groups(c(rep("A",5),rep("B",15)), side ="right", colorscale = dcolorscale(2, "Paired"), name = "Anno")  %>%
+  add_main_hm(b, 1:nrow(a), 1:ncol(a)) %>% 
+  add_row_groups(c(rep("A",15),rep("B",5))) %>% 
+  add_row_dendro(d, size = 0.2, side = "left")
+
+plot_iHeatmap(test)
+```
+
+## Move row annotation to right
+
+```{r}
+test = make_main_hm(a, 1:nrow(a), 1:ncol(a)) %>%
+  add_main_hm(b, 1:nrow(a), 1:ncol(a), zmin = min(a), zmax = max(a), show_colorbar = FALSE)   %>%
+  add_main_hm(b, 1:nrow(a), 1:ncol(a)) %>% 
+  add_row_groups(c(rep("A",15),rep("B",5))) %>% 
+  add_row_dendro(d, size = 0.2, side = "left") %>%
+  add_row_groups(c(rep("A",5),rep("B",15)), side ="right", colorscale = dcolorscale(2, "Paired"), name = "Anno")
+
+plot_iHeatmap(test)
+```
+
+
+## Add column dendrogram to simple heatmap
+
+```{r}
+test = make_main_hm(a, 1:nrow(a), 1:ncol(a)) %>%
+  add_col_dendro(d2)
+
+plot_iHeatmap(test)
+```
+
+## Add it to the bottom too
+
+```{r}
+test = make_main_hm(a, 1:nrow(a), 1:ncol(a)) %>%
+  add_col_dendro(d2) %>%
+  add_col_dendro(d2, side = "bottom")
+
+plot_iHeatmap(test)
+```
+
+## Add another heatmap with its own column dendrogram
+
+```{r}
+test = make_main_hm(a, 1:nrow(a), 1:ncol(a)) %>%
+  add_col_dendro(d2) %>%
+  add_col_dendro(d2, side = "bottom") %>%
+  add_main_hm(b) %>%
+  add_col_dendro(d2) 
+
+plot_iHeatmap(test)
+```
+
+## Add some column groups on bottom of second heatmap
+
+```{r}
+test = make_main_hm(a, 1:nrow(a), 1:ncol(a)) %>%
+  add_col_dendro(d2) %>%
+  add_col_dendro(d2, side = "bottom") %>%
+  add_main_hm(b) %>%
+  add_col_dendro(d2) %>%
+  add_col_groups(c(rep("A",3),rep("B",7)), side = "bottom")
+
+plot_iHeatmap(test)
+```
+
+
+## Row + Column Annotations
+
+```{r}
+test = make_main_hm(a, 1:nrow(a), 1:ncol(a)) %>%
+  add_col_dendro(d2) %>%
+  add_main_hm(b, 1:nrow(a), 1:ncol(a), zmin = min(a), zmax = max(a), show_colorbar = FALSE)   %>%
+  add_col_groups(c(rep("A",3),rep("B",7)), side = "bottom") %>% 
+  add_row_groups(c(rep("A",15),rep("B",5))) %>% 
+  add_row_dendro(d, size = 0.2, side = "left") %>%
+  add_row_groups(c(rep("A",5),rep("B",15)), side ="right", colorscale = dcolorscale(2, "Paired"), name = "Anno")
+
+plot_iHeatmap(test)
+```
+
+## More to do:
+
+- Display axis labels sensibly even after adding annotations on bottom/left
+
+- Check arguments to make sure only "legal" things being done
+
+- Add more possible plot subcomponents -- line plots, histograms
+
+- Automatic selection of new colorscale 
+
+- Row Order parameter for initial heatmap to control all annotations
+
+- Wrapper Functions to make common heatmap variations
+
+
+
+
+
+
