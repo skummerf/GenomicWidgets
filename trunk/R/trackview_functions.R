@@ -310,7 +310,7 @@ makeTiledRange <- function(gr, binwidth){
 }
 
 binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score", 
-                               scaling=NULL){
+                               scaling=NULL, weighted=TRUE){
   if(is.null(scaling)){
     scaling <- function(x){x}
   }
@@ -323,13 +323,16 @@ binCoverageInRange <- function(cvg.L, gr, binwidth=1000, val="score",
   for(g in names(cvg.L)){
     # Find overlap between the coverage and the tiled range
     overlap <- findOverlaps(cvg.L[[g]], tiled.range)
-    
+    if(weighted){
+      wscores <- width(cvg.L[[g]])*mcols(cvg.L[[g]])[[val]]
+    } else{
+      wscores <- mcols(cvg.L[[g]])[[val]]
+    }
     # Split scores from coverage range into their appropriate bin and sum
-    bin.split <- splitAsList(mcols(cvg.L[[g]])[[val]][queryHits(overlap)],
-                             factor(subjectHits(overlap)))
+    bin.split <- splitAsList(wscores, factor(subjectHits(overlap)))
     
     # Need a better way to scale the data
-    bin.score <- lapply(bin.split, function(x) scaling(sum(x)/length(x)))
+    bin.score <- lapply(bin.split, function(x) scaling(sum(x)))
     elementMetadata(tiled.range)[[g]] <- unlist(bin.score)
   }
   return(tiled.range)
