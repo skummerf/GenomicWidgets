@@ -8,9 +8,10 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 ```
 
 ```{r}
-source("~/workspace/experimental/iheatmap.R")
-source("~/workspace/chipVis/R/plot_utils.R")
+#source("~/workspace/experimental/iheatmap.R")
+#source("~/workspace/chipVis/R/plot_utils.R")
 #library(dplyr)
+library(chipVis)
 library(plotly)
 ```
 
