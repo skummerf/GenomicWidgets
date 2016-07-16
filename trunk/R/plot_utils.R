@@ -1,5 +1,4 @@
 # Some utility functions for use with plotly
-# Not Exported
 
 no_axis = list(title = "",
                zeroline = FALSE,
@@ -11,6 +10,13 @@ no_axis = list(title = "",
 # makes a discrete color scale for plotly
 # palette should be an RColorBrewer palette name
 # x is number of colors desired
+
+#' dcolorscale
+#' 
+#' @param x number of items
+#' @param palette name of RColorBrewer palette
+#' @export
+#' @author Alicia Schep
 dcolorscale <- function(x = 2, palette = "Dark2"){
   
   if (x == 1){
