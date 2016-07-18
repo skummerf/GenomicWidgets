@@ -23,7 +23,7 @@ This is intended to demonstrate how the chipVis package displays local views.
 info_dir <- "~/workspace/BAP1/"
 s_file <- paste(info_dir, "BAP1_june_2016_samples.txt", sep='')
 p_file <- paste(info_dir, "BAP1_june_2016_pairs.txt", sep='')
-fi <- getChipFileInfo(s_file, p_file)
+fi <- get_chip_file_info(s_file, p_file)
 symbol <- "RNF2"
 org <- "mouse"
 genome <- "GRCm38"
@@ -32,14 +32,14 @@ genome <- "GRCm38"
 ```{r Load BigWig}
 extension <- 50000
 # Create the range for viewing. Can either specify a symbol or a range
-range.gene <- getViewRange(symbol, org, genome)
+range.gene <- get_view_range(symbol, org, genome)
 # range.gene <- getViewRange(chr = 1, start=6000, end=6050)
 
 # Extend the region if desired
-range.gene <- extendGRange(range.gene, extension)
+range.gene <- extend_grange(range.gene, extension)
 
 # Get the exon list
-full.exon <- chipVis::igisExonlist(symbol, org=org, genome=genome)
+full.exon <- chipVis::get_exons(symbol, org=org, genome=genome)
 
 # Get the coverage
 input <- fi[2, 'Sample.Control']
@@ -48,16 +48,16 @@ idx <- c(9,10,15,16,18:23)
 shortened_names <- c(fi[idx[1:length(idx)-1], "Sample.Name"], "Input")
 
 # Get scaling factor
-sf <- getScalingFactor(fi[idx,])/1000000
+sf <- get_scaling_factor(fi[idx,])/1000000
 sf <- sf[2,]
 
-cvg <- getCoverageInRange(fi[idx, "File.bw"], range.gene, shortened_names, sf)
+cvg <- get_coverage_in_range(fi[idx, "File.bw"], range.gene, shortened_names, sf)
 ```
 
 ```{r Basic Track}
 grouping <- c("dRNF2-I", "RNF2-I", rep(c('dRNF2', 'RNF2'),4))
-dkwarg <- list(groups=grouping, type=c('a', 'a', 'confin', 'confin'), legend=TRUE)
-track_info <- chipVis::plotGeneCoverage(grl = cvg, range.gene, sync = TRUE, genome=genome, 
+dkwarg <- list(groups=grouping, type=c('heatmap', 'a', 'confin', 'confin'), legend=TRUE)
+track_info <- chipVis::plot_track_view(grl = cvg, range.gene, sync = TRUE, genome=genome, 
                           symbol=symbol, dat.exon=full.exon,
                           dtrack.kwargs = dkwarg)
 ```

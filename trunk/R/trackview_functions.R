@@ -374,7 +374,7 @@ make_data_tracks <- function(cvg.L, gr, genome, chr, bg.title, score.max, colors
   dtrack <- list()
   if(type == 'heatmap'){
     hm.gradient <- colorRampPalette(brewer.pal(9, "BuGn"))(100)
-    binned.cvg <- binCoverageInRange(cvg.L, gr, binwidth, val, scaling)
+    binned.cvg <- bin_coverage_in_range(cvg.L, gr, binwidth, val, scaling)
     heatmap.params <- list(range=binned.cvg, type='heatmap', chromosome=chr, genome=genome,
                            background.title='gray50', showSampleNames = TRUE,
                            cex.sampleNames = 0.6, cex.axis=0.6, gradient = hm.gradient)
