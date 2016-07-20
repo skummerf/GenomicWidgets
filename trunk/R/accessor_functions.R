@@ -20,7 +20,7 @@ get_chip_file_info <- function(samples_file, pairs_file){
                                         stringsAsFactors = FALSE))
   
   full_info <- merge(pairs, samples_exp, all = TRUE)
-  full_info[['Genoytpe']] <- samples[['Genotype']]
+  full_info[['Genotype']] <- samples[['Genotype']]
   
   return(full_info)
 }

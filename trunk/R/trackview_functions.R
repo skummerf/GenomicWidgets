@@ -28,7 +28,7 @@ plot_track_view <- function(grl, dat.exon, target.range, genome, ymax, symbol,
                              bg.title='grey50', colors=NULL, sync=FALSE,
                              type = NULL, scale.group=1, hm.thresh=4,
                              scaling=NULL, hm.binsize = 1000, showSNPs=FALSE,
-                             snpDB = NULL,
+                             snp.gr = NULL,
                              dtrack.kwargs=list(), gtrack.kwargs=list(),
                              grtrack.kwargs=list(), snptrack.kwargs=list(), ...) {
   # Get the chromosome
@@ -50,7 +50,7 @@ plot_track_view <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   
   gtrack.defaults <- list()
   grtrack.defaults <- list(fill='lightslateblue', background.title='lightslateblue')
-  snptrack.defaults <- list(fill='black', background.title='black', type='hist',
+  snptrack.defaults <- list(fill='black', background.title='black', chromosome=chr,
                             genome=genome, cex.title=0.6)
   if(type=='hist'){
     # Make colors for the plots
@@ -110,16 +110,14 @@ plot_track_view <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   
   # Match the seqname style and remove strand info on target.range
   if(showSNPs){
-    if(is.null(snpDB)){
+    if(is.null(snp.gr)){
       stop("Please supply a SNP database object")
     }
-    seqlevelsStyle(target.range) <- seqlevelsStyle(snpDB)
+    seqlevelsStyle(target.range) <- seqlevelsStyle(snp.gr)
     strand(target.range) <- "*"
-    snp_locs <- snpsByOverlaps(snpDB, target.range, type='within')
-    snp_counts <- bin_snp_in_range(snp_locs, target.range)
-    seqlevelsStyle(snp_counts) <- seqlevelsStyle(grl)
-    snptrack <- DataTrack(snp_counts, name ='# SNPs')
-    displayPars(snptrack) <- snptrack.params
+    snp_hits <- findOverlaps(snp.gr, target.range, type='within')
+    snp_locs <- snp.gr[queryHits(snp_hits)]
+    snptrack <- make_snp_track(snp_locs = snp_locs, strack.kwargs = snptrack.params)
   } else{
     snptrack=NULL
   }
@@ -133,8 +131,9 @@ plot_track_view <- function(grl, dat.exon, target.range, genome, ymax, symbol,
   }
   
   # Plot tracks
-  ptracks <- plotTracks(tracklist, main=main.title, chromosome = chr, ...)
-  return(ptracks)
+  ptracks <- plotTracks(tracklist, main=main.title, chromosome = chr, 
+                        from=start(target.range), to=end(target.range),...)
+  return(invisible(ptracks))
 }
 
 #' get_gene_range
@@ -394,4 +393,29 @@ make_data_tracks <- function(cvg.L, gr, genome, chr, bg.title, score.max, colors
     stop('No valid type supplied for datatrack')
   }
   return(dtrack)
+}
+
+sort_snps <- function(snp.gr, type.col = 'CONTEXT'){
+  snp_types <- mcols(snp.gr)[[type.col]]
+  for(type in unique(snp_types)){
+    mcols(snp.gr)[type] <- (mcols(snp.gr)[[type.col]]==type)*which(type==unique(snp_types))
+  }
+  new_df <- as.data.frame(mcols(snp.gr)[, names(mcols(snp.gr)) 
+                                        %in% unique(snp_types)])
+  names(new_df) <- gsub("_variant", "", names(new_df))
+  new_df[new_df == 0 ] <- NA
+  mcols(snp.gr) <- new_df
+  return(snp.gr)
+}
+
+make_snp_track <- function(snp_locs, strack.kwargs=list()){
+  sorted_snps <- sort_snps(snp_locs)
+  print(sorted_snps)
+  grouping <- names(mcols(sorted_snps))
+  strack.params <- list(range = sorted_snps, name='snps', showAxis=FALSE,
+                        groups = grouping, type='p', legend=FALSE, rot.title=0,
+                        size = 2)
+  strack.params <- modifyList(strack.params, strack.kwargs)
+  strack <- do.call(Gviz::DataTrack, strack.params)
+  return(strack)
 }

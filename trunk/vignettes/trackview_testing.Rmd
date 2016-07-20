@@ -24,7 +24,7 @@ info_dir <- "~/workspace/BAP1/"
 s_file <- paste(info_dir, "BAP1_june_2016_samples.txt", sep='')
 p_file <- paste(info_dir, "BAP1_june_2016_pairs.txt", sep='')
 fi <- get_chip_file_info(s_file, p_file)
-symbol <- "RNF2"
+symbol <- "ENO1"
 org <- "mouse"
 genome <- "GRCm38"
 ```
@@ -32,20 +32,21 @@ genome <- "GRCm38"
 ```{r Load BigWig}
 extension <- 50000
 # Create the range for viewing. Can either specify a symbol or a range
-range.gene <- get_view_range(symbol, org, genome)
-# range.gene <- getViewRange(chr = 1, start=6000, end=6050)
+# range.gene <- get_view_range(symbol, org, genome)
+range.gene <- get_view_range(chr = 1, start=159711000, end=159718000)
+strand(range.gene) <- "+"
 
 # Extend the region if desired
 range.gene <- extend_grange(range.gene, extension)
 
 # Get the exon list
-full.exon <- chipVis::get_exons(symbol, org=org, genome=genome)
+full.exon <- chipVis::get_exons(range.gene, org=org, genome=genome)
 
 # Get the coverage
 input <- fi[2, 'Sample.Control']
 input_idx <- which(fi$Sample.Name==input)
 idx <- c(9,10,15,16,18:23)
-shortened_names <- c(fi[idx[1:length(idx)-1], "Sample.Name"], "Input")
+shortened_names <- c(fi[idx[1:length(idx)-1], "Genotype"], "Input")
 
 # Get scaling factor
 sf <- get_scaling_factor(fi[idx,])/1000000
@@ -56,8 +57,6 @@ cvg <- get_coverage_in_range(fi[idx, "File.bw"], range.gene, shortened_names, sf
 
 ```{r Basic Track}
 grouping <- c("dRNF2-I", "RNF2-I", rep(c('dRNF2', 'RNF2'),4))
-dkwarg <- list(groups=grouping, type=c('heatmap', 'a', 'confin', 'confin'), legend=TRUE)
-track_info <- chipVis::plot_track_view(grl = cvg, range.gene, sync = TRUE, genome=genome, 
-                          symbol=symbol, dat.exon=full.exon,
-                          dtrack.kwargs = dkwarg)
+dkwarg <- list(groups=grouping, type=c('heatmap', 'a', 'confin', 'confin'), legend=TRUE, rotation.item=45)
+track_info <- chipVis::plot_track_view(grl = cvg, range.gene, sync = TRUE, genome=genome, dat.exon=full.exon, grtrack.kwargs = list(stacking='dense'), showSNPs = TRUE, snp.gr = snps)
 ```
