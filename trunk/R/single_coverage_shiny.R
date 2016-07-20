@@ -108,9 +108,9 @@ single_coverage_shiny <- function(M, signal, cvg_files, regions, region_names, g
       if(is.null(s) == T) return(NULL)
       ix <- heat()$row_order[s$y + 1]
       rang <- resize(regions[ix], width = 25000, fix = "center")
-      de <- igisExonlist(rang, genome = genome, org = org)
-      grl <- getCoverageInRange(cvg_files, rang, names = names(cvg_files))
-      plotGeneCoverage(grl, de, rang, genome = genome,symbol=region_names[ix])
+      de <- get_exons(rang, genome = genome, org = org)
+      grl <- get_coverage_in_range(cvg_files, rang, names = names(cvg_files))
+      plot_track_view(grl, de, rang, genome = genome,symbol=region_names[ix])
     })
     
   }

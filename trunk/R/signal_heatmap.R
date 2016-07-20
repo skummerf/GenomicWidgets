@@ -1,3 +1,167 @@
+#' cluster_heatmap
+#' 
+#' @param mat  matrix
+#' @param x x axis labels
+#' @param y y axis labels
+#' @param row_order row order method
+#' @param col_order col order method
+#' @param row_k k to use for kmeans clustering or cutting heirarchical clustering
+#' @param col_k k to use for kmeans clustering or cutting heirarchical clustering
+#' @param row_groups pre-determined groups for rows
+#' @param col_groups pre-determined groups for col
+#' @param row_clust_dist distance function to uses for row clustering
+#' @param col_clust_dist distance function to uses for col clustering
+#' @param name name of colorbar
+#' @param source source name in plotly
+#' @return list with five components, 1) plot -- function to plot
+#' 2) row_order -- row order used, 3) dendro hclust object if heirarchical clustering
+#' performed for rows  4) col_order -- row order used, 5) dendro hclust object if 
+#' heirarchical clustering
+#' performed for cols
+#' @export
+#' @import plotly
+#' @author Alicia Schep
+cluster_heatmap2 <- function(mat, 
+                            x = chipVis:::default_x(mat),
+                            y = chipVis:::default_y(mat),                   
+                            row_order = c("none","hclust","kmeans","groups"),
+                            col_order = c("none","hclust","kmeans","groups"),
+                            row_groups = NULL,
+                            col_groups = NULL,
+                            row_anno = NULL,
+                            col_anno = NULL,
+                            row_k = NULL,
+                            col_k = NULL,
+                            row_clust_dist = stats::dist,
+                            col_clust_dist = stats::dist,
+                            name = "Signal",
+                            source = "HM",
+                            scale = TRUE){
+  
+  # TO DO: Add argument check
+  
+  row_order = match.arg(row_order)
+  col_order = match.arg(col_order)
+  # 
+  
+  row_dendro = NULL
+  col_dendro = NULL
+  
+  
+  if (scale == TRUE){
+    mat = t(scale(t(log10(mat+1))))
+  }
+  
+  #Filter out rows with NA
+  notna <- apply(mat,1, function(x) !any(is.na(x)))
+  mat = mat[notna,]
+  y = y[notna]
+  if (!is.null(row_anno)){
+    for ( i in seq_along(row_anno)){
+      row_anno[[i]]$data = row_anno[[i]]$data[not_na]
+    }
+  }
+  
+  if (row_order == "hclust"){
+    row_dendro = flashClust::hclust(row_clust_dist(mat))
+    row_order = row_dendro$order
+    mat = mat[row_order,]
+    if (!is.null(row_anno)){
+      for ( i in seq_along(row_anno)){
+        row_anno[[i]]$data = row_anno[[i]]$data[row_order,]
+      }
+    }
+    if (!is.null(row_k)){
+      row_groups = cutree(row_dendro, k = row_k)[row_order]
+    }
+    y = y[row_order]
+  } else if (row_order == "kmeans"){
+    stopifnot(!is.null(row_k))
+    row_groups = kmeans(mat, centers = row_k)$cluster
+    row_order = order(row_groups)
+    row_groups = row_groups[row_order]
+    mat = mat[row_order,]
+    if (!is.null(row_anno)){
+      for ( i in seq_along(row_anno)){
+        row_anno[[i]]$data = row_anno[[i]]$data[row_order,]
+      }
+    }
+    y = y[row_order]
+  } else if (row_order == "groups"){
+    row_order = order(groups)
+    row_groups = row_groups[row_order]
+    mat = mat[row_order,]
+    if (!is.null(row_anno)){
+      for ( i in seq_along(row_anno)){
+        row_anno[[i]]$data = row_anno[[i]]$data[row_order,]
+      }
+    }
+    y = y[row_order]
+  } else{
+    row_order = 1:nrow(mat)
+  }
+  
+  if (col_order == "hclust"){
+    col_dendro = flashClust::hclust(col_clust_dist(t(mat)))
+    col_order = col_dendro$order
+    mat = mat[,col_order]
+    if (!is.null(col_anno)){
+      for ( i in seq_along(col_anno)){
+        col_anno[[i]]$data = col_anno[[i]]$data[,col_order]
+      }
+    }
+    if (!is.null(col_k)){
+      col_groups = cutree(col_dendro, k = col_k)[col_order]
+    }
+    x = x[col_order]
+  } else if (col_order == "kmeans"){
+    stopifnot(!is.null(col_k))
+    col_groups = kmeans(t(mat), centers = col_k)$cluster
+    col_order = order(col_groups)
+    col_groups = col_groups[col_order]
+    mat = mat[,col_order]
+    if (!is.null(col_anno)){
+      for ( i in seq_along(col_anno)){
+        col_anno[[i]]$data = col_anno[[i]]$data[,col_order]
+      }
+    }
+    x = x[col_order]
+  } else if (col_order == "groups"){
+    col_order = order(groups)
+    col_groups = col_groups[col_order]
+    mat = mat[,col_order]
+    if (!is.null(col_anno)){
+      for ( i in seq_along(col_anno)){
+        col_anno[[i]]$data = col_anno[[i]]$data[,col_order]
+      }
+    }
+    x = x[col_order]
+  } else{
+    col_order = 1:ncol(mat)
+  }  
+  
+  
+  p <- function(){
+    signal_heatmap_helper(mat = mat,
+                          x = x,
+                          y = y,
+                          row_groups = row_groups,
+                          col_groups = col_groups,
+                          row_dendro = row_dendro,
+                          col_dendro = col_dendro,
+                          row_anno = row_anno,
+                          col_anno = col_anno,
+                          name = name,
+                          source = source)
+  }
+  return(list(plot = p, 
+              row_order = row_order, 
+              row_dendro = row_dendro,
+              col_order = col_order,
+              col_dendro = col_dendro))
+  
+}
+
 
 
 #' cluster_heatmap
@@ -142,7 +306,6 @@ cluster_heatmap <- function(mat,
     col_order = 1:ncol(mat)
   }  
   
-
   p <- function(){
     signal_heatmap_helper(mat = mat,
                           x = x,

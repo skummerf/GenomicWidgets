@@ -178,9 +178,9 @@ multi_coverage_shiny <- function(heatmaps,
         
       ix <- heatmaps[[sel]]$row_mapping[s2$y + 1]
       rang <- resize(regions[ix], width = 50000, fix = "center")
-      de <- chipVis::igisExonlist(rang, genome = genome, org = org)
-      grl <- getCoverageInRange(cvg_files, rang, names = names(cvg_files), scaling.factor = scaling_factor)
-      chipVis::plotGeneCoverage(grl, de, rang, genome = genome,symbol=region_names[ix])
+      de <- get_exons(rang, genome = genome, org = org)
+      grl <- get_coverage_in_range(cvg_files, rang, names = names(cvg_files), scaling.factor = scaling_factor)
+      plot_track_view(grl, de, rang, genome = genome,symbol=region_names[ix])
 
     })
   }

@@ -71,6 +71,9 @@ promoter_counts <- simplify2array(BiocParallel::bplapply(bam_files,
                                                          bamsignals::bamCount,
                                                          promoter_ranges[1:500]))
  
-p1 %>% add_simple_heatmap(promoter_counts, col_order = "hclust", k_col = 4, scale_method = "normalize") %>% plot_iHeatmap()  %>% layout(margin = list(b = 200))
+p1 %>% 
+  add_simple_heatmap(promoter_counts, col_order = "hclust", k_col = 4, scale_method = "normalize") %>%
+  plot_iHeatmap()  %>% 
+  layout(margin = list(b = 200))
 
 ```

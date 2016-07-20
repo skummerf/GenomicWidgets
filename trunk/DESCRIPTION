@@ -12,7 +12,8 @@ Imports:
     GenomicRanges,
     Gviz,
     plotly,
-    flashClust
+    flashClust,
+    iHeatmapR
 RoxygenNote: 5.0.1
 Suggests: 
     shiny,

@@ -9,7 +9,8 @@ multi_coverage_plot(inputs, regions, region_names, binsize = 50, up = 2000,
   cvg_files = NULL, aggregate_normalization = c("localRms", "localMean",
   "localNonZeroMean", "PercentileMax", "scalar", "none"),
   heatmap_normalization = c("localRms", "localMean", "localNonZeroMean",
-  "PercentileMax", "scalar", "none"), genome = "GRCm38", org = "mouse", ...)
+  "PercentileMax", "scalar", "none"), pct = 0.95, genome = "GRCm38",
+  org = "mouse", scaling_factor = NULL, ...)
 }
 \description{
 mulit_coverage_plot

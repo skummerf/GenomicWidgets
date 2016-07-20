@@ -65,7 +65,7 @@ cvg_mats <- make_coverage_matrix(inputs = bam_files[mRNF2],
                                   up = 2500,
                                   down = 2500)
 
-scale_factors <- getScalingFactor(file_info = samples_exp)
+scale_factors <- get_scaling_factor(file_info = samples_exp)
 
 ```
 
