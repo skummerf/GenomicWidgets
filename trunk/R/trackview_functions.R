@@ -28,7 +28,7 @@ plot_track_view <- function(grl, dat.exon, target.range, genome, ymax, symbol,
                              bg.title='grey50', colors=NULL, sync=FALSE,
                              type = NULL, scale.group=1, hm.thresh=4,
                              scaling=NULL, hm.binsize = 1000, showSNPs=FALSE,
-                             snp.gr = NULL,
+                             snp.gr = NULL, tss.gr = NULL,
                              dtrack.kwargs=list(), gtrack.kwargs=list(),
                              grtrack.kwargs=list(), snptrack.kwargs=list(), ...) {
   # Get the chromosome
@@ -113,20 +113,25 @@ plot_track_view <- function(grl, dat.exon, target.range, genome, ymax, symbol,
     if(is.null(snp.gr)){
       stop("Please supply a SNP database object")
     }
-    seqlevelsStyle(target.range) <- seqlevelsStyle(snp.gr)
-    strand(target.range) <- "*"
-    snp_hits <- findOverlaps(snp.gr, target.range, type='within')
-    snp_locs <- snp.gr[queryHits(snp_hits)]
-    snptrack <- make_snp_track(snp_locs = snp_locs, strack.kwargs = snptrack.params)
+    snptrack <- make_snp_track(snp.gr, target.range, strack.kwargs = snptrack.params)
   } else{
     snptrack=NULL
   }
-    # Add tracks
+  
+  if(!is.null(tss.gr)){
+    tssTrack <- make_tss_track(tss.gr, target.range, chr)
+  } else{
+    tssTrack <- NULL
+  }
+  
+  # Add tracks
   tracklist <- list()
-  tracklist <- c(gtrack, grtrack, dtrack, snptrack)
+  tracklist <- c(gtrack, grtrack, tssTrack, dtrack, snptrack)
   
   # Confirm that all tracks have the same chromosome before plotting
-  if(length( unique(unlist(lapply(tracklist, function(x) {if("chromosome" %in% slotNames(x)){return(x@chromosome)}}))))!=1){
+  chr_list <- unlist(lapply(tracklist, function(x) 
+    {if("chromosome" %in% slotNames(x)){return(x@chromosome)}}))
+  if(length(unique(chr_list))!=1){
     warning("Tracks have different chromosomes. Visualization may not be complete")
   }
   
@@ -408,9 +413,12 @@ sort_snps <- function(snp.gr, type.col = 'CONTEXT'){
   return(snp.gr)
 }
 
-make_snp_track <- function(snp_locs, strack.kwargs=list()){
+make_snp_track <- function(snp.gr, target.range, strack.kwargs=list()){
+  seqlevelsStyle(target.range) <- seqlevelsStyle(snp.gr)
+  strand(target.range) <- "*"
+  snp_hits <- findOverlaps(snp.gr, target.range, type='within')
+  snp_locs <- snp.gr[queryHits(snp_hits)]
   sorted_snps <- sort_snps(snp_locs)
-  print(sorted_snps)
   grouping <- names(mcols(sorted_snps))
   strack.params <- list(range = sorted_snps, name='snps', showAxis=FALSE,
                         groups = grouping, type='p', legend=FALSE, rot.title=0,
@@ -419,3 +427,15 @@ make_snp_track <- function(snp_locs, strack.kwargs=list()){
   strack <- do.call(Gviz::DataTrack, strack.params)
   return(strack)
 }
+
+make_tss_track <- function(tss, target.range, chr){
+  tss_overlap <- findOverlaps(tss, target.range)
+  if(length(tss_overlap)==0){
+    return(NULL)
+  }
+  tss_in_range <- tss[queryHits(tss_overlap)]
+  tssTrack <- AnnotationTrack(tss_in_range, shape='arrow', name = 'TSS',
+                              id = mcols(tss_in_range)['names'], chromosome=chr,
+                              showFeatureId=TRUE) 
+  return(tssTrack)
+  }

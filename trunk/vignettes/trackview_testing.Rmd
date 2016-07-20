@@ -55,8 +55,15 @@ sf <- sf[2,]
 cvg <- get_coverage_in_range(fi[idx, "File.bw"], range.gene, shortened_names, sf)
 ```
 
+
+```{r Extra annotation Information}
+snps <- readRDS("~/workspace/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
+tss_db <- tssFromTxdb(TxDb.Mmusculus.BioMart.igis)
+```
+
+
 ```{r Basic Track}
 grouping <- c("dRNF2-I", "RNF2-I", rep(c('dRNF2', 'RNF2'),4))
 dkwarg <- list(groups=grouping, type=c('heatmap', 'a', 'confin', 'confin'), legend=TRUE, rotation.item=45)
-track_info <- chipVis::plot_track_view(grl = cvg, range.gene, sync = TRUE, genome=genome, dat.exon=full.exon, grtrack.kwargs = list(stacking='dense'), showSNPs = TRUE, snp.gr = snps)
+track_info <- chipVis::plot_track_view(grl = cvg, range.gene, sync = TRUE, genome=genome, dat.exon=full.exon, grtrack.kwargs = list(stacking='dense'), showSNPs = TRUE, snp.gr = snps, tss.gr = tss_db)
 ```
