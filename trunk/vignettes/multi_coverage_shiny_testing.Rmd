@@ -14,6 +14,7 @@ require(biomaRt)
 require(rtracklayer)
 require(Gviz)
 require(chipVis)
+require(iHeatmapR)
 options(ucscChromosomeNames=FALSE)
 BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
 
@@ -68,6 +69,19 @@ cvg_mats <- make_coverage_matrix(inputs = bam_files[mRNF2],
 scale_factors <- get_scaling_factor(file_info = samples_exp)
 
 ```
+
+## Multi coverage heatmap plot
+
+Argument clust_include says to use matrices 1 through 3 for clustering.  You could alternatively cluster based on just the first heatmap, or any combination of heatmaps that were supplied.  
+
+```{r}
+multi_coverage_heatmap(cvg_mats[1:3], 
+                       row_order = "kmeans", 
+                       k = 3, 
+                       clust_include = 1:3) %>% 
+  plot_iHeatmap()
+```
+
 
 ## Single coverage shiny app
 

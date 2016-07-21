@@ -9,7 +9,7 @@ new_single_coverage_heatmap(mat, x = iHeatmapR:::default_x(mat),
   "groups", "signal"), k = NULL, groups = NULL, clust_dist = stats::dist,
   signal = NULL, name = "Signal", summary = TRUE, source = "HM",
   scale = c("rows", "none"), scale_method = c("normalize", "standardize",
-  "center"))
+  "center"), ...)
 }
 \arguments{
 \item{mat}{coverage matrix}

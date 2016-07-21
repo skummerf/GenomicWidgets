@@ -9,8 +9,8 @@ plot genomic coverage along the gene}
 plot_track_view(grl, dat.exon, target.range, genome, ymax, symbol,
   bg.title = "grey50", colors = NULL, sync = FALSE, type = NULL,
   scale.group = 1, hm.thresh = 4, scaling = NULL, hm.binsize = 1000,
-  showSNPs = FALSE, snpDB = NULL, dtrack.kwargs = list(),
-  gtrack.kwargs = list(), grtrack.kwargs = list(),
+  showSNPs = FALSE, snp.gr = NULL, tss.gr = NULL,
+  dtrack.kwargs = list(), gtrack.kwargs = list(), grtrack.kwargs = list(),
   snptrack.kwargs = list(), ...)
 }
 \arguments{
