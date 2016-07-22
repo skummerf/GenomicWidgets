@@ -1,5 +1,6 @@
 ---
 title: "plotly_tracks_experiment"
+author: Alicia Schep
 output: html_document
 ---
 
@@ -11,9 +12,15 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 ```{r}
 txdb_to_shapes <- function(txdb, ranges){
+  stopifnot(length(ranges) == 1)
+  tx <- GenomicFeatures::transcriptsByOverlaps(txdb, ranges)
+  expanded_range <- GenomicRanges::GRanges(seqnames(ranges), IRanges::IRanges(min(start(tx)), max(end(tx))))
+  
   gr <- biovizBase::crunch(txdb,
-                           which = ranges)
-  gr <- biovizBase::addStepping(gr, group.name = "tx_id")
+                           which = expanded_range)
+  
+  
+  gr <- biovizBase::addStepping(gr, group.name = "tx_id", group.selfish = FALSE)
 
   df <- biovizBase::mold(gr)
   
@@ -53,10 +60,13 @@ g2 = ggplotly(g) %>% layout(yaxis = list(title = "",
                                     showticklabels = FALSE,
                                     showgrid = FALSE,
                                     ticks = ""),
+                            xaxis = list(range = c(31240000,
+                                                   31270000)),
                             hovermode = "nearest")
 g2
 ```
 
+The tooltips are pretty wacky right now, but otherwise it seems about correct; and the tooltips should be fixable.  Strand is not included though -- could easily be added to tooltip, or could have two different subplots for + and - strand stacked on top of each other, or could do color differently.  Adding little arrows would probably be possible but not as easy as the above solutions. Currently this is going through ggplot but it would not have too, that was just easier for a first pass.  
 
 ## Comparison
 
@@ -68,8 +78,6 @@ grtrack <- GeneRegionTrack(TxDb.Mmusculus.BioMart.igis)
 
 plotTracks(grtrack, from = start(test), to = end(test), chromosome = seqnames(test))
 ```
-
-One problem is that currently in plotly version if an intron/extron spans the plot boundary it may not shown
 
 
 ## Can link with data
