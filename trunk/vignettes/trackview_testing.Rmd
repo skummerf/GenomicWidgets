@@ -12,7 +12,7 @@ library(gChipseq)
 library(rtracklayer)
 library(TxDb.Hsapiens.BioMart.igis)
 library(SNPlocs.Hsapiens.dbSNP141.GRCh38)
-library(TxDb.Mmusculus.BioMart.igis)
+library(TxDb.Mmusculus.BioMart.igis3.0)
 ```
 
 ## R Markdown
@@ -24,17 +24,16 @@ info_dir <- "~/workspace/BAP1/"
 s_file <- paste(info_dir, "BAP1_june_2016_samples.txt", sep='')
 p_file <- paste(info_dir, "BAP1_june_2016_pairs.txt", sep='')
 fi <- get_chip_file_info(s_file, p_file)
-symbol <- "ENO1"
+symbol <- "RNF2"
 org <- "mouse"
 genome <- "GRCm38"
 ```
 
 ```{r Load BigWig}
-extension <- 50000
+extension <- 150000
 # Create the range for viewing. Can either specify a symbol or a range
 # range.gene <- get_view_range(symbol, org, genome)
-range.gene <- get_view_range(chr = 1, start=159711000, end=159718000)
-strand(range.gene) <- "+"
+range.gene <- get_view_range(chr = 1, start=159758000, end=159758000)
 
 # Extend the region if desired
 range.gene <- extend_grange(range.gene, extension)
@@ -65,5 +64,5 @@ tss_db <- tssFromTxdb(TxDb.Mmusculus.BioMart.igis)
 ```{r Basic Track}
 grouping <- c("dRNF2-I", "RNF2-I", rep(c('dRNF2', 'RNF2'),4))
 dkwarg <- list(groups=grouping, type=c('heatmap', 'a', 'confin', 'confin'), legend=TRUE, rotation.item=45)
-track_info <- chipVis::plot_track_view(grl = cvg, range.gene, sync = TRUE, genome=genome, dat.exon=full.exon, grtrack.kwargs = list(stacking='dense'), showSNPs = TRUE, snp.gr = snps, tss.gr = tss_db)
+track_info <- chipVis::plot_track_view(cvg.L = cvg, target.range=range.gene, sync = TRUE, genome=genome, transcripts.gr = full.exon, showSNPs = TRUE, snp.gr = snps, tss.gr = tss_db)
 ```
