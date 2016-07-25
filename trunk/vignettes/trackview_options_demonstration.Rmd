@@ -1,0 +1,253 @@
+---
+title: "TrackView Module"
+author: "Justin Finkle"
+date: "7/25/2016"
+output:
+  html_document:
+    toc: true
+    toc_depth: 4
+    number_sections: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+# Gviz Trackview Module
+## Intro
+This vignette describes the implementation of the trackview module for displaying
+local coverage, annotation, and epigenome information. The main functionality is 
+in coordinating Gviz tracks to most appropriately match the available data.
+
+```{r setup, include=FALSE, echo=TRUE}
+knitr::opts_chunk$set(echo = TRUE, cache=TRUE, autodep=TRUE)
+library(gChipseq)
+library(chipVis)
+library(TxDb.Hsapiens.BioMart.igis3.0)
+```
+
+## Load Data
+First we load data in the appropriate format. Nearly all the functions require data
+to be in the form of Genomic Ranges obects. The following objects are required for any
+trackview to be displayed:
+
+  1. A list of coverage files for each sample that will be displayed
+    + Currently only bigWig files are supported, but this can easily be changed
+
+We use the samples/pairs tables as in gChipseq, and then pull a few sample files
+for reference
+``` {r Load Data}
+info_dir <- "~/CARROLL_PR/data/"
+s_file <- paste(info_dir, "samples.txt", sep='')
+p_file <- paste(info_dir, "pairs.txt", sep='')
+fi <- chipVis::get_chip_file_info(s_file, p_file)
+org <- "human"
+genome <- "GRCh38"
+
+# Get the coverage files
+input <- fi[2, 'Sample.Control']
+input_idx <- which(fi$Sample.Name==input)
+idx <- c(2:4, input_idx)
+
+# The last file is the Input, so we'll adjust the name for brevity
+shortened_names <- c(fi[idx[1:length(idx)-1], "Sample.Name"], "Input")
+
+# Get scaling factors based on library size
+sf <- chipVis::get_scaling_factor(fi[idx,])/1000000
+sf
+sf <- sf[2,]
+```
+  
+  2. The target range to display, which can be made in one of two ways:
+    + Calculated automatically if a gene symbol is supplied 
+    + Specified directly by the user
+    
+Here we'll get the view by giving a gene name. 
+```{r Get the range that will be displayed}
+symbol <- "NRIP1"
+extension <- 50000
+
+# Create the range for viewing. Can either specify a symbol or a range
+range.gene <- chipVis::get_view_range(symbol, org, genome)
+
+# Its very easy to specify a range if desired
+# range.gene <- chipVis::get_view_range(chr = 1, start=10000, end=30000)
+
+# Extend the region if desired
+range.gene <- chipVis::extend_grange(range.gene, extension)
+
+```
+
+With this in hand we can get the annotation and the coverage from the files provided
+for the specified range. The exon data can be either a dataframe or GRanges object,
+and the coverage is a GRangesList object.
+``` {r  Get data}
+# Get the exon list
+full.exon <- chipVis::get_exons(symbol, org=org, genome=genome)
+cvg <- chipVis::get_coverage_in_range(fi[idx, "File.bw"], range.gene, 
+                                      shortened_names, scaling.factor = sf)
+
+cvg
+```
+
+## Plot Track Options
+Gviz essentially concatenates many horizontal types of information into a vertical
+stack for algined genomic display. We've curated some of the more important functions
+to better display a varied range of data. 
+
+### Plot Types
+#### Standard Coverage view
+Now we can start plotting! This is a standard coverage plot in the region.
+```{r Standard plot}
+track_info <- chipVis::plot_track_view(cvg, range.gene, full.exon, genome, 
+                                       sync=TRUE)
+```
+
+#### Heatmap view
+What if we want to plot more samples? We can easily grab more data and plot.
+By default, if more than 4 samples are supplied, a heatmap will be used.
+```{r Many samples}
+idx <- c(2:10, input_idx)
+shortened_names <- c(fi[idx[1:length(idx)-1], "Sample.Name"], "Input")
+sf <- chipVis::get_scaling_factor(fi[idx,])/1000000
+sf <- sf[2,]
+more_cvg <- chipVis::get_coverage_in_range(fi[idx, "File.bw"], range.gene, 
+                                      shortened_names, scaling.factor = sf)
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome)
+```
+
+#### Plot type
+If you are very committed to using a specific type of plot you can use different
+parameters. It is recommended that you don't change "hm.thresh", but instead specify
+the plot "type"
+``` {r Specifying plot type}
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
+                                       type='hist')
+```
+
+### Additional Annotations
+When plotting tracks we build a big vertical stack that line up with the
+GenomeAxisTrack. If other data is available it is easy to plot as well. Currently
+TSS and SNP data is supported.
+
+#### TSS
+To save space, the transcript annotations are collapsed by default. Therefore,
+it may be useful to see annotated TSS. Overall this often results in fewer vertical
+stacks in the annotation, saving space.
+
+TSS can be determined from TxDb objects, but must be supplied as a GRanges object
+
+``` {r Plot with TSS}
+tss_db <- gChipseq::tssFromTxdb(TxDb.Hsapiens.BioMart.igis)
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
+                                       tss.gr = tss_db)
+```
+
+#### SNPs
+Data is currently from the [GWAS Catalog](https://www.ebi.ac.uk/gwas/). For ease of use
+it has been made into a GRanges object and saved as an RDS object.
+
+NOTE: Currently the Y-axis labels for the SNP classification may not be correct. 
+However, the stratification and location are accurate.
+
+
+``` {r Plot with SNPs}
+snps <- readRDS("~/workspace/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
+                                       tss.gr = tss_db, snp.gr = snps)
+```
+
+## Display Options
+Gviz has a ton of plotting options that are hard to keep track of. We've tried to
+supply logical defaults based on the data. However, most display parameters can
+be changed. 
+
+Nevertheless, Gviz is not great at autosizing text, and it is challenging
+to provide default values that will work in all cases. Therefore, each track can
+take a list of keyword arguments (kwargs) to easily adjust the output and precluding 
+modification of the functions.
+
+### Sizing
+Gviz uses relative sizes to plot tracks. Therefore it is easiest to control the 
+size of each track via the plot.kwargs argument. Size values can be any scalar,
+but fractions summing to 1 are the most straightforward
+
+All tracks can be sized individually via their own track kwargs, however this is 
+not recommended.
+
+``` {r sizing, fig.height=3}
+sizes <- c(0.2, 0.3, 0.5)
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
+                                       plot.kwargs = list(sizes=sizes))
+```
+
+
+### Data Tracks
+
+#### Grouping
+Grouping is a particularly useful feature of Gviz. A quick example of this functionality
+is to group samples that have similar conditions. Gviz will automatically color the
+data in the heatmap. All we have to do is supply a grouping vector that matches
+the order of the samples
+
+Notice that the background panel color is also changed. The kwargs give you all 
+the flexibility available in Gviz!
+
+``` {r Grouping}
+# These are made up groups for the example
+grouping <- c(rep('WT', 5), rep('KO', 4), 'Input')
+
+# For whatever reason, the colors are in reverse order from the groups. Probably
+# a bug in Gviz somewhere
+colors <- c('black', 'blue', 'green')
+dkwargs <- list(groups=grouping, col=colors, background.title='gray50')
+
+# Then we just supply it as a list of kwargs
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
+                                       dtrack.kwargs = dkwargs)
+
+```
+
+#### Averages
+We can even use the same groupings to compute averages, and at the same time override
+the plot type to make a line plot with confidence intervals. All that is required
+is a vector specifying the types to plot. All plotted types will be overlaid.
+
+``` {r Averages}
+dkwargs <- list(groups=grouping, col=colors, type=c('a', 'confint'))
+
+# Then we just supply it as a list of kwargs
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
+                                       dtrack.kwargs = dkwargs)
+```
+
+#### Coverage Options
+All kwargs get applied globally to the datatrack. This isn't an issue for heatmap,
+but for the histogram plot is is, because each sample is plotted independently.
+Some flexibility is provided via the optional arguments color, bg.title, ymax,
+and sync:
+
+  * Color: str or vector specifying the colors for each data track
+  * bg.title: str or vector specifying the colors for each track panel
+  * ymax: vector of max values for the each data track
+  * sync: logical for whether to sync the ymax for all data tracks
+  
+``` {r Hist Colors}
+# Colors match the samples and will be repeated to equal the number of samples used
+colors <- c('red', 'black')
+# Then we just supply it as a list of kwargs
+track_info <- chipVis::plot_track_view(more_cvg[1:4], range.gene, full.exon, genome, 
+                                       colors = colors, bg.title = colors)
+```
+
+### Annotation Track
+By default the transcripts are condensed to save space. If you'd like to view them
+all this is a very easy fix.
+
+``` {r expand annotation}
+# Then we just supply it as a list of kwargs
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
+                                       grtrack.kwargs = list(stacking='squish'))
+```
+```
+
+
+  

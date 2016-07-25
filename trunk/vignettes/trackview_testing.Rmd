@@ -64,5 +64,5 @@ tss_db <- tssFromTxdb(TxDb.Mmusculus.BioMart.igis)
 ```{r Basic Track}
 grouping <- c("dRNF2-I", "RNF2-I", rep(c('dRNF2', 'RNF2'),4))
 dkwarg <- list(groups=grouping, type=c('heatmap', 'a', 'confin', 'confin'), legend=TRUE, rotation.item=45)
-track_info <- chipVis::plot_track_view(cvg.L = cvg, target.range=range.gene, sync = TRUE, genome=genome, transcripts.gr = full.exon, showSNPs = TRUE, snp.gr = snps, tss.gr = tss_db)
+track_info <- chipVis::plot_track_view(cvg.L = cvg, target.range=range.gene, sync = TRUE, genome=genome, transcripts.gr = full.exon, snp.gr = snps, tss.gr = tss_db)
 ```
