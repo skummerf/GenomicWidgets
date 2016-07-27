@@ -11,24 +11,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ## Function to convert txdb to list of data frames
 
 ```{r}
-txdb_to_shapes <- function(txdb, ranges){
-  stopifnot(length(ranges) == 1)
-  tx <- GenomicFeatures::transcriptsByOverlaps(txdb, ranges)
-  expanded_range <- GenomicRanges::GRanges(seqnames(ranges), IRanges::IRanges(min(start(tx)), max(end(tx))))
-  
-  gr <- biovizBase::crunch(txdb,
-                           which = expanded_range)
-  
-  
-  gr <- biovizBase::addStepping(gr, group.name = "tx_id", group.selfish = FALSE)
-
-  df <- biovizBase::mold(gr)
-  
-  out <- list(exons = df[which(df$type == "exon"),], 
-              introns = df[which(df$type == "gap"),],
-              utr = df[which(df$type == "utr"),])
-  return(out)
-}
+source("~/workspace/InternChIP/chipVis/trunk/R/browser_ly.R")
 ```
 
 
@@ -83,10 +66,10 @@ plotTracks(grtrack, from = start(test), to = end(test), chromosome = seqnames(te
 ## Can link with data
 
 ```{r}
-source("~/workspace/chipVis/R/coverage_matrix.R")
+source("~/workspace/InternChIP/chipVis/trunk/R/coverage_matrix.R")
 library(gChipseq)
 
-file.sample <- "~/workspace/BAP1_Data/BAP1_june_2016_samples.txt"
+file.sample <- "~/workspace/BAP1/BAP1_june_2016_samples.txt"
 
 samples <- read.table(file.sample,as.is=TRUE,header=TRUE)
 samples_exp <- expandSampleTable(samples)

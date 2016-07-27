@@ -1,0 +1,22 @@
+---
+title: "browser_ly_testing"
+author: "Justin Finkle"
+date: "7/27/2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(TxDb.Mmusculus.BioMart.igis3.0)
+library(plotly)
+```
+
+```{r}
+source("~/workspace/InternChIP/chipVis/trunk/R/browser_ly.R")
+```
+
+
+```{r Demo}
+test = GenomicRanges::GRanges("1",IRanges(151469406, 151500922))
+sha = txdb_to_shapes(txdb = TxDb.Mmusculus.BioMart.igis, test)
+```
