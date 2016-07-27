@@ -5,11 +5,14 @@
 \title{new_single_coverage_heatmap}
 \usage{
 new_single_coverage_heatmap(mat, x = iHeatmapR:::default_x(mat),
-  y = iHeatmapR:::default_y(mat), row_order = c("none", "hclust", "kmeans",
-  "groups", "signal"), k = NULL, groups = NULL, clust_dist = stats::dist,
-  signal = NULL, name = "Signal", summary = TRUE, source = "HM",
-  scale = c("rows", "none"), scale_method = c("normalize", "standardize",
-  "center"), ...)
+  y = iHeatmapR:::default_y(mat), include = 1000,
+  include_method = c("signal", "first", "random"), row_order = c("none",
+  "hclust", "kmeans", "groups", "signal"), k = NULL, groups = NULL,
+  clust_dist = stats::dist, signal = rowSums(mat), plot_signal = TRUE,
+  name = "Signal", summary = TRUE, source = "HM",
+  scale_method = c("localRms", "localMean", "localNonZeroMean",
+  "PercentileMax", "scalar", "none"), pct = 0.95, scale_factor = 1,
+  ticktext = TRUE, xlab = "Position", ...)
 }
 \arguments{
 \item{mat}{coverage matrix}
@@ -33,9 +36,7 @@ new_single_coverage_heatmap(mat, x = iHeatmapR:::default_x(mat),
 \item{source}{source name in plotly}
 }
 \value{
-list with three components, 1) plot -- function to plot
-2) row_order -- row order used, 3) dendro hclust object if heirarchical clustering
-performed
+iHeatmap object
 }
 \description{
 new_single_coverage_heatmap

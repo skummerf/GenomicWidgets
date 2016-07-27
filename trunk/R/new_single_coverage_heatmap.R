@@ -9,33 +9,60 @@
 #' @param name name of colorbar
 #' @param summary make summary plot, boolean
 #' @param source source name in plotly
-#' @return list with three components, 1) plot -- function to plot
-#' 2) row_order -- row order used, 3) dendro hclust object if heirarchical clustering
-#' performed
+#' @return iHeatmap object
 #' @export
 #' @author Alicia Schep
 new_single_coverage_heatmap <- function(mat, 
                                     x = iHeatmapR:::default_x(mat),
-                                    y = iHeatmapR:::default_y(mat),                    
+                                    y = iHeatmapR:::default_y(mat),
+                                    include = 1000,
+                                    include_method = c("signal","first","random"),
                                     row_order = c("none","hclust","kmeans","groups","signal"),
                                     k = NULL,
                                     groups = NULL,
                                     clust_dist = stats::dist,
-                                    signal = NULL,
+                                    signal = rowSums(mat),
+                                    plot_signal = TRUE,
                                     name = "Signal",
                                     summary = TRUE,
                                     source = "HM",
-                                    scale = c("rows","none"),
-                                    scale_method = c("normalize","standardize","center"),
+                                    scale_method = c("localRms", 
+                                                     "localMean", 
+                                                     "localNonZeroMean", 
+                                                     "PercentileMax", 
+                                                     "scalar", 
+                                                     "none"),
+                                    pct = 0.95,
+                                    scale_factor = 1, 
+                                    ticktext = TRUE,
+                                    xlab = "Position",
                                     ...){
   
   # TO DO: Add argument check
   
   row_order = match.arg(row_order)
-  scale <- match.arg(scale)
   scale_method <- match.arg(scale_method)
+  include_method <- match.arg(include_method)
   
-  if (scale != "none") mat <- iHeatmapR:::scale_mat(mat, scale = scale, scale_method = scale_method)
+  force(signal)
+  if (length(signal) != nrow(mat)){
+    stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
+  }
+  
+  if (include < nrow(mat)){
+    if (include_method  == "signal"){
+      keep <- which(signal >= quantile(signal, (length(signal) - include) / length(signal)))
+    } else if (include_method == "first"){
+      keep <- 1:include
+    } else if (include_method == "random"){
+      keep <- sample(1:nrow(mat), include)
+    }
+    mat <- mat[keep,]
+    y <- y[keep]
+    signal <- signal[keep]
+  }
+  
+  if (scale_method != "none") mat <- normalize_coverage_matrix(mat, method = scale_method, pct = pct, scalar = scale_factor)
   
   dendro = NULL
   
@@ -52,7 +79,6 @@ new_single_coverage_heatmap <- function(mat,
   } else if (row_order == "groups"){
     row_order = order(groups)
   } else if (row_order == "signal"){
-    stopifnot(!is.null(signal))
     row_order = order(signal, decreasing = FALSE)
   } else{
     row_order = 1:nrow(mat)
@@ -63,9 +89,27 @@ new_single_coverage_heatmap <- function(mat,
                     y = y, 
                     row_order = row_order, 
                     name = name,
-                    y_pos = "none",
-                    x_pos = "none",
                     ...) 
+  
+  if (isTRUE(ticktext)){
+    if ("0" %in% x){
+      tickvals = c(0, which(x == "0") - 1, ncol(mat) - 1)
+    } else{
+      tickvals = c(0, ncol(mat) - 1)
+    }
+  
+    ticktext = x[tickvals + 1]
+  
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+  
+  } else if (!is.null(ticktext) && ticktext != FALSE){
+    tickvals = which(x %in% ticktext) - 1
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+  }
+  
+  if (is.character(xlab) && nchar(xlab) > 0){
+    p <- p %>% add_x_axis_title(xlab)
+  }
   
   if (!is.null(groups)){
     p <- p %>% add_row_groups(groups, side = "left")
@@ -73,7 +117,7 @@ new_single_coverage_heatmap <- function(mat,
   if (!is.null(dendro)){
     p <- p %>% add_row_dendro(dendro, side = "left")
   }    
-  if (!is.null(signal)){
+  if (plot_signal){
     p <- p %>% add_row_signal(signal, "Total Signal")
   }
   if (summary){
@@ -101,18 +145,50 @@ add_coverage_heatmap <- function(p,
                                  mat, 
                                  x = iHeatmapR:::default_x(mat),                    
                                  groups = p$row_groups,
-                                 signal = NULL,
+                                 include = 1000,
+                                 include_method = c("signal","first","random"),
+                                 signal = rowSums(mat),
+                                 plot_signal = TRUE,
                                  name = "Signal",
                                  summary = TRUE,
-                                 scale = c("rows","none"),
-                                 scale_method = c("normalize","standardize","center"),
+                                 scale_method = c("localRms", 
+                                                  "localMean", 
+                                                  "localNonZeroMean", 
+                                                  "PercentileMax", 
+                                                  "scalar", 
+                                                  "none"),
+                                 pct = 0.95,
+                                 scale_factor = 1, 
+                                 ticktext = TRUE,
+                                 xlab = "Position",
                                  ...){
   
   
-  scale <- match.arg(scale)
   scale_method <- match.arg(scale_method)
+  include_method <- match.arg(include_method)
   
-  if (scale != "none") mat <- iHeatmapR:::scale_mat(mat, scale = scale, scale_method = scale_method)
+  
+  force(signal)
+  if (length(signal) != nrow(mat)){
+    stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
+  }
+  
+  if (include < nrow(mat)){
+    if (include_method  == "signal"){
+      keep <- which(signal >= quantile(signal, (length(signal) - include) / length(signal)))
+    } else if (include_method == "first"){
+      keep <- 1:include
+    } else if (include_method == "random"){
+      keep <- sample(1:nrow(mat), include)
+    }
+    mat <- mat[keep,]
+    y <- y[keep]
+    signal <- signal[keep]
+  }
+  
+
+  if (scale_method != "none") mat <- normalize_coverage_matrix(mat, method = scale_method, pct = pct, scalar = scale_factor)
+  
   
   dendro = NULL
   
@@ -121,9 +197,31 @@ add_coverage_heatmap <- function(p,
                     name = name,
                     y_pos = "none",
                     x_pos = "none",
+                    buffer = 0.1,
                     ...) 
   
-  if (!is.null(signal)){
+  if (isTRUE(ticktext)){
+    if ("0" %in% x){
+      tickvals = c(0, which(x == "0") - 1, ncol(mat) - 1)
+    } else{
+      tickvals = c(0, ncol(mat) - 1)
+    }
+    
+    ticktext = x[tickvals + 1]
+    
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+    
+  } else if (!is.null(ticktext) && ticktext != FALSE){
+    tickvals = which(x %in% ticktext) - 1
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+  }
+  
+  if (is.character(xlab) && nchar(xlab) > 0){
+    p <- p %>% add_x_axis_title(xlab)
+  }
+  
+  
+  if (plot_signal){
     p <- p %>% add_row_signal(signal, "Total Signal")
   }
   if (summary){
@@ -155,30 +253,62 @@ add_coverage_heatmap <- function(p,
 #' @author Alicia Schep
 multi_coverage_heatmap <- function(mats, 
                                         x = iHeatmapR:::default_x(mats[[1]]),
-                                        y = iHeatmapR:::default_y(mats[[1]]),                    
+                                        y = iHeatmapR:::default_y(mats[[1]]), 
+                                   include = 1000,
+                                   include_method = c("signal","first","random"),
                                         row_order = c("none","hclust","kmeans","groups","signal"),
                                         k = NULL,
                                         groups = NULL,
                                         clust_dist = stats::dist,
-                                        clust_include = 1, 
-                                        signal = NULL,
+                                        cluster_by = c("first","all"), 
+                                        signal = lapply(mats, rowSums),
+                                   plot_signal = TRUE, 
                                         name = "Signal",
                                         summary = TRUE,
                                         source = "HM",
-                                        scale = c("rows","none"),
-                                        scale_method = c("normalize","standardize","center"),
+                                   scale_method = c("localRms", 
+                                                    "localMean", 
+                                                    "localNonZeroMean", 
+                                                    "PercentileMax", 
+                                                    "scalar", 
+                                                    "none"),
+                                   pct = 0.95,
+                                   scale_factor = rep(1, length(mats)), 
                                    share_z = TRUE,
-                                   
+                                   ticktext = TRUE,
+                                   xlab = "Position",
                                         ...){
   
   # TO DO: Add argument check
   
   row_order = match.arg(row_order)
-  scale <- match.arg(scale)
   scale_method <- match.arg(scale_method)
+  cluster_by <- match.arg(cluster_by)
+  include_method <- match.arg(include_method)
   
-  if (scale != "none"){
-    mats <- lapply(mats, iHeatmapR:::scale_mat, scale, scale_method)
+  if (length(unique(lapply(mats, nrow))) > 1) stop("All input matrices must be of same length")
+  
+  force(signal)
+  if (length(signal[[1]]) != nrow(mats[[1]])){
+    stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
+  }
+  
+  if (include < nrow(mats[[1]])){
+    if (include_method  == "signal"){
+      tmp_signal <- Reduce("+",lapply(signal, function(z) z / sum(z)))
+      keep <- which(tmp_signal >= quantile(tmp_signal, (length(tmp_signal) - include) / length(tmp_signal)))
+    } else if (include_method == "first"){
+      keep <- 1:include
+    } else if (include_method == "random"){
+      keep <- sample(1:nrow(mats[[1]]), include)
+    }
+    mats <- lapply(mats, function(z) z[keep,])
+    y <- y[keep]
+    signal <- lapply(signal, function(z) z[keep])
+  }
+  
+  if (scale_method != "none"){
+    mats <- normalize_coverage_matrix(mats, method = scale_method, pct = pct, scalar = scale_factor)
   } 
   
   if (share_z){
@@ -189,20 +319,32 @@ multi_coverage_heatmap <- function(mats,
   dendro = NULL
   
   if (row_order == "hclust"){
-    dendro = flashClust::hclust(clust_dist(do.call(cbind,mats[clust_include])))
+    if (cluster_by == "first"){
+      dendro = flashClust::hclust(clust_dist(mats[[1]]))
+    } else{
+      dendro = flashClust::hclust(clust_dist(do.call(cbind,mats)))
+    }
     row_order = dendro$order
     if (!is.null(k)){
       groups = cutree(dendro, k = k)
     }
   } else if (row_order == "kmeans"){
     stopifnot(!is.null(k))
-    groups = kmeans(do.call(cbind,mats[clust_include]), centers = k)$cluster
+    if (cluster_by == "first"){
+      groups = kmeans(mats[[1]], centers = k)$cluster 
+    } else{
+       groups = kmeans(do.call(cbind,mats), centers = k)$cluster     
+    }
     row_order = order(groups)
   } else if (row_order == "groups"){
     row_order = order(groups)
   } else if (row_order == "signal"){
-    stopifnot(!is.null(signal))
-    row_order = order(signal, decreasing = FALSE)
+    if (cluster_by == "first"){
+      row_order = order(signal[[1]], decreasing = FALSE)
+    } else{
+      tmp_signal <- Reduce("+",lapply(signal, function(z) z / sum(z)))
+      row_order = order(tmp_signal, decreasing = FALSE)
+    }
   } else{
     row_order = 1:nrow(mats[[1]])
   }
@@ -213,8 +355,6 @@ multi_coverage_heatmap <- function(mats,
                       y = y, 
                       row_order = row_order, 
                       name = name,
-                      y_pos = "none",
-                      x_pos = "none",
                       zmin = zmin,
                       zmax = zmax,
                       ...) 
@@ -224,26 +364,47 @@ multi_coverage_heatmap <- function(mats,
                     y = y, 
                     row_order = row_order, 
                     name = names(mats)[1],
-                    y_pos = "none",
-                    x_pos = "none",
                     ...)     
   }
   
+  if (isTRUE(ticktext)){
+    if ("0" %in% x){
+      tickvals = c(0, which(x == "0") - 1, ncol(mats[[1]]) - 1)
+    } else{
+      tickvals = c(0, ncol(mats[[1]]) - 1)
+    }
+    
+    ticktext = x[tickvals + 1]
+    
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+    
+  } else if (!is.null(ticktext) && ticktext != FALSE){
+    tickvals = which(x %in% ticktext) - 1
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+  } else{
+    tickvals <- NULL
+  }
+  
+  if (is.character(xlab) && nchar(xlab) > 0){
+    p <- p %>% add_x_axis_title(xlab)
+  } else{
+    xlab <- NULL
+  }
 
   if (summary){
     p <- p %>% add_col_summary(groups, showlegend = FALSE)
   }  
-  if (!is.null(signal)){
-    p <- p %>% add_row_signal(signal, "Total Signal")
+  if (plot_signal){
+    p <- p %>% add_row_signal(signal[[1]], "Total Signal")
   }
+  
+  p <- p %>% add_x_axis_title(names(mats)[1], side = "top")
   
   if (length(mats) > 1){
     for (i in 2:length(mats)){
       if (share_z){
         p <- p %>% add_main_hm(mats[[i]], 
                                x = x, 
-                               y_pos = "none",
-                               x_pos = "none",
                                show_colorbar = FALSE,
                                zmax = zmax,
                                zmin = zmin,
@@ -252,22 +413,29 @@ multi_coverage_heatmap <- function(mats,
         p <- p %>% add_main_hm(mats[[i]], 
                              x = x, 
                              name = names(mats)[i],
-                             y_pos = "none",
-                             x_pos = "none",
                              ...) 
       }
       
       
-      if (!is.null(signal)){
-        p <- p %>% add_row_signal(signal, "Total Signal")
+      if (plot_signal){
+        p <- p %>% add_row_signal(signal[[i]], "Total Signal")
       }
       if (summary){
-        p <- p %>% add_col_summary(groups, showlegend = FALSE, yaxis = "y2")
+        summary_yaxis = gsub("yaxis","y",names(p$data$xaxis)[which(sapply(p$data$xaxis, 
+                                                                          function(x) x$type)=="col_summary")])
+        print(summary_yaxis)
+        p <- p %>% add_col_summary(groups, showlegend = FALSE, yaxis = summary_yaxis)
       }
       
+      if (!is.null(tickvals)){
+        p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+      }
+      if (!is.null(xlab)){
+        p <- p %>% add_x_axis_title(xlab)
+      }
+      p <- p %>% add_x_axis_title(names(mats)[i], side = "top")
     }
   }
-  
   
   if (!is.null(groups)){
     p <- p %>% add_row_groups(groups, side = "left")
@@ -280,12 +448,28 @@ multi_coverage_heatmap <- function(mats,
 }
 
 
-
-add_dist_to_tss <- function(ranges,
+#' @export
+add_dist_to_tss <- function(p,
+                            ranges,
                             tss,
                             ...){
   
+  d = log10(abs(mcols(GenomicRanges::distanceToNearest(ranges, tss, ignore.strand = TRUE))$distance) + 1)
   
+  
+  p <- p %>% add_row_plot(x = d,
+                          side = "right", 
+                          type = "scatter", 
+                          mode = "markers",
+                          x_layout = list(title = "Distance<br>to TSS<br>(log10)", 
+                                          range = c(-0.5,6),
+                                          tickvals = c(0,3,6),
+                                          zeroline = FALSE), 
+                          size = 0.3,
+                          buffer = 0.04,
+                          showlegend = FALSE)
+  
+  return(p)
 }
 
 

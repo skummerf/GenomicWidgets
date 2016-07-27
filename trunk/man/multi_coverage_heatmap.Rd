@@ -5,12 +5,15 @@
 \title{multi_coverage_heatmap}
 \usage{
 multi_coverage_heatmap(mats, x = iHeatmapR:::default_x(mats[[1]]),
-  y = iHeatmapR:::default_y(mats[[1]]), row_order = c("none", "hclust",
-  "kmeans", "groups", "signal"), k = NULL, groups = NULL,
-  clust_dist = stats::dist, clust_include = 1, signal = NULL,
-  name = "Signal", summary = TRUE, source = "HM", scale = c("rows",
-  "none"), scale_method = c("normalize", "standardize", "center"),
-  share_z = TRUE, ...)
+  y = iHeatmapR:::default_y(mats[[1]]), include = 1000,
+  include_method = c("signal", "first", "random"), row_order = c("none",
+  "hclust", "kmeans", "groups", "signal"), k = NULL, groups = NULL,
+  clust_dist = stats::dist, cluster_by = c("first", "all"),
+  signal = lapply(mats, rowSums), plot_signal = TRUE, name = "Signal",
+  summary = TRUE, source = "HM", scale_method = c("localRms", "localMean",
+  "localNonZeroMean", "PercentileMax", "scalar", "none"), pct = 0.95,
+  scale_factor = rep(1, length(mats)), share_z = TRUE, ticktext = TRUE,
+  xlab = "Position", ...)
 }
 \arguments{
 \item{x}{x axis labels}
@@ -31,13 +34,13 @@ multi_coverage_heatmap(mats, x = iHeatmapR:::default_x(mats[[1]]),
 
 \item{source}{source name in plotly}
 
-\item{scale}{scale rows? or none}
-
 \item{scale_method}{method to use for scaling}
 
 \item{share_z}{share colorbar between heatmaps}
 
 \item{mat}{coverage matrix}
+
+\item{scale}{scale rows? or none}
 }
 \value{
 iHeatmap object

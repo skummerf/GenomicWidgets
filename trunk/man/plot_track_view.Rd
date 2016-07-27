@@ -6,19 +6,19 @@
 Adapted from gChipseq function of the same name. Credit to Jinfeng Liu
 plot genomic coverage along the gene}
 \usage{
-plot_track_view(grl, dat.exon, target.range, genome, ymax, symbol,
-  bg.title = "grey50", colors = NULL, sync = FALSE, type = NULL,
+plot_track_view(cvg.L, target.range, transcripts.gr, genome, ymax, symbol,
+  bg.title = "black", colors = NULL, sync = FALSE, type = NULL,
   scale.group = 1, hm.thresh = 4, scaling = NULL, hm.binsize = 1000,
-  showSNPs = FALSE, snp.gr = NULL, tss.gr = NULL,
-  dtrack.kwargs = list(), gtrack.kwargs = list(), grtrack.kwargs = list(),
-  snptrack.kwargs = list(), ...)
+  snp.gr = NULL, tss.gr = NULL, ucsc = FALSE, gatrack.kwargs = list(),
+  grtrack.kwargs = list(), tsstrack.kwargs = list(),
+  snptrack.kwargs = list(), dtrack.kwargs = list(), plot.kwargs = list())
 }
 \arguments{
-\item{grl}{GRangesList: typically the results of importing wig/bw/... files for each sample}
-
-\item{dat.exon}{data.frame: exon information}
+\item{cvg.L}{GRangesList: typically the results of importing wig/bw/... files for each sample}
 
 \item{target.range}{GRange: range to plot}
+
+\item{transcripts.gr}{data.frame: exon information}
 
 \item{genome}{str: genome build, e.g. hg19, GRCh38, etc.}
 
@@ -36,15 +36,15 @@ plot_track_view(grl, dat.exon, target.range, genome, ymax, symbol,
 
 \item{hm.thresh}{integer-optional: threshold above which a heatmap is plotted. Can change threshold or override with type}
 
-\item{dtrack.kwargs}{list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks}
-
-\item{gtrack.kwargs}{list-optional: additional arguments for GenomeAxisTrack}
-
 \item{grtrack.kwargs}{list-optional: additional arguments for GeneRegionTrack}
 
 \item{snptrack.kwargs}{list-optional: additional arguments for the SNP DataTrack}
 
+\item{dtrack.kwargs}{list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks}
+
 \item{bg.title:}{str-optional: background color for the title panel}
+
+\item{gtrack.kwargs}{list-optional: additional arguments for GenomeAxisTrack}
 }
 \value{
 ptracks list: track objects plotted by Gviz

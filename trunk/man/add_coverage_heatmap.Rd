@@ -5,9 +5,11 @@
 \title{add_coverage_heatmap}
 \usage{
 add_coverage_heatmap(p, mat, x = iHeatmapR:::default_x(mat),
-  groups = p$row_groups, signal = NULL, name = "Signal", summary = TRUE,
-  scale = c("rows", "none"), scale_method = c("normalize", "standardize",
-  "center"), ...)
+  groups = p$row_groups, include = 1000, include_method = c("signal",
+  "first", "random"), signal = rowSums(mat), plot_signal = TRUE,
+  name = "Signal", summary = TRUE, scale_method = c("localRms",
+  "localMean", "localNonZeroMean", "PercentileMax", "scalar", "none"),
+  pct = 0.95, scale_factor = 1, ticktext = TRUE, xlab = "Position", ...)
 }
 \arguments{
 \item{mat}{coverage matrix}
@@ -22,9 +24,9 @@ add_coverage_heatmap(p, mat, x = iHeatmapR:::default_x(mat),
 
 \item{summary}{make summary plot, boolean}
 
-\item{scale}{"rows" or "none"}
-
 \item{scale_method}{"normalize", "standardize", "center"}
+
+\item{scale}{"rows" or "none"}
 }
 \value{
 iHeatmap object
