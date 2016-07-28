@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(TxDb.Mmusculus.BioMart.igis3.0)
 library(plotly)
+tx_data <- load_tx_data(TxDb.Mmusculus.BioMart.igis)
 ```
 
 ```{r}
@@ -17,6 +18,6 @@ source("~/workspace/InternChIP/chipVis/trunk/R/browser_ly.R")
 
 
 ```{r Demo}
-test = GenomicRanges::GRanges("1",IRanges(151469406, 151500922))
-sha = txdb_to_shapes(txdb = TxDb.Mmusculus.BioMart.igis, test)
+test = GenomicRanges::GRanges("2",IRanges(151450000, 151500922))
+plot_tx(txdb = TxDb.Mmusculus.BioMart.igis, range=test, tx_data = tx_data)
 ```
