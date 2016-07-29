@@ -9,15 +9,46 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(TxDb.Mmusculus.BioMart.igis3.0)
 library(plotly)
-tx_data <- load_tx_data(TxDb.Mmusculus.BioMart.igis)
+library(gChipseq)
+library(chipVis)
 ```
 
 ```{r}
 source("~/workspace/InternChIP/chipVis/trunk/R/browser_ly.R")
 ```
 
+```{r}
+# Specify parameters
+info_dir <- "~/workspace/BAP1/"
+s_file <- paste(info_dir, "BAP1_june_2016_samples.txt", sep='')
+p_file <- paste(info_dir, "BAP1_june_2016_pairs.txt", sep='')
+fi <- get_chip_file_info(s_file, p_file)
+symbol <- "RNF2"
+org <- "mouse"
+genome <- "GRCm38"
+```
+
+```{r}
+tx_data <- load_tx_data(TxDb.Mmusculus.BioMart.igis)
+```
+
+```{r}
+range.gene = GenomicRanges::GRanges("2",IRanges(151450000, 151500922))
+# Get the coverage
+input <- fi[2, 'Sample.Control']
+input_idx <- which(fi$Sample.Name==input)
+idx <- c(9,10,15,16,18:23)
+shortened_names <- c(fi[idx[1:length(idx)-1], "Genotype"], "Input")
+
+# Get scaling factor
+sf <- get_scaling_factor(fi[idx,])/1000000
+sf <- sf[2,]
+
+cvg <- get_coverage_in_range(fi[idx, "File.bw"], range.gene, shortened_names, sf)
+```
+
 
 ```{r Demo}
-test = GenomicRanges::GRanges("2",IRanges(151450000, 151500922))
-plot_tx(txdb = TxDb.Mmusculus.BioMart.igis, range=test, tx_data = tx_data)
+make_tracks(TxDb.Mmusculus.BioMart.igis, range.gene, tx_data, cvg)
 ```
+
