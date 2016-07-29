@@ -3,18 +3,49 @@
 #' 
 #' @author Alicia Schep
 #' @export
-aggregate_profile_plot <- function(cvg_mats, 
-                                   positions = colnames(cvg_mats[[1]]),
+aggregate_profile_plot <- function(mats, 
+                                   groups = NULL,
+                                   colors = "Dark2",
+                                   positions = colnames(mats[[1]]),
                                    ylab = "ChIP Signal", 
                                    xlab = "Position",
+                                   scale_method = c("none",
+                                                    "localRms", 
+                                                    "localMean", 
+                                                    "localNonZeroMean", 
+                                                    "PercentileMax", 
+                                                    "scalar"),
+                                   pct = 0.95,
+                                   scale_factor = 1,
                                    showlegend = TRUE){
   
-  col_aggs <- lapply(cvg_mats, colMeans)
+  scale_method = match.arg(scale_method)
+  if (scale_method != "none"){
+    mats <- normalize_coverage_matrix(mats, 
+                                      method = scale_method, 
+                                      pct = pct, 
+                                      scalar = scale_factor)
+  } 
   
-  plot_ly(x = rep(positions, length(col_aggs)),
-          y = unlist(col_aggs, use.names = FALSE),
-          color = rep(names(col_aggs), each = length(positions)),
-          text = rep(names(col_aggs), each = length(positions)),
+  col_aggs <- lapply(mats, colMeans)
+  
+  if (!is.null(groups)){
+    col = rep(groups, each = length(positions))
+  } else{
+    col = rep(names(col_aggs), each = length(positions))
+  }
+  
+  df <- data.frame(x = rep(positions, length(col_aggs)),
+                   y =   unlist(col_aggs, use.names = FALSE),
+                   names = rep(names(col_aggs), each = length(positions)),
+                   col = col)
+  
+  df %>% group_by(names) %>% plot_ly(x = ~x,
+          y = ~y,
+          color = ~col,
+          colors = colors,
+          text = ~names,
+          type = "scatter",
           mode = "lines",
           source = "agg") %>% layout(hovermode = "closest",
                                      xaxis = list(title = xlab),
