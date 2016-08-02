@@ -1,39 +1,3 @@
-get_tx_annotation <- function(txdb, range, tx_data){
-  tx <- transcriptsByOverlaps(txdb, range)
-  tx_names <- tx$tx_name
-  gr <- get_plot_ranges(tx_names, tx_data)
-  if(length(gr)){
-    gr <- biovizBase::addStepping(gr, group.name = "transcript", 
-                                  group.selfish = FALSE)
-  }
-  df <- biovizBase::mold(gr)
-  return(df)
-}
-
-get_plot_ranges <- function(tx_names, tx_data){
-  if(!length(tx_names)){ return(GRanges())}
-  for(n in names(tx_data)){
-    if(length(tx_data[[n]])){
-      tx_subset <- tx_names[tx_names %in% names(tx_data[[n]])]
-      part_gr <- unlist(tx_data[[n]][tx_subset])
-      part_gr$transcript <- names(part_gr)
-      part_gr$feature <- n
-      if(!('exon_name' %in% colnames(mcols(part_gr)))){
-        part_gr$exon_name <- NA
-      }
-      part_gr <- part_gr[, c('transcript', 'feature', 'exon_name')]
-    } else {
-      part_gr <- GRanges()
-    }
-    if(exists("parts_list")){
-      parts_list <- c(parts_list, part_gr)
-    } else {
-      parts_list <- part_gr
-    }
-  }
-  return(parts_list)
-}
-
 make_rect <- function(df, height, y_idx){
   if(nrow(df)>0){
     rect_list <- vector("list", nrow(df))
@@ -67,16 +31,6 @@ make_arrows <- function(df, y_idx){
     arrow_list <- NULL
   }
   return(arrow_list)
-}
-
-load_tx_data <- function(txdb){
-  message("Loading txdb data...")
-  return(list(intron = intronsByTranscript(txdb, use.names=TRUE),
-              utr5 = fiveUTRsByTranscript(txdb, use.names=TRUE),
-              utr3 = threeUTRsByTranscript(txdb, use.names=TRUE),
-              cds = cdsBy(txdb, by='tx', use.names=TRUE),
-              exon = exonsBy(txdb, by='tx', use.names=TRUE))
-  )
 }
 
 make_tracks <- function(txdb, range, tx_data, cvg_gr){
