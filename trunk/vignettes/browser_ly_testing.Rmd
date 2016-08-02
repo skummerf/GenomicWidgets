@@ -33,7 +33,7 @@ tx_data <- load_tx_data(TxDb.Mmusculus.BioMart.igis)
 ```
 
 ```{r}
-range.gene = GenomicRanges::GRanges("2",IRanges(151450000, 151500922))
+range.gene = GenomicRanges::GRanges("3",IRanges(6000, 10000))
 # Get the coverage
 input <- fi[2, 'Sample.Control']
 input_idx <- which(fi$Sample.Name==input)

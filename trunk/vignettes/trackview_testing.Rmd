@@ -18,6 +18,8 @@ library(TxDb.Mmusculus.BioMart.igis3.0)
 ## R Markdown
 
 This is intended to demonstrate how the chipVis package displays local views.
+
+First we load some data to use for visualization
 ```{r Load Data}
 # Specify parameters
 info_dir <- "~/workspace/BAP1/"
@@ -29,6 +31,14 @@ org <- "mouse"
 genome <- "GRCm38"
 ```
 
+
+Next we need to specify the range that will be shown in the track. This can be done
+in one of two ways:
+  1. Get the range of a gene by supplying the gene symbol. This works by finding the transcripts
+     that match the gene symbol and then calculating the corresponding range.
+  2. Set the range manually by specifying a chromosome, start, and end position
+After this the range can be extended, transcript anntotations can be obtained, and the
+relevant coverage from the data samples can be pulled with the appropriate scaling factors.
 ```{r Load BigWig}
 extension <- 150000
 # Create the range for viewing. Can either specify a symbol or a range
@@ -54,15 +64,28 @@ sf <- sf[2,]
 cvg <- get_coverage_in_range(fi[idx, "File.bw"], range.gene, shortened_names, sf)
 ```
 
-
+If available, the user can also load SNP data and TSS data. TSS annotations may be useful
+if there are a lot of transcripts that will be collapsed to save vertical space.
 ```{r Extra annotation Information}
 snps <- readRDS("~/workspace/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
 tss_db <- tssFromTxdb(TxDb.Mmusculus.BioMart.igis)
 ```
 
-
+Now we can plot the track. See the "Trackview Options Demonstration" vignette for a more
+detailed layout of all the options that can be used from GViz.
 ```{r Basic Track}
-grouping <- c("dRNF2-I", "RNF2-I", rep(c('dRNF2', 'RNF2'),4))
-dkwarg <- list(groups=grouping, type=c('heatmap', 'a', 'confin', 'confin'), legend=TRUE, rotation.item=45)
 track_info <- chipVis::plot_track_view(cvg.L = cvg, target.range=range.gene, sync = TRUE, genome=genome, transcripts.gr = full.exon, snp.gr = snps, tss.gr = tss_db)
+```
+
+Additionally, the plotting function can be wrapped into a simpler function that can be called by
+multiple different functions. This provides a central location for modifying the attributes
+of the trackview if it will be used in several places. The function `make_track_function`
+takes all the arguments of `plot_track_view`, in addition to arguments for setup (e.g. the
+coverage file names, scaling factor) so that it can be abstracted away.
+
+```{r Function Abstraction}
+cvg_files <- fi[idx, 'File.bw']
+names(cvg_files) <- fi[idx, 'Genotype']
+ptv <- make_track_function(range.gene, genome, org, cvg_files, sf, symbol, full.exon)
+ptv(range.gene)
 ```

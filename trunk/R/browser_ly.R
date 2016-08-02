@@ -2,8 +2,10 @@ get_tx_annotation <- function(txdb, range, tx_data){
   tx <- transcriptsByOverlaps(txdb, range)
   tx_names <- tx$tx_name
   gr <- get_plot_ranges(tx_names, tx_data)
-  if(!length(gr)){ return(NULL)}
-  gr <- biovizBase::addStepping(gr, group.name = "transcript", group.selfish = FALSE)
+  if(length(gr)){
+    gr <- biovizBase::addStepping(gr, group.name = "transcript", 
+                                  group.selfish = FALSE)
+  }
   df <- biovizBase::mold(gr)
   return(df)
 }
@@ -33,13 +35,17 @@ get_plot_ranges <- function(tx_names, tx_data){
 }
 
 make_rect <- function(df, height, y_idx){
-  rect_list <- vector("list", nrow(df))
-  yref = paste0("y", y_idx)
-  for(e in 1:nrow(df)){
-    row <- df[e, ]
-    rect_list[[e]] <- list(type = "rect", fillcolor = "blue", opacity = 1, line=list(width=0),
-                         x0 = row$start, x1 = row$end, xref = "x",
-                         y0 = row$stepping-height, y1 = row$stepping+height, yref = yref)
+  if(nrow(df)>0){
+    rect_list <- vector("list", nrow(df))
+    yref = paste0("y", y_idx)
+    for(e in 1:nrow(df)){
+      row <- df[e, ]
+      rect_list[[e]] <- list(type = "rect", fillcolor = "blue", opacity = 1, line=list(width=0),
+                           x0 = row$start, x1 = row$end, xref = "x",
+                           y0 = row$stepping-height, y1 = row$stepping+height, yref = yref)
+    }
+  } else {
+    rect_list <- NULL
   }
   return(rect_list)
 }

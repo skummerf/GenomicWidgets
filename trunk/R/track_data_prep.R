@@ -70,8 +70,11 @@ get_coverage_in_range <- function(bwList, target.range, names, scaling.factor=NU
   }
   
   # Name the list
-  if (!missing(names)){
+  if (!missing(names) && !is.null(names)){
     names(cvg.L) <- names
+  } else {
+    warning("Coverage file list supplied without names. Sequential numbering will be used")
+    names(cvg.L) <- seq_along(cvg.L)
   }
   return(cvg.L)
 }

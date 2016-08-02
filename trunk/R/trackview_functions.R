@@ -1,3 +1,55 @@
+#' Title
+#'
+#' @param range 
+#' @param genome 
+#' @param org 
+#' @param cvg_files 
+#' @param scaling_factor 
+#' @param symbol 
+#' @param transcripts.gr 
+#' @param ymax 
+#' @param bg.title 
+#' @param colors 
+#' @param sync 
+#' @param type 
+#' @param scale.group 
+#' @param hm.thresh 
+#' @param scaling 
+#' @param hm.binsize 
+#' @param snp.gr 
+#' @param tss.gr 
+#' @param ucsc 
+#' @param gatrack.kwargs 
+#' @param grtrack.kwargs 
+#' @param tsstrack.kwargs 
+#' @param snptrack.kwargs 
+#' @param dtrack.kwargs 
+#' @param plot.kwargs 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_track_function <- function(range, genome, org, cvg_files, scaling_factor,
+                                symbol, transcripts.gr, ymax, bg.title = 'black', 
+                                colors = NULL, sync = FALSE, type = NULL, 
+                                scale.group = 1, hm.thresh = 4, scaling = NULL, 
+                                hm.binsize = 1000, snp.gr = NULL, tss.gr = NULL,
+                                ucsc = FALSE, gatrack.kwargs=list(),
+                                grtrack.kwargs=list(), tsstrack.kwargs=list(), 
+                                snptrack.kwargs=list(), dtrack.kwargs=list(),
+                                plot.kwargs=list()){
+  plot_tv <- function(range){
+    de <- get_exons(range, genome = genome, org = org)
+    grl <- get_coverage_in_range(cvg_files, range, names = names(cvg_files), scaling.factor = scaling_factor)
+    tl <- plot_track_view(grl, range, transcripts.gr, genome, ymax, symbol, bg.title, colors,
+                          sync, type, scale.group, hm.thresh, scaling, hm.binsize, 
+                          snp.gr, tss.gr, ucsc, gatrack.kwargs, grtrack.kwargs, 
+                          tsstrack.kwargs, snptrack.kwargs, dtrack.kwargs, plot.kwargs)
+  }
+  return(plot_tv)
+}
+
 
 ##' plot genomic coverage along the gene
 ##' Adapted from gChipseq function of the same name. Credit to Jinfeng Liu
@@ -81,6 +133,7 @@ plot_track_view <- function(cvg.L, target.range, transcripts.gr, genome, ymax, s
   return(invisible(ptracks))
 }
 
+# ========================= Minor Helper Functions =============================
 make_title <- function(target.range, chr){
   title <- paste0("Chr", chr, ':', start(target.range), "-", end(target.range))
   return(title)
