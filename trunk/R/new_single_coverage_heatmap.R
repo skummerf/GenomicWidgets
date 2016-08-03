@@ -29,7 +29,8 @@ new_single_coverage_heatmap <- function(mat,
                                     clust_dist = stats::dist,
                                     signal = rowSums(mat, na.rm = TRUE),
                                     plot_signal = TRUE,
-                                    name = "Signal",
+                                    name = "Coverage",
+                                    signal_name = "Aggregate<br>Coverage",
                                     summary = TRUE,
                                     source = "HM",
                                     scale_method = c("localRms", 
@@ -126,7 +127,7 @@ new_single_coverage_heatmap <- function(mat,
     p <- p %>% add_row_dendro(dendro, side = "left")
   }    
   if (plot_signal){
-    p <- p %>% add_row_signal(signal, "Total Signal")
+    p <- p %>% add_row_signal(signal, signal_name)
   }
   if (summary){
     p <- p %>% add_col_summary(groups = groups, showlegend = FALSE)
@@ -157,7 +158,8 @@ add_coverage_heatmap <- function(p,
                                  include_method = c("signal","first","random"),
                                  signal = rowSums(mat),
                                  plot_signal = TRUE,
-                                 name = "Signal",
+                                 name = "Coverage",
+                                 signal_name = "Aggregate<br>Coverage",
                                  summary = TRUE,
                                  scale_method = c("localRms", 
                                                   "localMean", 
@@ -232,7 +234,7 @@ add_coverage_heatmap <- function(p,
   
   
   if (plot_signal){
-    p <- p %>% add_row_signal(signal, "Total Signal")
+    p <- p %>% add_row_signal(signal, signal_name)
   }
   if (summary){
     p <- p %>% add_col_summary(groups, showlegend = FALSE)
@@ -273,7 +275,8 @@ multi_coverage_heatmap <- function(mats,
                                         cluster_by = c("first","all"), 
                                         signal = lapply(mats, rowSums),
                                    plot_signal = TRUE, 
-                                        name = "Signal",
+                                   name = "Coverage",
+                                   signal_name = "Aggregate<br>Coverage",
                                         summary = TRUE,
                                         source = "HM",
                                    scale_method = c("localRms", 
@@ -407,7 +410,7 @@ multi_coverage_heatmap <- function(mats,
     p <- p %>% add_col_summary(groups, showlegend = FALSE)
   }  
   if (plot_signal){
-    p <- p %>% add_row_signal(signal[[1]], "Total Signal")
+    p <- p %>% add_row_signal(signal[[1]], paste(names(mats)[1],signal_name,sep = "<br>"))
   }
   
   p <- p %>% add_x_axis_title(names(mats)[1], side = "top")
@@ -430,7 +433,7 @@ multi_coverage_heatmap <- function(mats,
       
       
       if (plot_signal){
-        p <- p %>% add_row_signal(signal[[i]], "Total Signal")
+        p <- p %>% add_row_signal(signal[[i]], paste(names(mats)[i],signal_name,sep = "<br>"))
       }
       if (summary){
         summary_yaxis = gsub("yaxis","y",names(p$data$xaxis)[which(sapply(p$data$xaxis, 
