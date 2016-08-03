@@ -40,14 +40,14 @@ get_sample_names <- function(file_info){
 #' Title
 #'
 #' @param file_info 
-#' @param name.vector 
+#' @param name_vector 
 #'
 #' @return
 #' @export
 #'
 #' @examples
-add_short_names <- function(file_info, name.vector){
-  file_info <- data.frame(append(file_info, list("Short.Name"=name.vector), 
+add_short_names <- function(file_info, name_vector){
+  file_info <- data.frame(append(file_info, list("Short.Name"=name_vector), 
                                  after=match("Sample.Name", names(file_info))))
   return(file_info)
 }

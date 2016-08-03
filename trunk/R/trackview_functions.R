@@ -1,51 +1,72 @@
 #' Title
 #'
-#' @param range 
-#' @param genome 
-#' @param org 
+#' @param target_range 
 #' @param cvg_files 
-#' @param scaling_factor 
-#' @param symbol 
-#' @param transcripts.gr 
-#' @param ymax 
-#' @param bg.title 
+#' @param genome 
+#' @param db_object 
+#' @param tx_data 
+#' @param bg_title 
 #' @param colors 
-#' @param sync 
 #' @param type 
-#' @param scale.group 
-#' @param hm.thresh 
-#' @param scaling 
-#' @param hm.binsize 
-#' @param snp.gr 
-#' @param tss.gr 
+#' @param hm_thresh 
+#' @param cvg_scaling 
+#' @param hm_binsize 
+#' @param snp_gr 
+#' @param tss_gr 
 #' @param ucsc 
-#' @param gatrack.kwargs 
-#' @param grtrack.kwargs 
-#' @param tsstrack.kwargs 
-#' @param snptrack.kwargs 
-#' @param dtrack.kwargs 
-#' @param plot.kwargs 
+#' @param gatrack_kwargs 
+#' @param grtrack_kwargs 
+#' @param tsstrack_kwargs 
+#' @param snptrack_kwargs 
+#' @param dtrack_kwargs 
+#' @param plot_kwargs 
 #'
 #' @return
 #' @export
 #'
 #' @examples
-make_track_function <- function(range, genome, org, cvg_files, scaling_factor,
-                                symbol, transcripts.gr, ymax, bg.title = 'black', 
-                                colors = NULL, sync = FALSE, type = NULL, 
-                                scale.group = 1, hm.thresh = 4, scaling = NULL, 
-                                hm.binsize = 1000, snp.gr = NULL, tss.gr = NULL,
-                                ucsc = FALSE, gatrack.kwargs=list(),
-                                grtrack.kwargs=list(), tsstrack.kwargs=list(), 
-                                snptrack.kwargs=list(), dtrack.kwargs=list(),
-                                plot.kwargs=list()){
+make_track_function <- function(target_range, cvg_files, genome, db_object, tx_data,
+                                cvg_scaling = NULL,
+                                bg_title = 'black', 
+                                colors = NULL, 
+                                type = NULL, 
+                                hm_thresh = 4,
+                                hm_binsize = 1000,
+                                hm_scaling = NULL,
+                                snp_gr = NULL, 
+                                tss_gr = NULL, 
+                                ucsc = FALSE, 
+                                gatrack_kwargs=list(),
+                                grtrack_kwargs=list(), 
+                                tsstrack_kwargs=list(), 
+                                snptrack_kwargs=list(), 
+                                dtrack_kwargs=list(), 
+                                plot_kwargs = list()){
   plot_tv <- function(range){
-    de <- get_exons(range, genome = genome, org = org)
-    grl <- get_coverage_in_range(cvg_files, range, names = names(cvg_files), scaling.factor = scaling_factor)
-    tl <- plot_track_view(grl, range, transcripts.gr, genome, ymax, symbol, bg.title, colors,
-                          sync, type, scale.group, hm.thresh, scaling, hm.binsize, 
-                          snp.gr, tss.gr, ucsc, gatrack.kwargs, grtrack.kwargs, 
-                          tsstrack.kwargs, snptrack.kwargs, dtrack.kwargs, plot.kwargs)
+    exon_data <- get_tx_annotation(db_object = txdb, 
+                                   range = view_range, 
+                                   tx_data = tx_data,
+                                   no_introns=TRUE)
+    cvg_list <- get_coverage_in_range(bwList = cvg_files,
+                                      target_range = target_range, 
+                                      names = names(cvg_files), 
+                                      cvg_scaling = cvg_scaling)
+    tl <- plot_track_view(cvg_list, target_range, exon_data, genome,
+                          bg_title = bg_title,
+                          colors = colors, 
+                          type = type, 
+                          hm_thresh = hm_thresh,
+                          hm_binsize = hm_binsize,
+                          hm_scaling = hm_scaling,
+                          snp_gr = snp_gr, 
+                          tss_gr = tss_gr, 
+                          ucsc = ucsc, 
+                          gatrack_kwargs = gatrack_kwargs,
+                          grtrack_kwargs = grtrack_kwargs,
+                          tsstrack_kwargs = tsstrack_kwargs,
+                          snptrack_kwargs = snptrack_kwargs, 
+                          dtrack_kwargs = dtrack_kwargs, 
+                          plot_kwargs = plot_kwargs)
   }
   return(plot_tv)
 }
@@ -55,68 +76,95 @@ make_track_function <- function(range, genome, org, cvg_files, scaling_factor,
 ##' Adapted from gChipseq function of the same name. Credit to Jinfeng Liu
 ##' plot genomic coverage along the gene
 ##'
-##' @param cvg.L GRangesList: typically the results of importing wig/bw/... files for each sample
-##' @param transcripts.gr data.frame: exon information
-##' @param target.range GRange: range to plot 
+##' @param cvg_list GRangesList: typically the results of importing wig/bw/... files for each sample
+##' @param target_range GRange: range to plot 
+##' @param exon_data data.frame: exon information
 ##' @param genome str: genome build, e.g. hg19, GRCh38, etc.
-##' @param ymax vector-optional: ymax for the data tracks
-##' @param symbol str-optional: symbol to plot
-##' @param bg.title: str-optional: background color for the title panel
+##' @param bg_title 
 ##' @param colors str-optional: colors for coverage data tracks
-##' @param sync logical-optional: whether to sync the ymax for all data tracks
-##' @param scale.group scalar-optional: groups to use the same y scale
-##' @param hm.thresh integer-optional: threshold above which a heatmap is plotted. Can change threshold or override with type
 ##' @param type str-optional: type of datatrack to plot. Currently only 'hist' and 'heatmap' are supported
-##' @param dtrack.kwargs list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks
-##' @param gtrack.kwargs list-optional: additional arguments for GenomeAxisTrack
-##' @param grtrack.kwargs list-optional: additional arguments for GeneRegionTrack
-##' @param snptrack.kwargs list-optional: additional arguments for the SNP DataTrack
+##' @param hm_thresh integer-optional: threshold above which a heatmap is plotted. Can change threshold or override with type
+##' @param scaling 
+##' @param hm_binsize 
+##' @param snp_gr 
+##' @param tss_gr 
+##' @param ucsc 
+##' @param gatrack_kwargs 
+##' @param grtrack_kwargs list-optional: additional arguments for GeneRegionTrack
+##' @param tsstrack_kwargs 
+##' @param snptrack_kwargs list-optional: additional arguments for the SNP DataTrack
+##' @param dtrack_kwargs list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks
+##' @param plot_kwargs 
 ##'
 ##' @return ptracks list: track objects plotted by Gviz
 ##' @import Gviz gChipseq RColorBrewer
 ##' @export
 ##' @author Justin Finkle
-plot_track_view <- function(cvg.L, target.range, transcripts.gr, genome, ymax, symbol,
-                            bg.title = 'black', colors = NULL, sync = FALSE,
-                            type = NULL, scale.group = 1, hm.thresh = 4,
-                            scaling = NULL, hm.binsize = 1000, snp.gr = NULL, 
-                            tss.gr = NULL, ucsc = FALSE, gatrack.kwargs=list(),
-                            grtrack.kwargs=list(), tsstrack.kwargs=list(), 
-                            snptrack.kwargs=list(), dtrack.kwargs=list(), 
-                            plot.kwargs = list()) {
+plot_track_view <- function(cvg_list, target_range, exon_data, genome,
+                            bg_title = 'black', 
+                            colors = NULL, 
+                            type = NULL, 
+                            hm_thresh = 4,
+                            hm_binsize = 1000, 
+                            hm_scaling = NULL,
+                            snp_gr = NULL, 
+                            tss_gr = NULL, 
+                            ucsc = FALSE, 
+                            gatrack_kwargs=list(),
+                            grtrack_kwargs=list(), 
+                            tsstrack_kwargs=list(), 
+                            snptrack_kwargs=list(), 
+                            dtrack_kwargs=list(), 
+                            plot_kwargs = list()) {
   # Initialize
-  chr <- as.character(seqnames(target.range))
+  chr <- as.character(seqnames(target_range))
   options(ucscChromosomeNames = ucsc)
-  main.title <- make_title(target.range, chr)
+  main_title <- make_title(target_range = target_range, 
+                           chr = chr)
   snptrack <- NULL
   tssTrack <- NULL
   
   # Decide the type of datatrack to plot if not provided
   if(is.null(type)){
-    type <- ifelse(length(cvg.L)>hm.thresh, "heatmap", "hist")
+    type <- ifelse(length(cvg_list) > hm_thresh, "heatmap", "hist")
   }
   
   # Make tracks
-  dtrack <- make_data_tracks(cvg.L, target.range, genome, chr = chr, bg.title, 
-                             ymax = ymax, scale.group = scale.group, sync = sync,
-                             type=type, kwargs = dtrack.kwargs, colors = colors,
-                             scaling = scaling, binwidth = hm.binsize)
+  dtrack <- make_data_tracks(cvg_list = cvg_list, 
+                             gr = target_range, 
+                             genome = genome, 
+                             chr = chr, 
+                             bg_title = bg_title, 
+                             type=type, 
+                             colors = colors,
+                             binwidth = hm_binsize,
+                             hm_scaling = hm_scaling,
+                             kwargs = dtrack_kwargs)
   
   # Add genome tracks
-  gtrack <- make_gatrack(kwargs = gatrack.kwargs)
-  grtrack <- make_grtrack(transcripts.gr, genome, chr, kwargs = grtrack.kwargs)
+  gatrack <- make_gatrack(kwargs = gatrack_kwargs)
+  grtrack <- make_grtrack(exon_data = exon_data, 
+                          genome = genome, 
+                          chr = chr, 
+                          kwargs = grtrack_kwargs)
   
-  if(!is.null(snp.gr)){
-    snptrack <- make_snp_track(snp.gr, target.range, kwargs = snptrack.kwargs)
+  if(!is.null(snp_gr)){
+    snptrack <- make_snp_track(snp_gr = snp_gr,
+                               target_range = target_range, 
+                               kwargs = snptrack_kwargs)
   }
   
-  if(!is.null(tss.gr)){
-    tssTrack <- make_tss_track(tss.gr, target.range, chr, kwargs = tsstrack.kwargs)
+  if(!is.null(tss_gr)){
+    tssTrack <- make_tss_track(tss = tss_gr,
+                               target_range = target_range,
+                               chr = chr, 
+                               kwargs = tsstrack_kwargs)
   }
   
   # Add tracks
   tracklist <- list()
-  tracklist <- c(gtrack, grtrack, tssTrack, snptrack, dtrack)
+  tracklist <- c(GeneAxis=gatrack, GeneRegion=grtrack, 
+                 TSS=tssTrack, SNP=snptrack, dtrack)
   
   # Confirm that all tracks have the same chromosome before plotting
   chr_list <- unlist(lapply(tracklist, chr_check))
@@ -125,17 +173,20 @@ plot_track_view <- function(cvg.L, target.range, transcripts.gr, genome, ymax, s
   }
   
   # Plot tracks
-  plot.defaults <- list(trackList = tracklist, main = main.title, chromosome = chr,
-                        from = start(target.range), to = end(target.range),
+  plot_defaults <- list(trackList = tracklist, 
+                        main = main_title, 
+                        chromosome = chr,
+                        from = start(target_range), 
+                        to = end(target_range),
                         cex.main = 1)
-  plot.params <- modifyList(plot.defaults, plot.kwargs)
+  plot.params <- modifyList(plot_defaults, plot_kwargs)
   ptracks <- do.call(Gviz::plotTracks, plot.params)
   return(invisible(ptracks))
 }
 
 # ========================= Minor Helper Functions =============================
-make_title <- function(target.range, chr){
-  title <- paste0("Chr", chr, ':', start(target.range), "-", end(target.range))
+make_title <- function(target_range, chr){
+  title <- paste0("Chr", chr, ':', start(target_range), "-", end(target_range))
   return(title)
 }
 

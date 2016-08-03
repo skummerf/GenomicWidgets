@@ -7,11 +7,9 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(chipVis)
 library(gChipseq)
+library(chipVis)
 library(rtracklayer)
-library(TxDb.Hsapiens.BioMart.igis)
-library(SNPlocs.Hsapiens.dbSNP141.GRCh38)
 library(TxDb.Mmusculus.BioMart.igis3.0)
 ```
 
@@ -29,6 +27,8 @@ fi <- get_chip_file_info(s_file, p_file)
 symbol <- "RNF2"
 org <- "mouse"
 genome <- "GRCm38"
+tx_data <- load_tx_data(TxDb.Mmusculus.BioMart.igis)
+txdb <- TxDb.Mmusculus.BioMart.igis
 ```
 
 
@@ -42,14 +42,16 @@ relevant coverage from the data samples can be pulled with the appropriate scali
 ```{r Load BigWig}
 extension <- 150000
 # Create the range for viewing. Can either specify a symbol or a range
-# range.gene <- get_view_range(symbol, org, genome)
-range.gene <- get_view_range(chr = 1, start=159758000, end=159758000)
+# view_range <- get_view_range(tx_data = tx_data, db_object = txdb, symbol = symbol, 
+                             # keytype = "SYMBOL")
+view_range <- get_view_range(chr = 1, start=159758000, end=159758000)
 
 # Extend the region if desired
-range.gene <- extend_grange(range.gene, extension)
+view_range <- extend_grange(view_range, extension)
 
 # Get the exon list
-full.exon <- chipVis::get_exons(range.gene, org=org, genome=genome)
+exon_data <- get_tx_annotation(db_object = txdb, range = view_range, 
+                               tx_data = tx_data, no_introns=TRUE)
 
 # Get the coverage
 input <- fi[2, 'Sample.Control']
@@ -61,20 +63,22 @@ shortened_names <- c(fi[idx[1:length(idx)-1], "Genotype"], "Input")
 sf <- get_scaling_factor(fi[idx,])/1000000
 sf <- sf[2,]
 
-cvg <- get_coverage_in_range(fi[idx, "File.bw"], range.gene, shortened_names, sf)
+cvg <- get_coverage_in_range(fi[idx, "File.bw"], view_range, shortened_names, sf)
 ```
 
 If available, the user can also load SNP data and TSS data. TSS annotations may be useful
 if there are a lot of transcripts that will be collapsed to save vertical space.
 ```{r Extra annotation Information}
 snps <- readRDS("~/workspace/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
-tss_db <- tssFromTxdb(TxDb.Mmusculus.BioMart.igis)
+tss_db <- tssFromTxdb(txdb)
 ```
 
 Now we can plot the track. See the "Trackview Options Demonstration" vignette for a more
 detailed layout of all the options that can be used from GViz.
 ```{r Basic Track}
-track_info <- chipVis::plot_track_view(cvg.L = cvg, target.range=range.gene, sync = TRUE, genome=genome, transcripts.gr = full.exon, snp.gr = snps, tss.gr = tss_db)
+track_info <- plot_track_view(cvg_list = cvg, target_range = view_range, 
+                              genome=genome, exon_data = exon_data, 
+                              snp_gr = snps, tss_gr = tss_db)
 ```
 
 Additionally, the plotting function can be wrapped into a simpler function that can be called by
@@ -86,6 +90,8 @@ coverage file names, scaling factor) so that it can be abstracted away.
 ```{r Function Abstraction}
 cvg_files <- fi[idx, 'File.bw']
 names(cvg_files) <- fi[idx, 'Genotype']
-ptv <- make_track_function(range.gene, genome, org, cvg_files, sf, symbol, full.exon)
-ptv(range.gene)
+ptv <- make_track_function(target_range = view_range, cvg_files = cvg_files,
+                           genome = genome, db_object = txdb, tx_data = tx_data,
+                           cvg_scaling = sf, plot_kwargs = list(sizes=c(0.2, 0.3, 0.3)), grtrack_kwargs = list(stacking='squish'))
+ptv(view_range)
 ```
