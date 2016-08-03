@@ -1,3 +1,9 @@
+default_end <- function(x){
+  stopifnot(length(x) > 2)
+  end = as.numeric(x[length(x)]) + as.numeric(x[2]) - as.numeric(x[1])
+  as.character(end)
+}
+
 #' new_single_coverage_heatmap
 #' @param mat coverage matrix
 #' @param x x axis labels
@@ -21,7 +27,7 @@ new_single_coverage_heatmap <- function(mat,
                                     k = NULL,
                                     groups = NULL,
                                     clust_dist = stats::dist,
-                                    signal = rowSums(mat),
+                                    signal = rowSums(mat, na.rm = TRUE),
                                     plot_signal = TRUE,
                                     name = "Signal",
                                     summary = TRUE,
@@ -35,6 +41,8 @@ new_single_coverage_heatmap <- function(mat,
                                     pct = 0.95,
                                     scale_factor = 1, 
                                     ticktext = TRUE,
+                                    start = x[1],
+                                    end = default_end(x),     
                                     xlab = "Position",
                                     ...){
   
@@ -51,7 +59,7 @@ new_single_coverage_heatmap <- function(mat,
   
   if (include < nrow(mat)){
     if (include_method  == "signal"){
-      keep <- which(signal >= quantile(signal, (length(signal) - include) / length(signal)))
+      keep <- which(signal >= quantile(signal, (length(signal) - include) / length(signal), na.rm = TRUE))
     } else if (include_method == "first"){
       keep <- 1:include
     } else if (include_method == "random"){
@@ -94,11 +102,11 @@ new_single_coverage_heatmap <- function(mat,
   if (isTRUE(ticktext)){
     if ("0" %in% x){
       tickvals = c(0, which(x == "0") - 1, ncol(mat) - 1)
+      ticktext = c(start, "0",end)
     } else{
       tickvals = c(0, ncol(mat) - 1)
+      ticktext = c(start, end)
     }
-  
-    ticktext = x[tickvals + 1]
   
     p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
   
@@ -121,7 +129,7 @@ new_single_coverage_heatmap <- function(mat,
     p <- p %>% add_row_signal(signal, "Total Signal")
   }
   if (summary){
-    p <- p %>% add_col_summary(groups, showlegend = FALSE)
+    p <- p %>% add_col_summary(groups = groups, showlegend = FALSE)
   }
   
   p$row_groups <- groups
@@ -160,6 +168,8 @@ add_coverage_heatmap <- function(p,
                                  pct = 0.95,
                                  scale_factor = 1, 
                                  ticktext = TRUE,
+                                 start = x[1],
+                                 end = default_end(x),     
                                  xlab = "Position",
                                  ...){
   
@@ -203,11 +213,11 @@ add_coverage_heatmap <- function(p,
   if (isTRUE(ticktext)){
     if ("0" %in% x){
       tickvals = c(0, which(x == "0") - 1, ncol(mat) - 1)
+      ticktext = c(start, "0",end)
     } else{
       tickvals = c(0, ncol(mat) - 1)
+      ticktext = c(start, end)
     }
-    
-    ticktext = x[tickvals + 1]
     
     p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
     
@@ -276,6 +286,8 @@ multi_coverage_heatmap <- function(mats,
                                    scale_factor = rep(1, length(mats)), 
                                    share_z = TRUE,
                                    ticktext = TRUE,
+                                   start = x[1],
+                                   end = default_end(x),     
                                    xlab = "Position",
                                         ...){
   
@@ -369,12 +381,12 @@ multi_coverage_heatmap <- function(mats,
   
   if (isTRUE(ticktext)){
     if ("0" %in% x){
-      tickvals = c(0, which(x == "0") - 1, ncol(mats[[1]]) - 1)
+      tickvals = c(0, which(x == "0") - 1, ncol(mat) - 1)
+      ticktext = c(start, "0",end)
     } else{
-      tickvals = c(0, ncol(mats[[1]]) - 1)
+      tickvals = c(0, ncol(mat) - 1)
+      ticktext = c(start, end)
     }
-    
-    ticktext = x[tickvals + 1]
     
     p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
     
