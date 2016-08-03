@@ -17,16 +17,16 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r libraries, message = FALSE, warning=FALSE, error=FALSE, cache = FALSE}
 require(gChipseq)
 require(chipVis)
-require(iHeatmapR)
-require(plotly)
 require(TxDb.Mmusculus.BioMart.igis)
+require(plotly)
+require(iHeatmapR)
 BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
 ```
 
 ```{r inputs, message = FALSE, warning=FALSE, error=FALSE, cache = TRUE}
 
-file.sample <- "~/workspace/BAP1_Data/BAP1_june_2016_samples.txt"
-file.pair <- "~/workspace/BAP1_Data/BAP1_june_2016_pairs.txt"
+file.sample <- "/gne/research/workspace/schepa/BAP1_Data/BAP1_june_2016_samples.txt"
+file.pair <- "/gne/research/workspace/schepa/BAP1_Data/BAP1_june_2016_pairs.txt"
 
 samples <- read.table(file.sample,as.is=TRUE,header=TRUE)
 samples_exp <- expandSampleTable(samples)
@@ -173,14 +173,11 @@ aggregate_profile_plot(cvg_mats) %>% layout(margin = list(r = 200, b = 100))
 
 ```{r}
 
-e <- readRDS("~/workspace/BAP1_Data/esetRPKM.RDS")
+e <- readRDS("/gne/research/workspace/schepa/BAP1_Data/esetRPKM.RDS")
 
 e <- e[which(substr(fData(e)$chr,1,3) == "chr"),]
 fData(e)$chr <- sapply(fData(e)$chr, function(x) substr(x, 4, nchar(x)))
 e <- e[which(fData(e)$chr %in% c(1:22,"X")),]
-
-#source("~/workspace/chipVis/R/signal_heatmap.R")
-#source("~/workspace/chipVis/R/plot_utils.R")
 
 p1 = simple_heatmap(log10(exprs(e)[1:500,] + 1), 
                      y = as.character(fData(e)$symbol[1:500]), 

@@ -1,0 +1,107 @@
+---
+title: "Untitled"
+runtime: shiny
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=TRUE}
+knitr::opts_chunk$set(echo = TRUE, cache=TRUE, autodep=TRUE)
+library(gChipseq)
+library(chipVis)
+library(TxDb.Hsapiens.BioMart.igis3.0)
+library(plotly)
+library(iHeatmapR)
+BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
+```
+
+``` {r Load Data}
+info_dir <- "/gne/research/workspace/rinaldj1/projects/bulkChipPipeline/data/CARROLL_PR/data/"
+s_file <- paste(info_dir, "samples.txt", sep='')
+p_file <- paste(info_dir, "pairs.txt", sep='')
+fi <- chipVis::get_chip_file_info(s_file, p_file)
+org <- "human"
+genome <- "GRCh38"
+
+anno <- readr::read_csv("/gne/research/workspace/rinaldj1/projects/bulkChipPipeline/data/CARROLL_PR/datDex.csv")[,c("run","sample_attribute")]
+
+sample_attributes = lapply(strsplit(anno$sample_attribute, split = "||", fixed = TRUE),
+                           function(x) setNames(lapply(x, function(y) stringr::str_trim(strsplit(y,":")[[1]][2])),
+                                                stringr::str_trim(sapply(x, function(y) strsplit(y,":")[[1]][1]))))
+
+sample_attributes_df <- plyr::ldply(sample_attributes, data.frame, stringsAsFactors = FALSE)
+
+fi_attributes <- as.data.frame(t(sapply(fi$Sample.Name, function(x){
+  if (x %in% anno$run){
+    return(sample_attributes_df[which(anno$run == x), ])
+  } else{
+    return(sample_attributes_df[grep(x,sample_attributes_df$source_name)[1], ])
+  }
+})))
+
+fi <- cbind(fi, fi_attributes)
+
+# Get scaling factors based on library size
+sf <- chipVis::get_scaling_factor(fi)[2,]/1000000
+
+```
+  
+  
+```{r}
+rpkmEset <- readRDS("/gne/research/workspace/schepa/Carroll_Data/GSE68358.rpkmEset.Rds")
+
+
+```
+  
+  
+#Get MCF7 Progesterone  
+  
+```{r MCF7_tss_cvg}
+MCF7 = list(
+  MCF7_ER_Full_Media_3hr  = which(fi_attributes$source_name == "MCF7_ER_Full_Media_3hr"),
+  MCF7_ER_Progesterone_3hr = which(fi_attributes$source_name == "MCF7_ER_Progesterone_3hr"),
+  MCF7_ER_R5020_3hr = which(fi_attributes$source_name == "MCF7_ER_R5020_3hr"),
+  
+  MCF7_PR_Full_Media_3hr  = which(fi_attributes$source_name == "MCF7_PR_Full_Media_3hr"),
+  MCF7_PR_Progesterone_3hr = which(fi_attributes$source_name == "MCF7_PR_Progesterone_3hr"),
+  MCF7_PR_R5020_3hr = which(fi_attributes$source_name == "MCF7_PR_R5020_3hr"),
+  
+  MCF7_p300_Full_Media_3hr  = which(fi_attributes$source_name == "MCF7_p300_Full_Media_3hr"),
+  MCF7_p300_Progesterone_3hr = which(fi_attributes$source_name == "MCF7_p300_Progesterone_3hr"),
+  MCF7_p300_R5020_3hr = which(fi_attributes$source_name == "MCF7_p300_R5020_3hr")
+)
+
+tss <- tssFromTxdb(txdb = TxDb.Hsapiens.BioMart.igis)
+unique_tss <- unique(tss) #Remove same positions
+
+peaks <- lapply( fi$File.macs[unlist(MCF7)], readMacsPeaks, fc=5, minTags=10, fdr=0.01)
+peaks <- peaks[!sapply(peaks, is.null)]
+
+merged_peaks <- reduce(do.call(c, peaks))
+
+tss_in_peaks <- subsetByOverlaps(unique_tss, merged_peaks, maxgap = 0)
+
+tss_cvg_mats <- lapply(MCF7, function(x){
+  tmp <- make_coverage_matrix(inputs = fi$File.bam[x],
+                                  ranges = tss_in_peaks,
+                                  binsize = 25,
+                                  up = 1000,
+                                  down = 1000)
+  out <- Reduce("+", tmp) / length(tmp)
+  return(out)
+})
+
+```
+
+
+
+```{r}
+new_single_coverage_heatmap(tss_cvg_mats[[1]], row_order = "signal", y = tss_in_peaks$names)
+```
+
+```{r}
+MCF7_ER_tss_cvg_mats = tss_cvg_mats[1:3]
+names(MCF7_ER_tss_cvg_mats) = c("Control","Pr","Syn. Pr")
+multi_coverage_heatmap(MCF7_ER_tss_cvg_mats, row_order = "kmeans", y = tss_in_peaks$names, k = 3)
+```
+
+
