@@ -30,7 +30,7 @@ new_single_coverage_heatmap <- function(mat,
                                     signal = rowSums(mat, na.rm = TRUE),
                                     plot_signal = TRUE,
                                     name = "Coverage",
-                                    signal_name = "Aggregate<br>Coverage",
+                                    signal_name = "Aggregate",
                                     summary = TRUE,
                                     source = "HM",
                                     scale_method = c("localRms", 
@@ -45,6 +45,7 @@ new_single_coverage_heatmap <- function(mat,
                                     start = x[1],
                                     end = default_end(x),     
                                     xlab = "Position",
+                                    font = list(size = 8),
                                     ...){
   
   # TO DO: Add argument check
@@ -109,15 +110,15 @@ new_single_coverage_heatmap <- function(mat,
       ticktext = c(start, end)
     }
   
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
   
   } else if (!is.null(ticktext) && ticktext != FALSE){
     tickvals = which(x %in% ticktext) - 1
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
   }
   
   if (is.character(xlab) && nchar(xlab) > 0){
-    p <- p %>% add_x_axis_title(xlab)
+    p <- p %>% add_x_axis_title(xlab, font = font)
   }
   
   if (!is.null(groups)){
@@ -127,14 +128,17 @@ new_single_coverage_heatmap <- function(mat,
     p <- p %>% add_row_dendro(dendro, side = "left")
   }    
   if (plot_signal){
-    p <- p %>% add_row_signal(signal, signal_name)
+    p <- p %>% add_row_signal(signal, signal_name, 
+                              x_layout = list(font = font))
   }
   if (summary){
-    p <- p %>% add_col_summary(groups = groups, showlegend = FALSE)
+    p <- p %>% add_col_summary(groups = groups, showlegend = FALSE,
+                               y_layout = list(font = font))
   }
   
   p$row_groups <- groups
   
+  p$layout$font <- font
   return(p)
 }
 
@@ -159,7 +163,7 @@ add_coverage_heatmap <- function(p,
                                  signal = rowSums(mat),
                                  plot_signal = TRUE,
                                  name = "Coverage",
-                                 signal_name = "Aggregate<br>Coverage",
+                                 signal_name = "Aggregate",
                                  summary = TRUE,
                                  scale_method = c("localRms", 
                                                   "localMean", 
@@ -173,6 +177,7 @@ add_coverage_heatmap <- function(p,
                                  start = x[1],
                                  end = default_end(x),     
                                  xlab = "Position",
+                                 font = list(size = 8),
                                  ...){
   
   
@@ -221,11 +226,14 @@ add_coverage_heatmap <- function(p,
       ticktext = c(start, end)
     }
     
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals,
+                                 font = font)
     
   } else if (!is.null(ticktext) && ticktext != FALSE){
     tickvals = which(x %in% ticktext) - 1
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, 
+                                 tickvals = tickvals,
+                                 font = font)
   }
   
   if (is.character(xlab) && nchar(xlab) > 0){
@@ -234,12 +242,14 @@ add_coverage_heatmap <- function(p,
   
   
   if (plot_signal){
-    p <- p %>% add_row_signal(signal, signal_name)
+    p <- p %>% add_row_signal(signal, signal_name, 
+                              x_layout = list(font = font))
   }
   if (summary){
-    p <- p %>% add_col_summary(groups, showlegend = FALSE)
+    p <- p %>% add_col_summary(groups, showlegend = FALSE, y_layout = list(font = font))
   }
   
+  p$layout$font <- font
   return(p)
 
 }
@@ -276,7 +286,7 @@ multi_coverage_heatmap <- function(mats,
                                         signal = lapply(mats, rowSums),
                                    plot_signal = TRUE, 
                                    name = "Coverage",
-                                   signal_name = "Aggregate<br>Coverage",
+                                   signal_name = "Aggregate",
                                         summary = TRUE,
                                         source = "HM",
                                    scale_method = c("localRms", 
@@ -292,6 +302,7 @@ multi_coverage_heatmap <- function(mats,
                                    start = x[1],
                                    end = default_end(x),     
                                    xlab = "Position",
+                                   font = list(size = 8),
                                         ...){
   
   # TO DO: Add argument check
@@ -384,36 +395,37 @@ multi_coverage_heatmap <- function(mats,
   
   if (isTRUE(ticktext)){
     if ("0" %in% x){
-      tickvals = c(0, which(x == "0") - 1, ncol(mat) - 1)
+      tickvals = c(0, which(x == "0") - 1, ncol(mats[[1]]) - 1)
       ticktext = c(start, "0",end)
     } else{
-      tickvals = c(0, ncol(mat) - 1)
+      tickvals = c(0, ncol(mats[[1]]) - 1)
       ticktext = c(start, end)
     }
     
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
     
   } else if (!is.null(ticktext) && ticktext != FALSE){
     tickvals = which(x %in% ticktext) - 1
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
   } else{
     tickvals <- NULL
   }
   
   if (is.character(xlab) && nchar(xlab) > 0){
-    p <- p %>% add_x_axis_title(xlab)
+    p <- p %>% add_x_axis_title(xlab, font = font)
   } else{
     xlab <- NULL
   }
 
   if (summary){
-    p <- p %>% add_col_summary(groups, showlegend = FALSE)
+    p <- p %>% add_col_summary(groups, showlegend = FALSE, y_layout = list(font = font))
   }  
   if (plot_signal){
-    p <- p %>% add_row_signal(signal[[1]], paste(names(mats)[1],signal_name,sep = "<br>"))
+    p <- p %>% add_row_signal(signal[[1]], paste(names(mats)[1],signal_name,sep = "<br>"), 
+                              x_layout = list(font = font))
   }
   
-  p <- p %>% add_x_axis_title(names(mats)[1], side = "top")
+  p <- p %>% add_x_axis_title(names(mats)[1], side = "top", font = font)
   
   if (length(mats) > 1){
     for (i in 2:length(mats)){
@@ -433,22 +445,22 @@ multi_coverage_heatmap <- function(mats,
       
       
       if (plot_signal){
-        p <- p %>% add_row_signal(signal[[i]], paste(names(mats)[i],signal_name,sep = "<br>"))
+        p <- p %>% add_row_signal(signal[[i]], paste(names(mats)[i],signal_name,sep = "<br>"), 
+                                  x_layout = list(font = font))
       }
       if (summary){
         summary_yaxis = gsub("yaxis","y",names(p$data$xaxis)[which(sapply(p$data$xaxis, 
                                                                           function(x) x$type)=="col_summary")])
-        print(summary_yaxis)
         p <- p %>% add_col_summary(groups, showlegend = FALSE, yaxis = summary_yaxis)
       }
       
       if (!is.null(tickvals)){
-        p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals)
+        p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
       }
       if (!is.null(xlab)){
-        p <- p %>% add_x_axis_title(xlab)
+        p <- p %>% add_x_axis_title(xlab, font = font)
       }
-      p <- p %>% add_x_axis_title(names(mats)[i], side = "top")
+      p <- p %>% add_x_axis_title(names(mats)[i], side = "top", font = font)
     }
   }
   
@@ -458,7 +470,7 @@ multi_coverage_heatmap <- function(mats,
   if (!is.null(dendro)){
     p <- p %>% add_row_dendro(dendro, side = "left")
   }    
-
+  p$layout$font <- font
   return(p)
 }
 
