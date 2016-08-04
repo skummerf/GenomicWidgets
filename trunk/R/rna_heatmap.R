@@ -27,7 +27,7 @@
 #' @author Alicia Schep
 rna_heatmap <- function(mat, 
                            x = iHeatmapR:::default_x(mat),
-                           y = iHeatmapR:::default_y(mat),                   
+                           y = iHeatmapR:::default_y(mat),   
                            row_order = c("hclust","none","kmeans","groups"),
                            col_order = c("groups","none","hclust","kmeans"),
                            row_groups = NULL,
@@ -40,9 +40,9 @@ rna_heatmap <- function(mat,
                            source = "HM",
                            scale = c("rows","cols","none"),
                            scale_method = c("standardize","center","normalize"),
-                           x_labels = NULL,
-                           y_labels = y,
-                           x_title = NULL,
+                           x_labels = x,
+                           y_labels = NULL,
+                           x_title = "Samples",
                            y_title = "Genes",
                            ...){
   

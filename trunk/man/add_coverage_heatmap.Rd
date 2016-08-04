@@ -7,9 +7,11 @@
 add_coverage_heatmap(p, mat, x = iHeatmapR:::default_x(mat),
   groups = p$row_groups, include = 1000, include_method = c("signal",
   "first", "random"), signal = rowSums(mat), plot_signal = TRUE,
-  name = "Signal", summary = TRUE, scale_method = c("localRms",
-  "localMean", "localNonZeroMean", "PercentileMax", "scalar", "none"),
-  pct = 0.95, scale_factor = 1, ticktext = TRUE, xlab = "Position", ...)
+  name = "Coverage", signal_name = "Aggregate", summary = TRUE,
+  scale_method = c("localRms", "localMean", "localNonZeroMean",
+  "PercentileMax", "scalar", "none"), pct = 0.95, scale_factor = 1,
+  ticktext = TRUE, start = x[1], end = default_end(x),
+  xlab = "Position", font = list(size = 8), ...)
 }
 \arguments{
 \item{mat}{coverage matrix}

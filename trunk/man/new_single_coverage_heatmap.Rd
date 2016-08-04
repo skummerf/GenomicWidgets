@@ -8,11 +8,12 @@ new_single_coverage_heatmap(mat, x = iHeatmapR:::default_x(mat),
   y = iHeatmapR:::default_y(mat), include = 1000,
   include_method = c("signal", "first", "random"), row_order = c("none",
   "hclust", "kmeans", "groups", "signal"), k = NULL, groups = NULL,
-  clust_dist = stats::dist, signal = rowSums(mat), plot_signal = TRUE,
-  name = "Signal", summary = TRUE, source = "HM",
-  scale_method = c("localRms", "localMean", "localNonZeroMean",
-  "PercentileMax", "scalar", "none"), pct = 0.95, scale_factor = 1,
-  ticktext = TRUE, xlab = "Position", ...)
+  clust_dist = stats::dist, signal = rowSums(mat, na.rm = TRUE),
+  plot_signal = TRUE, name = "Coverage", signal_name = "Aggregate",
+  summary = TRUE, source = "HM", scale_method = c("localRms", "localMean",
+  "localNonZeroMean", "PercentileMax", "scalar", "none"), pct = 0.95,
+  scale_factor = 1, ticktext = TRUE, start = x[1], end = default_end(x),
+  xlab = "Position", font = list(size = 8), ...)
 }
 \arguments{
 \item{mat}{coverage matrix}

@@ -47,42 +47,103 @@ sf <- chipVis::get_scaling_factor(fi)[2,]/1000000
   
   
 ```{r}
+library(Homo.sapiens)
 rpkmEset <- readRDS("/gne/research/workspace/schepa/Carroll_Data/GSE68358.rpkmEset.Rds")
 
+fd <- AnnotationDbi::select(Homo.sapiens, 
+             rownames(exprs(rpkmEset)), 
+             c("TXSTART","TXEND","TXCHROM","TXSTRAND","SYMBOL","ENSEMBL"),
+             keytype="ENTREZID")
+
+library(dplyr)
+fd2 <- fd %>% group_by(ENTREZID) %>% summarize(start = min(TXSTART),
+                                                 end = max(TXEND),
+                                                 chr = first(TXCHROM),
+                                                 strand = first(TXSTRAND),
+                                                 symbol = first(SYMBOL),
+                                                 ensembl = first(ENSEMBL))
+
+fd2 <- fd2[which(substr(fd2$chr,1,3) == "chr"),]
+fd2$chr <- sapply(fd2$chr, function(x) substr(x, 4, nchar(x)))
+fd2 <- fd2[which(fd2$chr %in% c(1:22,"X")),]
+
+rpkmEset <- rpkmEset[fd2$ENTREZID,]
+
+tss_ranges <- with(fd2, GenomicRanges::GRanges(chr,
+                                               IRanges::IRanges(start = ifelse(strand == "-",
+                                                                              end,
+                                                                              start),
+                                                               width = 1),
+                                               strand = strand,
+                                               symbol = symbol,
+                                               entrez = ENTREZID,
+                                               ensembl = ensembl))
+T47D_eset <- rpkmEset[,grep("T47D",pData(rpkmEset)$celltype)]
 
 ```
   
   
-#Get MCF7 Progesterone  
+```{r}
+T47D_exprs = log10(exprs(T47D_eset)+1)
+T47D_var = apply(T47D_exprs,1, sd, na.rm= TRUE)
+high_var = which(T47D_var > quantile(T47D_var,0.95,na.rm= TRUE))
+treat_groups = stringr::str_trim(sapply(stringr::str_split(pData(T47D_eset)$treatment,":"), 
+                      function(x) x[[2]]))
+
+rna_hm <- rna_heatmap(T47D_exprs[high_var,], col_groups = treat_groups,
+            x = pData(T47D_eset)$title, y = tss_ranges$symbol[high_var],
+            y_title = NULL, x_title = NULL) 
+
+rna_hm %>% plot_iHeatmap() %>% layout(margin = list(b = 250)) %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/rna_hm.pdf")
+
+```
+
+  
+#Get T47D Progesterone  
   
 ```{r MCF7_tss_cvg}
-MCF7 = list(
-  MCF7_ER_Full_Media_3hr  = which(fi_attributes$source_name == "MCF7_ER_Full_Media_3hr"),
-  MCF7_ER_Progesterone_3hr = which(fi_attributes$source_name == "MCF7_ER_Progesterone_3hr"),
-  MCF7_ER_R5020_3hr = which(fi_attributes$source_name == "MCF7_ER_R5020_3hr"),
+T47D = list(
+  T47D_ER_Full_Media_3hr  = which(fi_attributes$source_name == "T47D_ER_Full_Media_3hr"),
+  T47D_ER_Progesterone_3hr = which(fi_attributes$source_name == "T47D_ER_Progesterone_3hr"),
+  T47D_ER_R5020_3hr = which(fi_attributes$source_name == "T47D_ER_R5020_3hr"),
   
-  MCF7_PR_Full_Media_3hr  = which(fi_attributes$source_name == "MCF7_PR_Full_Media_3hr"),
-  MCF7_PR_Progesterone_3hr = which(fi_attributes$source_name == "MCF7_PR_Progesterone_3hr"),
-  MCF7_PR_R5020_3hr = which(fi_attributes$source_name == "MCF7_PR_R5020_3hr"),
+  T47D_PR_Full_Media_3hr  = which(fi_attributes$source_name == "T47D_PR_Full_Media_3hr"),
+  T47D_PR_Progesterone_3hr = which(fi_attributes$source_name == "T47D_PR_Progesterone_3hr"),
+  T47D_PR_R5020_3hr = which(fi_attributes$source_name == "T47D_PR_R5020_3hr"),
   
-  MCF7_p300_Full_Media_3hr  = which(fi_attributes$source_name == "MCF7_p300_Full_Media_3hr"),
-  MCF7_p300_Progesterone_3hr = which(fi_attributes$source_name == "MCF7_p300_Progesterone_3hr"),
-  MCF7_p300_R5020_3hr = which(fi_attributes$source_name == "MCF7_p300_R5020_3hr")
+  T47D_p300_Full_Media_3hr  = which(fi_attributes$source_name == "T47D_p300_Full_Media_3hr"),
+  T47D_p300_Progesterone_3hr = which(fi_attributes$source_name == "T47D_p300_Progesterone_3hr"),
+  T47D_p300_R5020_3hr = which(fi_attributes$source_name == "T47D_p300_R5020_3hr")
+  
 )
 
-tss <- tssFromTxdb(txdb = TxDb.Hsapiens.BioMart.igis)
-unique_tss <- unique(tss) #Remove same positions
 
-peaks <- lapply( fi$File.macs[unlist(MCF7)], readMacsPeaks, fc=5, minTags=10, fdr=0.01)
-peaks <- peaks[!sapply(peaks, is.null)]
+# T47D = list(
+#   T47D_ER_3hr_Vehicle  = which(fi_attributes$source_name == "T47D_ER_3hr_Vehicle"),
+#   T47D_ER_3hr_E2 = which(fi_attributes$source_name == "T47D_ER_3hr_E2"),
+#   T47D_ER_3hr_PG = which(fi_attributes$source_name == "T47D_ER_3hr_PG"),
+#   T47D_ER_3hr_E2_PG = which(fi_attributes$source_name == "T47D_ER_3hr_E2+PG"),
+#   
+#   T47D_PR_3hr_Vehicle  = which(fi_attributes$source_name == "T47D_PR_3hr_Vehicle"),
+#   T47D_PR_3hr_E2 = which(fi_attributes$source_name == "T47D_PR_3hr_E2"),
+#   T47D_PR_3hr_PG = which(fi_attributes$source_name == "T47D_PR_3hr_PG"),
+#   T47D_PR_3hr_E2_PG = which(fi_attributes$source_name == "T47D_PR_3hr_E2+PG")
+#   
+# )
 
-merged_peaks <- reduce(do.call(c, peaks))
+tss <- gChipseq::tssFromTxdb(txdb = TxDb.Hsapiens.BioMart.igis)
+#unique_tss <- unique(tss) #Remove same positions
 
-tss_in_peaks <- subsetByOverlaps(unique_tss, merged_peaks, maxgap = 0)
+#peaks <- lapply( fi$File.macs[unlist(MCF7)], readMacsPeaks, fc=5, minTags=10, fdr=0.01)
+#peaks <- peaks[!sapply(peaks, is.null)]
 
-tss_cvg_mats <- lapply(MCF7, function(x){
+#merged_peaks <- reduce(do.call(c, peaks))
+
+#tss_in_peaks <- subsetByOverlaps(tss_ranges, merged_peaks, maxgap = 0)
+
+tss_cvg_mats <- lapply(T47D, function(x){
   tmp <- make_coverage_matrix(inputs = fi$File.bam[x],
-                                  ranges = tss_in_peaks,
+                                  ranges = tss_ranges[high_var],
                                   binsize = 25,
                                   up = 1000,
                                   down = 1000)
@@ -95,13 +156,66 @@ tss_cvg_mats <- lapply(MCF7, function(x){
 
 
 ```{r}
-new_single_coverage_heatmap(tss_cvg_mats[[1]], row_order = "signal", y = tss_in_peaks$names)
+new_single_coverage_heatmap(tss_cvg_mats[[1]], row_order = "signal", y = tss_ranges$symbol)
 ```
 
 ```{r}
-MCF7_ER_tss_cvg_mats = tss_cvg_mats[1:3]
-names(MCF7_ER_tss_cvg_mats) = c("Control","Pr","Syn. Pr")
+T47D_ER_tss_cvg_mats = tss_cvg_mats[1:3]
+names(T47D_ER_tss_cvg_mats) = c("Control","Pr","Syn. Pr")
 multi_coverage_heatmap(MCF7_ER_tss_cvg_mats, row_order = "kmeans", y = tss_in_peaks$names, k = 3)
+```
+
+```{r}
+MCF7_PR_tss_cvg_mats = tss_cvg_mats[4:6]
+names(MCF7_PR_tss_cvg_mats) = c("Control","Pr","Syn. Pr")
+multi_coverage_heatmap(MCF7_PR_tss_cvg_mats, row_order = "kmeans", y = tss_in_peaks$names, k = 3)
+```
+
+
+```{r}
+peaks <- lapply( fi$File.macs[unlist(T47D)], readMacsPeaks, fc=5, minTags=10, fdr=0.01)
+peaks <- peaks[!sapply(peaks, is.null)]
+
+merged_peaks <- lapply(T47D,
+                       function(x){
+                         peaks <- lapply( fi$File.macs[x], readMacsPeaks, fc=5, minTags=10, fdr=0.01)
+                         peaks <- peaks[!sapply(peaks, is.null)]
+                         reduce(do.call(c, peaks), min.gapwidth = 500)
+                         })
+                       
+
+er_progesterone_peaks_cvg_mats <- lapply(T47D, function(x){
+  tmp <- make_coverage_matrix(inputs = fi$File.bam[x],
+                                  ranges = merged_peaks[[2]][1:5000],
+                                  binsize = 50,
+                                  up = 1000,
+                                  down = 1000)
+  out <- Reduce("+", tmp) / length(tmp)
+  return(out)
+})
+#merged_peaks <- reduce(do.call(c, peaks))
+
+T47D_scale_factors = sapply(T47D, function(x) mean(sf[x]))
+
+```
+
+```{r}
+ag1 = aggregate_profile_plot(er_progesterone_peaks_cvg_mats[1:3],xlab = "Position relative to ER Peaks<br> in T47D + Progesterone",
+                            ylab = "ER ChIP-Signal")
+ag2 = aggregate_profile_plot(er_progesterone_peaks_cvg_mats[4:6],ylab = "Position relative to ER Peaks<br> in T47D + Progesterone",
+                            ylab = "PR ChIP-Signal")
+
+ag1 %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/aggregate_profiles1.pdf")
+ag2 %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/aggregate_profiles2.pdf")
+
+
+```
+
+```{r}
+mchm <- multi_coverage_heatmap(er_progesterone_peaks_cvg_mats[1:3], row_order = "kmeans", k = 3, cluster_by = "first")
+
+mchm %>% plot_iHeatmap %>% layout(margin = list(b = 250)) %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/multi_coverage.pdf")
+
 ```
 
 
