@@ -7,7 +7,7 @@ output:
     toc: true
     toc_depth: 4
     number_sections: true
-    toc_float:
+    toc_float: 
       collapsed: false
       smooth_scroll: false
 ---
@@ -22,6 +22,7 @@ knitr::opts_chunk$set(echo = TRUE, cache=TRUE, autodep=TRUE)
 library(gChipseq)
 library(chipVis)
 library(TxDb.Hsapiens.BioMart.igis3.0)
+library(Homo.sapiens)
 ```
 
 ## Load Data
@@ -42,6 +43,12 @@ fi <- chipVis::get_chip_file_info(s_file, p_file)
 org <- "human"
 genome <- "GRCh38"
 
+# Pre loading the transcript data makes for faster interactive plots.
+# it won't matter much here though
+txdb <- Homo.sapiens
+tx_data <- load_tx_data(txdb)
+
+
 # Get the coverage files
 input <- fi[2, 'Sample.Control']
 input_idx <- which(fi$Sample.Name==input)
@@ -60,30 +67,25 @@ sf <- sf[2,]
     + Calculated automatically if a gene symbol is supplied 
     + Specified directly by the user
     
-Here we'll get the view by giving a gene name. 
+Here we'll get the view by giving a range. Gene names are supported, but only
+if an OrganismDb object is supplied
 ```{r Get the range that will be displayed}
-symbol <- "NRIP1"
-extension <- 50000
-
-# Create the range for viewing. Can either specify a symbol or a range
-range.gene <- chipVis::get_view_range(symbol, org, genome)
-
-# Its very easy to specify a range if desired
-# range.gene <- chipVis::get_view_range(chr = 1, start=10000, end=30000)
-
-# Extend the region if desired
-range.gene <- chipVis::extend_grange(range.gene, extension)
-
+# This range should correspond to NRIP1
+range.gene <- chipVis::get_view_range(txdb, "NRIP1", keytype="SYMBOL")
+seqlevelsStyle(range.gene) <- "NCBI"
+# range.gene <- chipVis::get_view_range(chr = 21, start=14865936, end=14961235)
+range.gene <- chipVis::extend_grange(range.gene, extend=100000)
 ```
 
 With this in hand we can get the annotation and the coverage from the files provided
 for the specified range. The exon data can be either a dataframe or GRanges object,
 and the coverage is a GRangesList object.
 ``` {r  Get data}
-# Get the exon list
-full.exon <- chipVis::get_exons(symbol, org=org, genome=genome)
+# Get the exon list. We specifically ignore introns because Gviz calculates them on its own
+exon_data <- get_tx_annotation(db_object = txdb, range = range.gene, 
+                               tx_data = tx_data, no_introns=TRUE)
 cvg <- chipVis::get_coverage_in_range(fi[idx, "File.bw"], range.gene, 
-                                      shortened_names, scaling.factor = sf)
+                                      shortened_names, cvg_scaling = sf)
 
 cvg
 ```
@@ -97,8 +99,8 @@ to better display a varied range of data.
 #### Standard Coverage view
 Now we can start plotting! This is a standard coverage plot in the region.
 ```{r Standard plot}
-track_info <- chipVis::plot_track_view(cvg, range.gene, full.exon, genome, 
-                                       sync=TRUE)
+track_info <- chipVis::plot_track_view(cvg_list = cvg, target_range = range.gene, 
+                              genome=genome, exon_data = exon_data)
 ```
 
 #### Heatmap view
@@ -110,8 +112,8 @@ shortened_names <- c(fi[idx[1:length(idx)-1], "Sample.Name"], "Input")
 sf <- chipVis::get_scaling_factor(fi[idx,])/1000000
 sf <- sf[2,]
 more_cvg <- chipVis::get_coverage_in_range(fi[idx, "File.bw"], range.gene, 
-                                      shortened_names, scaling.factor = sf)
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome)
+                                      shortened_names, cvg_scaling = sf)
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome)
 ```
 
 #### Plot type
@@ -119,7 +121,7 @@ If you are very committed to using a specific type of plot you can use different
 parameters. It is recommended that you don't change "hm.thresh", but instead specify
 the plot "type"
 ``` {r Specifying plot type}
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
                                        type='hist')
 ```
 
@@ -136,9 +138,9 @@ stacks in the annotation, saving space.
 TSS can be determined from TxDb objects, but must be supplied as a GRanges object
 
 ``` {r Plot with TSS}
-tss_db <- gChipseq::tssFromTxdb(TxDb.Hsapiens.BioMart.igis)
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
-                                       tss.gr = tss_db)
+tss_db <- gChipseq::tssFromTxdb(txdb)
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+                                       tss_gr = tss_db)
 ```
 
 #### SNPs
@@ -151,8 +153,8 @@ However, the stratification and location are accurate.
 
 ``` {r Plot with SNPs}
 snps <- readRDS("~/workspace/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
-                                       tss.gr = tss_db, snp.gr = snps)
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+                                       tss_gr = tss_db, snp_gr = snps)
 ```
 
 ## Display Options
@@ -167,7 +169,7 @@ modification of the functions.
 
 ### Sizing
 Gviz uses relative sizes to plot tracks. Therefore it is easiest to control the 
-size of each track via the plot.kwargs argument. Size values can be any scalar,
+size of each track via the plot_kwargs argument. Size values can be any scalar,
 but fractions summing to 1 are the most straightforward
 
 All tracks can be sized individually via their own track kwargs, however this is 
@@ -175,8 +177,8 @@ not recommended.
 
 ``` {r sizing, fig.height=3}
 sizes <- c(0.2, 0.3, 0.5)
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
-                                       plot.kwargs = list(sizes=sizes))
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+                                       plot_kwargs = list(sizes=sizes))
 ```
 
 
@@ -201,8 +203,8 @@ colors <- c('black', 'blue', 'green')
 dkwargs <- list(groups=grouping, col=colors, background.title='gray50')
 
 # Then we just supply it as a list of kwargs
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
-                                       dtrack.kwargs = dkwargs)
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+                                       dtrack_kwargs = dkwargs)
 
 ```
 
@@ -215,8 +217,8 @@ is a vector specifying the types to plot. All plotted types will be overlaid.
 dkwargs <- list(groups=grouping, col=colors, type=c('a', 'confint'))
 
 # Then we just supply it as a list of kwargs
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
-                                       dtrack.kwargs = dkwargs)
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+                                       dtrack_kwargs = dkwargs)
 ```
 
 #### Coverage Options
@@ -234,8 +236,8 @@ and sync:
 # Colors match the samples and will be repeated to equal the number of samples used
 colors <- c('red', 'black')
 # Then we just supply it as a list of kwargs
-track_info <- chipVis::plot_track_view(more_cvg[1:4], range.gene, full.exon, genome, 
-                                       colors = colors, bg.title = colors)
+track_info <- chipVis::plot_track_view(more_cvg[1:4], range.gene, exon_data, genome, 
+                                       colors = colors, bg_title = colors)
 ```
 
 ### Annotation Track
@@ -244,10 +246,8 @@ all this is a very easy fix.
 
 ``` {r expand annotation}
 # Then we just supply it as a list of kwargs
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, full.exon, genome, 
-                                       grtrack.kwargs = list(stacking='squish'))
+track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+                                       grtrack_kwargs = list(stacking='squish'))
 ```
-```
-
 
   

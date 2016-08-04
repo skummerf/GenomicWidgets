@@ -246,13 +246,13 @@ make_data_tracks <- function(cvg_list, gr, genome, chr,
     names(bg_title) <- names(cvg_list)
     
     # Scale the data for the histograms
-    score_max <- sapply(cvg_list, function(x) { max(score(x)) } )
+    score_max <- max(sapply(cvg_list, function(x) { max(score(x)) } ))
     
     for (g in names(cvg_list)) {
       coverage_defaults <- list(range=cvg_list[[g]], 
                                 chromosome=chr, 
                                 type='hist',
-                                ylim=c(0, score_max[g]),
+                                ylim=c(0, score_max),
                                 background.title=bg_title[g],
                                 genome=genome, name=g, 
                                 col.histogram=colors[g],

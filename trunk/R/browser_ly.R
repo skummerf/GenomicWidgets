@@ -82,10 +82,24 @@ make_tracks <- function(txdb, range, tx_data, cvg_gr){
   
 }
 
+#' Title
+#'
+#' @param db_object 
+#' @param range 
+#' @param tx_data 
+#' @param no_introns 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 get_tx_annotation <- function(db_object, range, tx_data, no_introns=FALSE){
+  in_style <- seqlevelsStyle(range)
+  seqlevelsStyle(range) <- seqlevelsStyle(db_object)
   tx <- chipVis:::transcriptsByOverlaps(db_object, range)
-  tx_names <- tx$TXNAME
+  tx_names <- unlist(tx$TXNAME)
   gr <- get_plot_ranges(tx_names, tx_data)
+  seqlevelsStyle(gr) <- in_style
   if(no_introns){
     gr <- gr[mcols(gr)[['feature']]!='intron']
   }
