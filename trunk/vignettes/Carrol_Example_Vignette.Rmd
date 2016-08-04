@@ -202,7 +202,7 @@ T47D_scale_factors = sapply(T47D, function(x) mean(sf[x]))
 ```{r}
 ag1 = aggregate_profile_plot(er_progesterone_peaks_cvg_mats[1:3],xlab = "Position relative to ER Peaks<br> in T47D + Progesterone",
                             ylab = "ER ChIP-Signal")
-ag2 = aggregate_profile_plot(er_progesterone_peaks_cvg_mats[4:6],ylab = "Position relative to ER Peaks<br> in T47D + Progesterone",
+ag2 = aggregate_profile_plot(er_progesterone_peaks_cvg_mats[4:6],xlab = "Position relative to ER Peaks<br> in T47D + Progesterone",
                             ylab = "PR ChIP-Signal")
 
 ag1 %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/aggregate_profiles1.pdf")
