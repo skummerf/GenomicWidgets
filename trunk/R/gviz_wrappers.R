@@ -292,7 +292,8 @@ bin_coverage_in_range <- function(cvg_list, gr,
       wscores <- mcols(cvg_list[[g]])[[val]]
     }
     # Split scores from coverage range into their appropriate bin and sum
-    bin_split <- splitAsList(wscores, factor(subjectHits(overlap)))
+    bin_split <- splitAsList(wscores[queryHits(overlap)], 
+                             factor(subjectHits(overlap)))
     
     # Need a better way to scale the data
     bin_score <- lapply(bin_split, function(x) sum(x))
