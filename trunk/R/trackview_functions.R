@@ -35,7 +35,8 @@ make_track_function <- function(target_range, cvg_files, genome, db_object, tx_d
                                 hm_scaling = NULL,
                                 snp_gr = NULL, 
                                 tss_gr = NULL, 
-                                ucsc = FALSE, 
+                                ucsc = FALSE,
+                                existing_tracks = NULL,
                                 gatrack_kwargs=list(),
                                 grtrack_kwargs=list(), 
                                 tsstrack_kwargs=list(), 
@@ -61,6 +62,7 @@ make_track_function <- function(target_range, cvg_files, genome, db_object, tx_d
                           snp_gr = snp_gr, 
                           tss_gr = tss_gr, 
                           ucsc = ucsc, 
+                          existing_tracks = existing_tracks,
                           gatrack_kwargs = gatrack_kwargs,
                           grtrack_kwargs = grtrack_kwargs,
                           tsstrack_kwargs = tsstrack_kwargs,
@@ -110,6 +112,7 @@ plot_track_view <- function(cvg_list, target_range, exon_data, genome,
                             snp_gr = NULL, 
                             tss_gr = NULL, 
                             ucsc = FALSE, 
+                            existing_tracks = NULL,
                             gatrack_kwargs=list(),
                             grtrack_kwargs=list(), 
                             tsstrack_kwargs=list(), 
@@ -164,7 +167,7 @@ plot_track_view <- function(cvg_list, target_range, exon_data, genome,
   # Add tracks
   tracklist <- list()
   tracklist <- c(GeneAxis=gatrack, GeneRegion=grtrack, 
-                 TSS=tssTrack, SNP=snptrack, dtrack)
+                 TSS=tssTrack, SNP=snptrack, dtrack, existing_tracks)
   
   # Confirm that all tracks have the same chromosome before plotting
   chr_list <- unlist(lapply(tracklist, chr_check))

@@ -203,7 +203,7 @@ sort_snps <- function(snp_gr, type_col = 'CONTEXT'){
 make_data_tracks <- function(cvg_list, gr, genome, chr,
                              bg_title = 'black', 
                              colors = NULL, 
-                             type=NULL, 
+                             type = 'heatmap', 
                              binwidth=1000, 
                              val="score", 
                              hm_scaling = log,
