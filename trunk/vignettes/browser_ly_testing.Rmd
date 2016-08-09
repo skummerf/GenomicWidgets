@@ -13,9 +13,6 @@ library(gChipseq)
 library(chipVis)
 ```
 
-```{r}
-source("~/workspace/InternChIP/chipVis/trunk/R/browser_ly.R")
-```
 
 ```{r}
 # Specify parameters
@@ -33,12 +30,12 @@ tx_data <- load_tx_data(TxDb.Mmusculus.BioMart.igis)
 ```
 
 ```{r}
-view_range <- get_view_range(chr = 1, start=159758000, end=159758000)
-view_range <- extend_grange(view_range, 50000)
+view_range <- get_view_range(chr = 5, start=76287400, end=76373827)
+view_range <- extend_grange(view_range, 2000)
 # Get the coverage
 input <- fi[2, 'Sample.Control']
 input_idx <- which(fi$Sample.Name==input)
-idx <- c(9,10,15,16,18:23)
+idx <- c(19, 23)
 shortened_names <- c(fi[idx[1:length(idx)-1], "Genotype"], "Input")
 
 # Get scaling factor

@@ -36,6 +36,7 @@ make_arrows <- function(df, y_idx){
 make_tracks <- function(txdb, range, tx_data, cvg_gr){
   # Make GeneRegion plot
   tx_info <- get_tx_annotation(db_object = txdb, range=range, tx_data = tx_data)
+  tx_info <- subsetByOverlaps(tx_info, range)
   if(length(tx_info)){
     tx_info <- biovizBase::addStepping(tx_info, group.name = "transcript",
                                   group.selfish = FALSE)
@@ -57,7 +58,7 @@ make_tracks <- function(txdb, range, tx_data, cvg_gr){
                           color = 'blue')
   }
   
-  track_heights <- c(0.2, rep(0.8/length(samples), length(samples)))
+  track_heights <- c(0.3, rep(0.7/length(samples), length(samples)))
   sp <- subplot(plots, nrows=length(samples)+1, shareX = TRUE, heights=track_heights)
   track_names <- sapply(sp$x$data, function(x){x$name})
   grt_idx <- which(track_names == "GeneRegion")
@@ -66,14 +67,20 @@ make_tracks <- function(txdb, range, tx_data, cvg_gr){
   # Make shapes
   cds_rect <- make_rect(cds, height = 0.4, grt_idx)
   utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], height=0.2, grt_idx)
-  # intron_arrow <- make_arrows(tx_info[tx_info$feature == 'intron', ], grt_idx)
+  ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ], height=0.2, grt_idx)
+  
+  # Crop arrows to view range
+  introns <- tx_info[tx_info$feature == 'intron', ]
+  introns$start <- pmax(introns$start, start(range))
+  introns$end <- pmin(introns$end, end(range))
+  intron_arrow <- make_arrows(introns, grt_idx)
   
   # Modify layouts
-  grt_layout <- list(showlegend=FALSE, shapes=c(cds_rect, utr_rect))
-                     # annotations=intron_arrow)
+  grt_layout <- list(showlegend=FALSE, shapes=c(cds_rect, utr_rect, ncRNA_rect),
+                     annotations=intron_arrow)
   sp$x$layout <- modifyList(sp$x$layout, grt_layout)
-  grt_y_layout <- list(autorange='reversed', showticklabels=FALSE, showticks=FALSE)
-                       # title='Transcripts')
+  grt_y_layout <- list(autorange='reversed', showticklabels=FALSE, showticks=FALSE,
+                       title='Transcripts')
   sp$x$layout[[paste0("yaxis",grt_idx)]] <- modifyList(sp$x$layout[[paste0("yaxis",grt_idx)]], grt_y_layout)
   sp <- sp %>% layout(xaxis=list(range=c(start(range), end(range))))
   return(sp)
@@ -130,11 +137,20 @@ get_plot_ranges <- function(tx_names, tx_data){
     } else {
       part_gr <- GRanges()
     }
-    if(exists("parts_list")){
-      parts_list <- c(parts_list, part_gr)
+    if(exists("parts")){
+      parts <- c(parts, part_gr)
     } else {
-      parts_list <- part_gr
+      parts <- part_gr
     }
   }
-  return(parts_list)
+  
+  # Find ncRNA in exons
+  exon_tx <- unique(parts$transcript[parts$feature=='exon'])
+  coding_tx <- unique(parts$transcript[parts$feature!='intron' & parts$feature!='exon'])
+  
+  # ncRNA are exons that aren't in CDS or UTRs
+  nc_tx <- setdiff(exon_tx, coding_tx)
+  parts$feature[parts$transcript %in% nc_tx & parts$feature=='exon'] <-'ncRNA'
+  
+  return(parts)
 }
