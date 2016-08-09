@@ -5,8 +5,7 @@
 \title{add_coverage_heatmap}
 \usage{
 add_coverage_heatmap(p, mat, x = iHeatmapR:::default_x(mat),
-  groups = p$row_groups, include = 1000, include_method = c("signal",
-  "first", "random"), signal = rowSums(mat), plot_signal = TRUE,
+  groups = p$row_groups, signal = rowSums(mat), plot_signal = TRUE,
   name = "Coverage", signal_name = "Aggregate", summary = TRUE,
   scale_method = c("localRms", "localMean", "localNonZeroMean",
   "PercentileMax", "scalar", "none"), pct = 0.95, scale_factor = 1,
