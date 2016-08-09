@@ -11,7 +11,7 @@ rna_heatmap(mat, x = iHeatmapR:::default_x(mat),
   row_clust_dist = stats::dist, col_clust_dist = stats::dist,
   name = "RNA-seq", source = "HM", scale = c("rows", "cols", "none"),
   scale_method = c("standardize", "center", "normalize"), x_labels = x,
-  y_labels = NULL, x_title = "Samples", y_title = "Genes", ...)
+  y_labels = NULL, x_title = NULL, y_title = NULL, ...)
 }
 \arguments{
 \item{mat}{matrix of values to be plotted as heatmap}
@@ -48,9 +48,9 @@ rna_heatmap(mat, x = iHeatmapR:::default_x(mat),
 
 \item{y_labels}{axis labels for y axis (default is NULL)}
 
-\item{x_title}{x axis title}
+\item{x_title}{x axis title (default is NULL)}
 
-\item{y_title}{y axis title (default is "Genes")}
+\item{y_title}{y axis title (default is NULL)}
 
 \item{...}{additional argument to make_main_hm}
 }

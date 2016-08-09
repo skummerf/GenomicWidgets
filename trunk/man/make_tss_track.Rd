@@ -4,12 +4,12 @@
 \alias{make_tss_track}
 \title{Make TSS Track}
 \usage{
-make_tss_track(tss, target.range, chr, kwargs = list())
+make_tss_track(tss, target_range, chr, kwargs = list())
 }
 \arguments{
 \item{tss}{}
 
-\item{target.range}{}
+\item{target_range}{}
 
 \item{chr}{}
 }

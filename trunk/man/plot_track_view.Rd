@@ -6,45 +6,51 @@
 Adapted from gChipseq function of the same name. Credit to Jinfeng Liu
 plot genomic coverage along the gene}
 \usage{
-plot_track_view(cvg.L, target.range, transcripts.gr, genome, ymax, symbol,
-  bg.title = "black", colors = NULL, sync = FALSE, type = NULL,
-  scale.group = 1, hm.thresh = 4, scaling = NULL, hm.binsize = 1000,
-  snp.gr = NULL, tss.gr = NULL, ucsc = FALSE, gatrack.kwargs = list(),
-  grtrack.kwargs = list(), tsstrack.kwargs = list(),
-  snptrack.kwargs = list(), dtrack.kwargs = list(), plot.kwargs = list())
+plot_track_view(cvg_list, target_range, exon_data, genome, bg_title = "black",
+  colors = NULL, type = NULL, hm_thresh = 4, hm_binsize = 1000,
+  hm_scaling = NULL, snp_gr = NULL, tss_gr = NULL, ucsc = FALSE,
+  gatrack_kwargs = list(), grtrack_kwargs = list(),
+  tsstrack_kwargs = list(), snptrack_kwargs = list(),
+  dtrack_kwargs = list(), plot_kwargs = list())
 }
 \arguments{
-\item{cvg.L}{GRangesList: typically the results of importing wig/bw/... files for each sample}
+\item{cvg_list}{GRangesList: typically the results of importing wig/bw/... files for each sample}
 
-\item{target.range}{GRange: range to plot}
+\item{target_range}{GRange: range to plot}
 
-\item{transcripts.gr}{data.frame: exon information}
+\item{exon_data}{data.frame: exon information}
 
 \item{genome}{str: genome build, e.g. hg19, GRCh38, etc.}
 
-\item{ymax}{vector-optional: ymax for the data tracks}
-
-\item{symbol}{str-optional: symbol to plot}
+\item{bg_title}{}
 
 \item{colors}{str-optional: colors for coverage data tracks}
 
-\item{sync}{logical-optional: whether to sync the ymax for all data tracks}
-
 \item{type}{str-optional: type of datatrack to plot. Currently only 'hist' and 'heatmap' are supported}
 
-\item{scale.group}{scalar-optional: groups to use the same y scale}
+\item{hm_thresh}{integer-optional: threshold above which a heatmap is plotted. Can change threshold or override with type}
 
-\item{hm.thresh}{integer-optional: threshold above which a heatmap is plotted. Can change threshold or override with type}
+\item{hm_binsize}{}
 
-\item{grtrack.kwargs}{list-optional: additional arguments for GeneRegionTrack}
+\item{snp_gr}{}
 
-\item{snptrack.kwargs}{list-optional: additional arguments for the SNP DataTrack}
+\item{tss_gr}{}
 
-\item{dtrack.kwargs}{list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks}
+\item{ucsc}{}
 
-\item{bg.title:}{str-optional: background color for the title panel}
+\item{gatrack_kwargs}{}
 
-\item{gtrack.kwargs}{list-optional: additional arguments for GenomeAxisTrack}
+\item{grtrack_kwargs}{list-optional: additional arguments for GeneRegionTrack}
+
+\item{tsstrack_kwargs}{}
+
+\item{snptrack_kwargs}{list-optional: additional arguments for the SNP DataTrack}
+
+\item{dtrack_kwargs}{list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks}
+
+\item{plot_kwargs}{}
+
+\item{scaling}{}
 }
 \value{
 ptracks list: track objects plotted by Gviz

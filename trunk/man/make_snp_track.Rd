@@ -4,12 +4,12 @@
 \alias{make_snp_track}
 \title{Make SNP Track}
 \usage{
-make_snp_track(snp.gr, target.range, kwargs = list())
+make_snp_track(snp_gr, target_range, kwargs = list())
 }
 \arguments{
-\item{snp.gr}{}
+\item{snp_gr}{}
 
-\item{target.range}{}
+\item{target_range}{}
 
 \item{strack.kwargs}{}
 }

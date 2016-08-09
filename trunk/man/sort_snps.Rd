@@ -4,12 +4,12 @@
 \alias{sort_snps}
 \title{Title}
 \usage{
-sort_snps(snp.gr, type.col = "CONTEXT")
+sort_snps(snp_gr, type_col = "CONTEXT")
 }
 \arguments{
-\item{snp.gr}{}
+\item{snp_gr}{}
 
-\item{type.col}{}
+\item{type_col}{}
 }
 \description{
 Title

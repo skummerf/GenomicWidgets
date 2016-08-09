@@ -4,12 +4,12 @@
 \alias{make_data_tracks}
 \title{Make Data Tracks}
 \usage{
-make_data_tracks(cvg.L, gr, genome, chr, ymax, sync = FALSE,
-  bg.title = "black", scale.group = 1, colors = NULL, type = NULL,
-  binwidth = 1000, val = "score", scaling = NULL, kwargs = list())
+make_data_tracks(cvg_list, gr, genome, chr, bg_title = "black",
+  colors = NULL, type = NULL, binwidth = 1000, val = "score",
+  hm_scaling = log, kwargs = list())
 }
 \arguments{
-\item{cvg.L}{GRangesList containing coverage score}
+\item{cvg_list}{}
 
 \item{gr}{GRange to plot}
 
@@ -17,7 +17,7 @@ make_data_tracks(cvg.L, gr, genome, chr, ymax, sync = FALSE,
 
 \item{chr}{str}
 
-\item{bg.title}{str: color for track panel backgrounds}
+\item{bg_title}{str: color for track panel backgrounds}
 
 \item{colors}{list-optional: colors for coverage tracks}
 
@@ -27,11 +27,9 @@ make_data_tracks(cvg.L, gr, genome, chr, ymax, sync = FALSE,
 
 \item{val}{str: value in cvg.L elements to use for binning coverage. Default is "score"}
 
+\item{kwargs}{}
+
 \item{scaling}{}
-
-\item{score.max}{scalar: scaling}
-
-\item{dtrack.kwargs}{list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks}
 }
 \value{
 dtrack list: DataTrack objects

@@ -18,8 +18,8 @@
 #' @param scale_method what method to use for scaling, either standardize, center, normalize
 #' @param x_labels axis labels for x axis (default is x)
 #' @param y_labels axis labels for y axis (default is NULL)
-#' @param x_title x axis title
-#' @param y_title y axis title (default is "Genes")
+#' @param x_title x axis title (default is NULL)
+#' @param y_title y axis title (default is NULL)
 #' @param ... additional argument to make_main_hm
 #' @return iHeatmap object, which can be printed or passed to \code{\link{plot_iHeatmap}} to
 #' generate an interactive graphic
@@ -42,8 +42,8 @@ rna_heatmap <- function(mat,
                            scale_method = c("standardize","center","normalize"),
                            x_labels = x,
                            y_labels = NULL,
-                           x_title = "Samples",
-                           y_title = "Genes",
+                           x_title = NULL,
+                           y_title = NULL,
                            ...){
   
   row_order = match.arg(row_order)

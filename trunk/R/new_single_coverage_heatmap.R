@@ -70,6 +70,8 @@ new_single_coverage_heatmap <- function(mat,
     mat <- mat[keep,]
     y <- y[keep]
     signal <- signal[keep]
+  } else{
+    keep <- NULL
   }
   
   if (scale_method != "none") mat <- normalize_coverage_matrix(mat, method = scale_method, pct = pct, scalar = scale_factor)
@@ -77,7 +79,7 @@ new_single_coverage_heatmap <- function(mat,
   dendro = NULL
   
   if (row_order == "hclust"){
-    dendro = flashClust::hclust(clust_dist(mat))
+    dendro = fastcluster::hclust(clust_dist(mat))
     row_order = dendro$order
     if (!is.null(k)){
       groups = cutree(dendro, k = k)
@@ -139,6 +141,10 @@ new_single_coverage_heatmap <- function(mat,
   p$row_groups <- groups
   
   p$layout$font <- font
+  
+  if (!is.null(keep)){
+    p$keep = keep
+  }
   return(p)
 }
 
@@ -158,8 +164,6 @@ add_coverage_heatmap <- function(p,
                                  mat, 
                                  x = iHeatmapR:::default_x(mat),                    
                                  groups = p$row_groups,
-                                 include = 1000,
-                                 include_method = c("signal","first","random"),
                                  signal = rowSums(mat),
                                  plot_signal = TRUE,
                                  name = "Coverage",
@@ -182,27 +186,16 @@ add_coverage_heatmap <- function(p,
   
   
   scale_method <- match.arg(scale_method)
-  include_method <- match.arg(include_method)
-  
   
   force(signal)
   if (length(signal) != nrow(mat)){
     stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
   }
   
-  if (include < nrow(mat)){
-    if (include_method  == "signal"){
-      keep <- which(signal >= quantile(signal, (length(signal) - include) / length(signal)))
-    } else if (include_method == "first"){
-      keep <- 1:include
-    } else if (include_method == "random"){
-      keep <- sample(1:nrow(mat), include)
-    }
-    mat <- mat[keep,]
-    y <- y[keep]
-    signal <- signal[keep]
+  if (!is.null(p$keep)){
+    mat <- mat[p$keep,]
+    signal <- signal[p$keep]
   }
-  
 
   if (scale_method != "none") mat <- normalize_coverage_matrix(mat, method = scale_method, pct = pct, scalar = scale_factor)
   
@@ -331,6 +324,8 @@ multi_coverage_heatmap <- function(mats,
     mats <- lapply(mats, function(z) z[keep,])
     y <- y[keep]
     signal <- lapply(signal, function(z) z[keep])
+  } else{
+    keep <- NULL
   }
   
   if (scale_method != "none"){
@@ -346,9 +341,9 @@ multi_coverage_heatmap <- function(mats,
   
   if (row_order == "hclust"){
     if (cluster_by == "first"){
-      dendro = flashClust::hclust(clust_dist(mats[[1]]))
+      dendro = fastcluster::hclust(clust_dist(mats[[1]]))
     } else{
-      dendro = flashClust::hclust(clust_dist(do.call(cbind,mats)))
+      dendro = fastcluster::hclust(clust_dist(do.call(cbind,mats)))
     }
     row_order = dendro$order
     if (!is.null(k)){
@@ -471,6 +466,7 @@ multi_coverage_heatmap <- function(mats,
     p <- p %>% add_row_dendro(dendro, side = "left")
   }    
   p$layout$font <- font
+  if (!is.null(keep)) p$keep <- keep
   return(p)
 }
 
@@ -496,8 +492,6 @@ multi_coverage_heatmap <- function(mats,
 add_multi_coverage_heatmap <- function(p,
                                        mats, 
                                    x = iHeatmapR:::default_x(mats[[1]]),
-                                   include = 1000,
-                                   include_method = c("signal","first","random"),
                                    row_order = c("none","hclust","kmeans","groups","signal"),
                                    k = NULL,
                                    groups = NULL,
@@ -530,7 +524,6 @@ add_multi_coverage_heatmap <- function(p,
   row_order = match.arg(row_order)
   scale_method <- match.arg(scale_method)
   cluster_by <- match.arg(cluster_by)
-  include_method <- match.arg(include_method)
   
   if (length(unique(lapply(mats, nrow))) > 1) stop("All input matrices must be of same length")
   
@@ -539,18 +532,9 @@ add_multi_coverage_heatmap <- function(p,
     stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
   }
   
-  if (include < nrow(mats[[1]])){
-    if (include_method  == "signal"){
-      tmp_signal <- Reduce("+",lapply(signal, function(z) z / sum(z)))
-      keep <- which(tmp_signal >= quantile(tmp_signal, (length(tmp_signal) - include) / length(tmp_signal)))
-    } else if (include_method == "first"){
-      keep <- 1:include
-    } else if (include_method == "random"){
-      keep <- sample(1:nrow(mats[[1]]), include)
-    }
-    mats <- lapply(mats, function(z) z[keep,])
-    y <- y[keep]
-    signal <- lapply(signal, function(z) z[keep])
+  if (!is.null(p$keep)){
+    mats <- lapply(mats, function(z) z[p$keep,])
+    signal <- lapply(signal, function(z) z[p$keep])
   }
   
   if (scale_method != "none"){
@@ -566,9 +550,9 @@ add_multi_coverage_heatmap <- function(p,
   
   if (row_order == "hclust"){
     if (cluster_by == "first"){
-      dendro = flashClust::hclust(clust_dist(mats[[1]]))
+      dendro = fastcluster::hclust(clust_dist(mats[[1]]))
     } else{
-      dendro = flashClust::hclust(clust_dist(do.call(cbind,mats)))
+      dendro = fastcluster::hclust(clust_dist(do.call(cbind,mats)))
     }
     row_order = dendro$order
     if (!is.null(k)){

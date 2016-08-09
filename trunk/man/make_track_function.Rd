@@ -4,64 +4,53 @@
 \alias{make_track_function}
 \title{Title}
 \usage{
-make_track_function(range, genome, org, cvg_files, scaling_factor, symbol,
-  transcripts.gr, ymax, bg.title = "black", colors = NULL, sync = FALSE,
-  type = NULL, scale.group = 1, hm.thresh = 4, scaling = NULL,
-  hm.binsize = 1000, snp.gr = NULL, tss.gr = NULL, ucsc = FALSE,
-  gatrack.kwargs = list(), grtrack.kwargs = list(),
-  tsstrack.kwargs = list(), snptrack.kwargs = list(),
-  dtrack.kwargs = list(), plot.kwargs = list())
+make_track_function(target_range, cvg_files, genome, db_object, tx_data,
+  cvg_scaling = NULL, bg_title = "black", colors = NULL, type = NULL,
+  hm_thresh = 4, hm_binsize = 1000, hm_scaling = NULL, snp_gr = NULL,
+  tss_gr = NULL, ucsc = FALSE, gatrack_kwargs = list(),
+  grtrack_kwargs = list(), tsstrack_kwargs = list(),
+  snptrack_kwargs = list(), dtrack_kwargs = list(), plot_kwargs = list())
 }
 \arguments{
-\item{range}{}
-
-\item{genome}{}
-
-\item{org}{}
+\item{target_range}{}
 
 \item{cvg_files}{}
 
-\item{scaling_factor}{}
+\item{genome}{}
 
-\item{symbol}{}
+\item{db_object}{}
 
-\item{transcripts.gr}{}
+\item{tx_data}{}
 
-\item{ymax}{}
+\item{cvg_scaling}{}
 
-\item{bg.title}{}
+\item{bg_title}{}
 
 \item{colors}{}
 
-\item{sync}{}
-
 \item{type}{}
 
-\item{scale.group}{}
+\item{hm_thresh}{}
 
-\item{hm.thresh}{}
+\item{hm_binsize}{}
 
-\item{scaling}{}
+\item{snp_gr}{}
 
-\item{hm.binsize}{}
-
-\item{snp.gr}{}
-
-\item{tss.gr}{}
+\item{tss_gr}{}
 
 \item{ucsc}{}
 
-\item{gatrack.kwargs}{}
+\item{gatrack_kwargs}{}
 
-\item{grtrack.kwargs}{}
+\item{grtrack_kwargs}{}
 
-\item{tsstrack.kwargs}{}
+\item{tsstrack_kwargs}{}
 
-\item{snptrack.kwargs}{}
+\item{snptrack_kwargs}{}
 
-\item{dtrack.kwargs}{}
+\item{dtrack_kwargs}{}
 
-\item{plot.kwargs}{}
+\item{plot_kwargs}{}
 }
 \description{
 Title

@@ -9,7 +9,7 @@ make_gatrack(kwargs = list())
 \arguments{
 \item{kwargs}{}
 
-\item{target.range}{}
+\item{target_range}{}
 }
 \description{
 Make GenomeAxisTrack
