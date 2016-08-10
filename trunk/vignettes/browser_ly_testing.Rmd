@@ -35,18 +35,19 @@ view_range <- extend_grange(view_range, 2000)
 # Get the coverage
 input <- fi[2, 'Sample.Control']
 input_idx <- which(fi$Sample.Name==input)
-idx <- c(19, 23)
+idx <- c(18:23)
 shortened_names <- c(fi[idx[1:length(idx)-1], "Genotype"], "Input")
 
 # Get scaling factor
 sf <- get_scaling_factor(fi[idx,])/1000000
 sf <- sf[2,]
 
+# Get the coverage
 cvg <- get_coverage_in_range(fi[idx, "File.bw"], view_range, shortened_names, sf)
 ```
 
 
 ```{r Demo}
-make_tracks(TxDb.Mmusculus.BioMart.igis, view_range, tx_data, cvg)
+plot_browserly_tracks(TxDb.Mmusculus.BioMart.igis, view_range, tx_data, cvg)
 ```
 

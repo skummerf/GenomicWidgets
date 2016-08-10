@@ -1,7 +1,21 @@
-make_rect <- function(df, height, y_idx){
+coverage_heatmap <- function(b_cvg){
+  hm_vals <- apply(t(as.matrix(as.data.frame(mcols(b_cvg)))), 2, rev)
+  bin_df <- biovizBase::mold(b_cvg)
+  p <- plot_ly(z=hm_vals, y=rownames(hm_vals), x=bin_df$midpoint, type='heatmap',
+               hoverinfo='x+z')
+  return(p)
+}
+
+crop_introns <- function(introns, range){
+  introns$start <- pmax(introns$start, start(range))
+  introns$end <- pmin(introns$end, end(range))
+  return(introns)
+}
+
+make_rect <- function(df, height, yref){
+  yref <- gsub("yaxis", "y", yref)
   if(nrow(df)>0){
     rect_list <- vector("list", nrow(df))
-    yref = paste0("y", y_idx)
     for(e in 1:nrow(df)){
       row <- df[e, ]
       rect_list[[e]] <- list(type = "rect", fillcolor = "blue", opacity = 1, line=list(width=0),
@@ -14,9 +28,9 @@ make_rect <- function(df, height, y_idx){
   return(rect_list)
 }
 
-make_arrows <- function(df, y_idx){
+make_arrows <- function(df, yref){
+  yref <- gsub("yaxis", "y", yref)
   if(nrow(df)>0){
-    yref = paste0("y", y_idx)
     arrow_list <- vector("list", nrow(df))
     for(i in 1:nrow(df)){
       row <- df[i, ]
@@ -33,124 +47,143 @@ make_arrows <- function(df, y_idx){
   return(arrow_list)
 }
 
-make_tracks <- function(txdb, range, tx_data, cvg_gr){
-  # Make GeneRegion plot
-  tx_info <- get_tx_annotation(db_object = txdb, range=range, tx_data = tx_data)
-  tx_info <- subsetByOverlaps(tx_info, range)
-  if(length(tx_info)){
-    tx_info <- biovizBase::addStepping(tx_info, group.name = "transcript",
-                                  group.selfish = FALSE)
-  }
-  tx_info <- biovizBase::mold(tx_info)
-  
-  # Make supblots
-  bcvg <- bin_coverage_in_range(cvg_gr, range, binwidth = 100)
-  bin_df <- biovizBase::mold(bcvg)
-  samples <- names(mcols(bcvg))
-  plots <- list()
-  
-  cds <- tx_info[tx_info$feature == 'cds', ]
-  plots[["GeneRegion"]] <- plot_ly(x=cds$midpoint, y=cds$stepping, type='scatter', opacity=0,
-                                   text = cds$transcript, name="GeneRegion")
-  for(n in samples){
-    plots[[n]] <- plot_ly(x=bin_df$midpoint, y=bin_df[[n]], fill='tozeroy',
-                          mode='', type='scatter', showlegend=FALSE, name=n,
-                          color = 'blue')
-  }
-  
-  track_heights <- c(0.3, rep(0.7/length(samples), length(samples)))
-  sp <- subplot(plots, nrows=length(samples)+1, shareX = TRUE, heights=track_heights)
-  track_names <- sapply(sp$x$data, function(x){x$name})
-  grt_idx <- which(track_names == "GeneRegion")
-  grt_idx <- ifelse(grt_idx == 1, '', grt_idx)
-  
-  # Make shapes
-  cds_rect <- make_rect(cds, height = 0.4, grt_idx)
-  utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], height=0.2, grt_idx)
-  ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ], height=0.2, grt_idx)
-  
-  # Crop arrows to view range
-  introns <- tx_info[tx_info$feature == 'intron', ]
-  introns$start <- pmax(introns$start, start(range))
-  introns$end <- pmin(introns$end, end(range))
-  intron_arrow <- make_arrows(introns, grt_idx)
-  
-  # Modify layouts
-  grt_layout <- list(showlegend=FALSE, shapes=c(cds_rect, utr_rect, ncRNA_rect),
-                     annotations=intron_arrow)
-  sp$x$layout <- modifyList(sp$x$layout, grt_layout)
-  grt_y_layout <- list(autorange='reversed', showticklabels=FALSE, showticks=FALSE,
-                       title='Transcripts')
-  sp$x$layout[[paste0("yaxis",grt_idx)]] <- modifyList(sp$x$layout[[paste0("yaxis",grt_idx)]], grt_y_layout)
-  sp <- sp %>% layout(xaxis=list(range=c(start(range), end(range))))
-  return(sp)
-    # Coverage and Heatmap
-      # Titles
-      # Colors
-      # Y axes
-      # Groups
-    # Annotation
-  
-    # SNPs
-    # Collapsing and TSS
-  
-}
-
 #' Title
 #'
-#' @param db_object 
+#' @param txdb 
 #' @param range 
 #' @param tx_data 
-#' @param no_introns 
+#' @param cvg_list 
+#' @param hm_thresh 
+#' @param type 
+#' @param binsize 
 #'
 #' @return
 #' @export
 #'
 #' @examples
-get_tx_annotation <- function(db_object, range, tx_data, no_introns=FALSE){
-  in_style <- seqlevelsStyle(range)[[1]]
-  seqlevelsStyle(range) <- seqlevelsStyle(db_object)
-  tx <- chipVis:::transcriptsByOverlaps(db_object, range)
-  tx_names <- unlist(tx$TXNAME)
-  gr <- get_plot_ranges(tx_names, tx_data)
-  if(length(gr)){
-    seqlevelsStyle(gr) <- in_style
-    if(no_introns){
-      gr <- gr[mcols(gr)[['feature']]!='intron']
-    }
+plot_browserly_tracks <- function(txdb, range, tx_data, cvg_list,
+                        hm_thresh = 4,
+                        type = NULL,
+                        binsize = 1000){
+  # Make GeneRegion plot
+  tx_info <- get_tx_annotation(db_object = txdb, range=range, tx_data = tx_data)
+  
+  # Prepare tx info for plotting
+  if(length(tx_info)){
+    tx_info <- biovizBase::addStepping(tx_info, group.name = "transcript",
+                                       group.selfish = FALSE)
   }
-  return(gr)
+  tx_info <- biovizBase::mold(tx_info)
+  
+  # Make "invisible" transcript plot
+  tx_track <- browserly_tx_track(tx_info = tx_info)
+  
+  plots <- list("GeneRegion"= tx_track)
+  # Make supblots
+  # Decide the type of datatrack to plot if not provided
+  if(is.null(type)){
+    type <- ifelse(length(cvg_list) > hm_thresh, "heatmap", "hist")
+  }
+  
+  cvg_track <- browserly_cvg_track(cvg_list=cvg_list, range = range,
+                                   type = type, binsize = binsize)
+  
+  plots <- modifyList(plots, cvg_track)
+  track_heights <- c(0.3, rep(0.7/length(cvg_track), length(cvg_track)))
+  sp <- subplot(plots, nrows=length(plots), shareX = TRUE, heights=track_heights)
+  
+  # Modify layouts
+  trace_names <- sapply(sp$x$data, function(x){x$name})
+  trace_axes <- lapply(sp$x$data, function(x) {gsub("y", "yaxis", x$yaxis)})
+  names(trace_axes) <- trace_names                                                                                                     
+  grt_ax <- trace_axes[["GeneRegion"]]
+  
+  letterwidth <- 9
+  maxlabellength <- max(sapply(names(cvg_list), nchar))
+  if(type == 'heatmap'){
+    margin = list(l=letterwidth*maxlabellength)
+  } else {
+    margin =  list()
+  }
+  sp <- add_tx_shapes(sp, tx_info, range, grt_ax)
+  sp <- modify_y(sp, cvg_list, trace_axes, grt_ax, type)
+  sp <- sp %>% layout(xaxis=list(range=c(start(range), end(range))),
+                      margin=margin)
+  return(sp)
+  
 }
 
-get_plot_ranges <- function(tx_names, tx_data){
-  if(!length(tx_names)){ return(GRanges())}
-  for(n in names(tx_data)){
-    if(length(tx_data[[n]])){
-      tx_subset <- tx_names[tx_names %in% names(tx_data[[n]])]
-      part_gr <- unlist(tx_data[[n]][tx_subset])
-      part_gr$transcript <- names(part_gr)
-      part_gr$feature <- n
-      if(!('exon_name' %in% colnames(mcols(part_gr)))){
-        part_gr$exon_name <- NA
-      }
-      part_gr <- part_gr[, c('transcript', 'feature', 'exon_name')]
+modify_y <- function(plotly_obj, cvg_list, trace_axes, grt_ax, type){
+  data_axes <- trace_axes[trace_axes!=grt_ax]
+  
+  # Scale the data for the histograms
+  if(type!='heatmap'){
+    score_max <- max(unlist(lapply(plotly_obj$x$data, function(x) 
+      {if(class(x$y)=='numeric') return(x$y)})))
+  }
+  for(sample in names(data_axes)){
+    ax <- data_axes[[sample]]
+    if(type!='heatmap'){
+      plotly_obj$x$layout[[ax]][['range']] <- c(0, score_max)
+      plotly_obj$x$layout[[ax]][['title']] <- sample
+      plotly_obj$x$layout[[ax]][['titlefont']] <- list(size=10)
     } else {
-      part_gr <- GRanges()
-    }
-    if(exists("parts")){
-      parts <- c(parts, part_gr)
-    } else {
-      parts <- part_gr
+      plotly_obj$x$layout[[ax]]['ticks'] <- ""
     }
   }
+  return(plotly_obj)
+}
+
+add_tx_shapes <- function(plotly_obj, tx_info, range, grt_ax){
+  # Add annotations
+  cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ], height = 0.4, grt_ax)
+  utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], height=0.2, grt_ax)
+  ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ], height=0.2, grt_ax)
   
-  # Find ncRNA in exons
-  exon_tx <- unique(parts$transcript[parts$feature=='exon'])
-  coding_tx <- unique(parts$transcript[parts$feature!='intron' & parts$feature!='exon'])
+  # Crop arrows to view range
+  cropped_introns <- crop_introns(tx_info[tx_info$feature == 'intron', ], range)
+  intron_arrow <- make_arrows(cropped_introns, grt_ax)
+  grt_layout <- list(showlegend=FALSE, shapes=c(cds_rect, utr_rect, ncRNA_rect),
+                     annotations=intron_arrow)
+  plotly_obj$x$layout <- modifyList(plotly_obj$x$layout, grt_layout)
+  grt_y_layout <- list(autorange='reversed', showticklabels=FALSE, showticks=FALSE,
+                       title='Transcripts')
+  plotly_obj$x$layout[[grt_ax]] <- modifyList(plotly_obj$x$layout[[grt_ax]], grt_y_layout)
+  return(plotly_obj)
+}
+
+browserly_tx_track <- function(tx_info, 
+                               hover_info = c('cds', 'utr3', 'utr5', 'ncRNA')){
   
-  # ncRNA are exons that aren't in CDS or UTRs
-  nc_tx <- setdiff(exon_tx, coding_tx)
-  parts$feature[parts$transcript %in% nc_tx & parts$feature=='exon'] <-'ncRNA'
+  # Initizialize Plot
+  tx_track <- plot_ly(type='scatter', name = 'GeneRegion')
+  for(h_feature in hover_info){
+    h <- tx_info[tx_info$feature == h_feature, ]
+    tx_track <- tx_track %>% add_trace(x=h$midpoint, y=h$stepping, opacity=0,
+                                       text = h$transcript, 
+                                       name=h_feature,
+                                       hoverinfo="x+name+text", showlegend=FALSE)
+  }
   
-  return(parts)
+  return(tx_track)
+}
+
+browserly_cvg_track <- function(cvg_list, range, 
+                                binsize = 1000,
+                                type = 'heatmap',
+                                colors = NULL){
+  bin_cvg <- bin_coverage_in_range(cvg_list, range, binwidth = binsize)
+  bin_df <- biovizBase::mold(bin_cvg)
+  cvg_track <- list()
+  if(type == 'heatmap'){
+    cvg_track[['heatmap']] <- coverage_heatmap(bin_cvg)
+  }
+  else{
+    for(n in names(cvg_list)){
+      cvg_track[[n]] <- plot_ly(x=bin_df$midpoint, y=bin_df[[n]], type='scatter',
+                                fill='tozeroy', mode='', showlegend=FALSE, name=n,
+                                hoverinfo='x+y')
+    }
+  }
+  return(cvg_track)
 }
