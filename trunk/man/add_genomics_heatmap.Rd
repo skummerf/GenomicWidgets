@@ -9,9 +9,10 @@ add_genomics_heatmap(p, mat, x = iHeatmapR:::default_x(mat),
   col_k = NULL, col_clust_dist = stats::dist, name = "Value",
   scale = c("rows", "cols", "none"), scale_method = c("standardize",
   "center", "normalize"), colorscale = continuous_colorscale(),
-  col_groups_palette = iHeatmapR:::DEFAULT_COLORS,
-  col_groups_name = "Column<br>Groups", x_labels = NULL, y_labels = NULL,
-  x_title = NULL, y_title = NULL, buffer = 0.2, ...)
+  show_colorbar = TRUE, col_groups_palette = iHeatmapR:::DEFAULT_COLORS,
+  col_groups_name = "Column<br>Groups", show_col_groups_colorbar = TRUE,
+  x_labels = NULL, y_labels = NULL, x_title = NULL, y_title = NULL,
+  buffer = 0.2, ...)
 }
 \arguments{
 \item{mat}{matrix of values to be plotted as heatmap}

@@ -300,7 +300,7 @@ bin_coverage_in_range <- function(cvg_list, gr,
     
     # Need a better way to scale the data
     bin_score <- lapply(bin_split, function(x) sum(x))
-    mcols(tiled_range)[[g]] <- unlist(bin_score)
+    mcols(tiled_range)[[g]] <- unlist(bin_score)/width(tiled_range)
   }
   return(tiled_range)
 }

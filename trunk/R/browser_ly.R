@@ -47,6 +47,47 @@ make_arrows <- function(df, yref){
   return(arrow_list)
 }
 
+
+#' Title
+#'
+#' @param cvg_files 
+#' @param genome 
+#' @param db_object 
+#' @param tx_data 
+#' @param hm_thresh 
+#' @param type 
+#' @param binsize 
+#' @param cvg_scaling 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_browserly_function <- function(cvg_files, 
+                                    db_object, 
+                                    tx_data,
+                                    hm_thresh = 4,
+                                    type = NULL,
+                                    binsize = 1000,
+                                    cvg_scaling = NULL){
+  plot_browserly <- function(target_range){
+    cvg_list <- get_coverage_in_range(bwList = cvg_files,
+                                      target_range = target_range, 
+                                      names = names(cvg_files), 
+                                      cvg_scaling = cvg_scaling)
+    b_plot <- plot_browserly_tracks(db_object = db_object, 
+                                    range = target_range, 
+                                    tx_data = tx_data,
+                                    cvg_list = cvg_list,
+                                    hm_thresh = hm_thresh,
+                                    type = type,
+                                    binsize = binsize)
+    return(b_plot)
+  }
+  return(plot_browserly)
+}
+
+
 #' Title
 #'
 #' @param txdb 
@@ -61,12 +102,12 @@ make_arrows <- function(df, yref){
 #' @export
 #'
 #' @examples
-plot_browserly_tracks <- function(txdb, range, tx_data, cvg_list,
+plot_browserly_tracks <- function(db_object, range, tx_data, cvg_list,
                         hm_thresh = 4,
                         type = NULL,
                         binsize = 1000){
   # Make GeneRegion plot
-  tx_info <- get_tx_annotation(db_object = txdb, range=range, tx_data = tx_data)
+  tx_info <- get_tx_annotation(db_object = db_object, range=range, tx_data = tx_data)
   
   # Prepare tx info for plotting
   if(length(tx_info)){
@@ -101,7 +142,8 @@ plot_browserly_tracks <- function(txdb, range, tx_data, cvg_list,
   letterwidth <- 9
   maxlabellength <- max(sapply(names(cvg_list), nchar))
   if(type == 'heatmap'){
-    margin = list(l=letterwidth*maxlabellength)
+    left_margin = max(letterwidth*maxlabellength, 60)
+    margin = list(l=left_margin)
   } else {
     margin =  list()
   }
