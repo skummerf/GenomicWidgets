@@ -55,3 +55,47 @@ heatmap_to_tracks_shiny <- function(heatmap,
   shinyApp(ui = ui, server = server, options = options)
   
 }
+
+
+heatmap_to_browserly_shiny <- function(heatmap, 
+                                    track_function,
+                                    link,
+                                    title = "Heatmap linked to Genome Tracks",
+                                    options = list(height = 1400)){
+  require(shiny)
+  require(plotly)  
+  
+  # Check regions
+  
+  ui <- fluidPage(
+    
+    # Application title
+    titlePanel(title),
+    
+    fluidRow(
+      plotlyOutput("heat")
+    ),
+    fluidRow(
+      plotlyOutput("tracks")
+    )
+  )
+  
+  # Define server logic required to draw a histogram
+  server <- function(input, output) {
+    
+    output$heat <- renderPlotly({
+      heatmap %>% plot_iHeatmap(source = HEATMAP_SOURCE)
+    })
+    
+    output$tracks <- renderPlotly({
+      linker <- link() 
+      if (is.null(linker)) return(NULL)
+      track_function(linker)  
+    })
+    
+  }
+  
+  # Run the application 
+  shinyApp(ui = ui, server = server, options = options)
+  
+}
