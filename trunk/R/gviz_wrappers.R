@@ -286,14 +286,17 @@ bin_coverage_in_range <- function(cvg_list, gr,
   for(g in names(cvg_list)){
     # Find overlap between the coverage and the tiled range
     overlap <- findOverlaps(cvg_list[[g]], tiled_range)
+    q_hits <- queryHits(overlap)
+    s_hits <- subjectHits(overlap)
     if(weighted){
-      wscores <- width(cvg_list[[g]])*mcols(cvg_list[[g]])[[val]]
+      # Weight the scores by how much of the query width intersects the subject range
+      intersection <- pintersect(cvg_list[[g]][q_hits], tiled_range[s_hits])
+      wscores <- width(intersection)*mcols(cvg_list[[g]])[[val]][q_hits]
     } else{
-      wscores <- mcols(cvg_list[[g]])[[val]]
+      wscores <- mcols(cvg_list[[g]])[[val]][q_hits]
     }
     # Split scores from coverage range into their appropriate bin and sum
-    bin_split <- splitAsList(wscores[queryHits(overlap)], 
-                             factor(subjectHits(overlap)))
+    bin_split <- splitAsList(wscores, factor(s_hits))
     
     # Need a better way to scale the data
     bin_score <- lapply(bin_split, function(x) sum(x))

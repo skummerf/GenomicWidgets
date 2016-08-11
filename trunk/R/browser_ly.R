@@ -38,7 +38,7 @@ make_arrows <- function(df, yref){
       xend <- ifelse(row$strand =="-", row$end, row$start)
       arrow_list[[i]] <- list(x = xstart, y=row$stepping, xref = "x", yref = yref,
                               showarrow = TRUE, ax = xend, ay=row$stepping,
-                              axref='x', ayref= yref, arrowwidth = 1)
+                              axref='x', ayref= yref, arrowwidth = 1, text="")
     
     }
   } else {
