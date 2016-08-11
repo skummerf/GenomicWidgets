@@ -25,7 +25,10 @@
 #' @export
 #'
 #' @examples
-make_track_function <- function(target_range, cvg_files, genome, db_object, tx_data,
+make_track_function <- function(cvg_files, 
+                                genome, 
+                                db_object, 
+                                tx_data,
                                 cvg_scaling = NULL,
                                 bg_title = 'black', 
                                 colors = NULL, 
@@ -43,9 +46,10 @@ make_track_function <- function(target_range, cvg_files, genome, db_object, tx_d
                                 snptrack_kwargs=list(), 
                                 dtrack_kwargs=list(), 
                                 plot_kwargs = list()){
-  plot_tv <- function(range){
-    exon_data <- get_tx_annotation(db_object = txdb, 
-                                   range = view_range, 
+  plot_tv <- function(target_range){
+    if (is.null(target_range)) return(NULL)
+    exon_data <- get_tx_annotation(db_object = db_object, 
+                                   range = target_range, 
                                    tx_data = tx_data,
                                    no_introns=TRUE)
     cvg_list <- get_coverage_in_range(bwList = cvg_files,
