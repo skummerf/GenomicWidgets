@@ -41,16 +41,38 @@ tss_ranges <- with(fData(rpkmEset), GenomicRanges::GRanges(chr,
  
 ```{r}
 T47D_eset <- rpkmEset[,grep("T47D",pData(rpkmEset)$celltype)]
-
-T47D_exprs = log10(exprs(T47D_eset)+1)
-T47D_var = apply(T47D_exprs,1, sd, na.rm= TRUE)
-high_var = which(T47D_var > quantile(T47D_var,0.95,na.rm= TRUE))
 treat_groups = stringr::str_trim(sapply(stringr::str_split(pData(T47D_eset)$treatment,":"), 
-                      function(x) x[[2]]))
+                      function(x) x[[2]])) %>% gsub("+","_",., fixed= TRUE) %>% 
+  gsub("_3hr","",.)
 
-rna_hm <- rna_heatmap(T47D_exprs[high_var,], col_groups = treat_groups,
-            x = pData(T47D_eset)$title, y = tss_ranges$symbol[high_var],
-            y_title = NULL, x_title = NULL) 
+library(limma)
+library(edgeR)
+
+dge <- DGEList(counts = exprs(T47D_eset)) %>% calcNormFactors()
+design <- model.matrix(~ 0 +treat_groups)
+colnames(design) = gsub("treat_groups", "", colnames(design))
+v <- voom(dge, design=design)
+fit <- lmFit(v, design)
+contrasts <- makeContrasts(E2_Progesterone-E2, 
+                           E2_R5020-E2, 
+                           E2_R5020-E2_Progesterone, levels = design)
+fit2 <- contrasts.fit(fit, contrasts) %>% eBayes()
+results_Progesterone <- topTable(fit2, coef = 1, adjust = "BH")
+results_R5020 <- topTable(fit2, coef = 2, adjust = "BH")
+
+
+results <- decideTests(fit2, p.value = 0.01, lfc = 1)
+sig <- which(apply(results,1, function(x) sum(x!=0) > 0))
+
+# T47D_exprs = log10(exprs(T47D_eset)+1)
+# T47D_var = apply(T47D_exprs,1, function(x)
+#                  
+#                  sd, na.rm= TRUE)
+# high_var = which(T47D_var > quantile(T47D_var,0.95,na.rm= TRUE))
+
+rna_hm <- genomics_heatmap(v$E[sig,], col_groups = treat_groups,
+            x = pData(T47D_eset)$title, y = fData(T47D_eset)$symbol[sig],
+            name = "RNA-seq",cbg = colorbar_grid(x_spacing = 0.3)) 
 
 # rna_hm %>% plot_iHeatmap() %>% layout(margin = list(b = 250)) %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/rna_hm.pdf")
 
@@ -61,17 +83,17 @@ rna_hm <- rna_heatmap(T47D_exprs[high_var,], col_groups = treat_groups,
   
 ```{r MCF7_tss_cvg}
 T47D = list(
-  T47D_ER_Full_Media_3hr  = which(fi$source_name == "T47D_ER_Full_Media_3hr"),
-  T47D_ER_Progesterone_3hr = which(fi$source_name == "T47D_ER_Progesterone_3hr"),
-  T47D_ER_R5020_3hr = which(fi$source_name == "T47D_ER_R5020_3hr"),
+  ER_ab = which(fi$source_name == "T47D_ER_Full_Media_3hr"),
+  ER_ab_Pr_treat = which(fi$source_name == "T47D_ER_Progesterone_3hr"),
+  ER_ab_R5020_treat = which(fi$source_name == "T47D_ER_R5020_3hr"),
   
-  T47D_PR_Full_Media_3hr  = which(fi$source_name == "T47D_PR_Full_Media_3hr"),
-  T47D_PR_Progesterone_3hr = which(fi$source_name == "T47D_PR_Progesterone_3hr"),
-  T47D_PR_R5020_3hr = which(fi$source_name == "T47D_PR_R5020_3hr"),
+  PR_ab  = which(fi$source_name == "T47D_PR_Full_Media_3hr"),
+  PR_ab_Pr_treat = which(fi$source_name == "T47D_PR_Progesterone_3hr"),
+  PR_ab_R5020_treat = which(fi$source_name == "T47D_PR_R5020_3hr"),
   
-  T47D_p300_Full_Media_3hr  = which(fi$source_name == "T47D_p300_Full_Media_3hr"),
-  T47D_p300_Progesterone_3hr = which(fi$source_name == "T47D_p300_Progesterone_3hr"),
-  T47D_p300_R5020_3hr = which(fi$source_name == "T47D_p300_R5020_3hr")
+  p300_ab  = which(fi$source_name == "T47D_p300_Full_Media_3hr"),
+  p300_ab_Pr_treat  = which(fi$source_name == "T47D_p300_Progesterone_3hr"),
+  p300_ab_R5020_treat = which(fi$source_name == "T47D_p300_R5020_3hr")
   
 )
 
@@ -91,7 +113,7 @@ T47D = list(
 
 tss_cvg_mats <- lapply(T47D, function(x){
   tmp <- make_coverage_matrix(inputs = fi$File.bam[x],
-                                  ranges = tss_ranges[high_var],
+                                  ranges = tss_ranges[sig],
                                   binsize = 100,
                                   up = 5000,
                                   down = 5000)
@@ -99,21 +121,70 @@ tss_cvg_mats <- lapply(T47D, function(x){
   return(out)
 })
 
-tr <- transcriptsBy(TxDb.Hsapiens.BioMart.igis, by = "gene") %>% unlist()
-tr$entrez <- stringr::str_extract(names(tr),"(?<=:)(.*)")
-tr$symbol <- annotate::getSYMBOL(tr$entrez, data='org.Hs.eg')
-names(tr) = NULL
-tr <- resize(tr, fix = "start", width = 1)
+promoter_ranges = GenomicRanges::promoters(tss_ranges,
+                                                 up = 5000,
+                                                 down = 5000)
 
-tss_cvg_mats2 <- lapply(T47D, function(x){
-  tmp <- make_coverage_matrix(inputs = fi$File.bam[x],
-                                  ranges = tr[which(tr$entrez %in% tss_ranges$entrez[high_var])],
-                                  binsize = 25,
-                                  up = 1000,
-                                  down = 1000)
-  out <- Reduce("+", tmp) / length(tmp)
-  return(out)
-})
+er_promoter_counts <- simplify2array(
+  BiocParallel::bplapply(fi$File.bam[unlist(T47D[1:3])],
+                         bamsignals::bamCount,
+                         promoter_ranges[sig])) %>% 
+  scale(center = FALSE, scale = sf[unlist(T47D[1:3])])
+
+pr_promoter_counts <- simplify2array(
+  BiocParallel::bplapply(fi$File.bam[unlist(T47D[4:6])],
+                         bamsignals::bamCount,
+                         promoter_ranges[sig])) %>% 
+  scale(center = FALSE, scale = sf[unlist(T47D[4:6])])
+
+p300_promoter_counts <- simplify2array(
+  BiocParallel::bplapply(fi$File.bam[unlist(T47D[7:9])],
+                         bamsignals::bamCount,
+                         promoter_ranges[sig])) %>% 
+  scale(center = FALSE, scale = sf[unlist(T47D[7:9])])
+
+
+colnames(er_promoter_counts) <- unlist(fi$source_name[unlist(T47D[1:3])], use.names= FALSE)
+er_chip_condition <- unlist(fi$condition[unlist(T47D[1:3])], use.names= FALSE)
+
+
+colnames(pr_promoter_counts) <- unlist(fi$source_name[unlist(T47D[4:6])], use.names= FALSE)
+pr_chip_condition <- unlist(fi$condition[unlist(T47D[4:6])], use.names= FALSE)
+
+
+er_chip_hm <- genomics_heatmap(er_promoter_counts, col_groups = er_chip_condition,
+            y = fData(T47D_eset)$symbol[sig],
+            x_labels = NULL, name = "ChIP-seq") 
+
+
+rna_hm %>% add_genomics_heatmap(er_promoter_counts,
+                                col_groups = er_chip_condition,
+                                name = "ER ChIP") %>% 
+  add_genomics_heatmap(pr_promoter_counts,
+                                col_groups = pr_chip_condition,
+                                name = "ER ChIP",
+                       show_colorbar = FALSE) %>% 
+  add_genomics_heatmap(pr_promoter_counts,
+                                col_groups = pr_chip_condition,
+                                name = "PR ChIP",
+                       show_colorbar = FALSE)
+
+
+# tr <- transcriptsBy(TxDb.Hsapiens.BioMart.igis, by = "gene") %>% unlist()
+# tr$entrez <- stringr::str_extract(names(tr),"(?<=:)(.*)")
+# tr$symbol <- annotate::getSYMBOL(tr$entrez, data='org.Hs.eg')
+# names(tr) = NULL
+# tr <- resize(tr, fix = "start", width = 1)
+# 
+# tss_cvg_mats2 <- lapply(T47D, function(x){
+#   tmp <- make_coverage_matrix(inputs = fi$File.bam[x],
+#                                   ranges = tr[which(tr$entrez %in% tss_ranges$entrez[high_var])],
+#                                   binsize = 25,
+#                                   up = 1000,
+#                                   down = 1000)
+#   out <- Reduce("+", tmp) / length(tmp)
+#   return(out)
+# })
 
 # 
 # tss <- gChipseq::tssFromTxdb(txdb = TxDb.Hsapiens.BioMart.igis)
@@ -141,7 +212,9 @@ tss_cvg_mats2 <- lapply(T47D, function(x){
 
 
 ```{r}
-new_single_coverage_heatmap(tss_cvg_mats[[1]], row_order = "signal", y = tss_ranges$symbol[high_var])
+rna_hm %>% add_coverage_heatmap(tss_cvg_mats[[2]])
+
+new_single_coverage_heatmap(tss_cvg_mats[[1]], row_order = "signal", y = tss_ranges$symbol[sig])
 ```
 
 ```{r}
@@ -167,7 +240,17 @@ merged_peaks <- lapply(T47D,
                          peaks <- peaks[!sapply(peaks, is.null)]
                          reduce(do.call(c, peaks), min.gapwidth = 500)
                          })
-                       
+                    
+
+rp_scores <- sapply(merged_peaks, compute_regulatory_potential, tss_ranges)
+
+rna_hm %>% add_simple_heatmap(rp_scores[high_var,],
+                              col_groups = rep(c("ER","PR","p300"), each = 3),
+                              name = "Regulatory<br>Potential") %>%
+  plot_iHeatmap() %>% layout(margin = list(b = 250)) %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/rna_plus_regulatory_potential.png")
+
+
+
 
 er_progesterone_peaks_cvg_mats <- lapply(T47D, function(x){
   tmp <- make_coverage_matrix(inputs = fi$File.bam[x],

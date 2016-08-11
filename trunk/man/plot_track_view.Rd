@@ -9,9 +9,9 @@ plot genomic coverage along the gene}
 plot_track_view(cvg_list, target_range, exon_data, genome, bg_title = "black",
   colors = NULL, type = NULL, hm_thresh = 4, hm_binsize = 1000,
   hm_scaling = NULL, snp_gr = NULL, tss_gr = NULL, ucsc = FALSE,
-  gatrack_kwargs = list(), grtrack_kwargs = list(),
-  tsstrack_kwargs = list(), snptrack_kwargs = list(),
-  dtrack_kwargs = list(), plot_kwargs = list())
+  existing_tracks = NULL, gatrack_kwargs = list(),
+  grtrack_kwargs = list(), tsstrack_kwargs = list(),
+  snptrack_kwargs = list(), dtrack_kwargs = list(), plot_kwargs = list())
 }
 \arguments{
 \item{cvg_list}{GRangesList: typically the results of importing wig/bw/... files for each sample}

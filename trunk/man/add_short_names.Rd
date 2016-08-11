@@ -4,12 +4,12 @@
 \alias{add_short_names}
 \title{Title}
 \usage{
-add_short_names(file_info, name.vector)
+add_short_names(file_info, name_vector)
 }
 \arguments{
 \item{file_info}{}
 
-\item{name.vector}{}
+\item{name_vector}{}
 }
 \description{
 Title

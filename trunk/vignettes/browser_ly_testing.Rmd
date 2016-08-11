@@ -16,7 +16,7 @@ library(chipVis)
 
 ```{r}
 # Specify parameters
-info_dir <- "~/workspace/BAP1/"
+info_dir <- "/gne/research/workspace/schepa/BAP1_Data/"
 s_file <- paste(info_dir, "BAP1_june_2016_samples.txt", sep='')
 p_file <- paste(info_dir, "BAP1_june_2016_pairs.txt", sep='')
 fi <- get_chip_file_info(s_file, p_file)

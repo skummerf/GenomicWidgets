@@ -5,11 +5,11 @@
 \title{add_coverage_heatmap}
 \usage{
 add_coverage_heatmap(p, mat, x = iHeatmapR:::default_x(mat),
-  groups = p$row_groups, signal = rowSums(mat), plot_signal = TRUE,
-  name = "Coverage", signal_name = "Aggregate", summary = TRUE,
-  scale_method = c("localRms", "localMean", "localNonZeroMean",
-  "PercentileMax", "scalar", "none"), pct = 0.95, scale_factor = 1,
-  ticktext = TRUE, start = x[1], end = default_end(x),
+  groups = p$row_groups, signal = rowMeans(mat, na.rm = TRUE),
+  plot_signal = TRUE, name = "Coverage", signal_name = "Avg. Coverage",
+  summary = TRUE, scale_method = c("localRms", "localMean",
+  "localNonZeroMean", "PercentileMax", "scalar", "none"), pct = 0.95,
+  scale_factor = 1, ticktext = TRUE, start = x[1], end = default_end(x),
   xlab = "Position", font = list(size = 8), ...)
 }
 \arguments{

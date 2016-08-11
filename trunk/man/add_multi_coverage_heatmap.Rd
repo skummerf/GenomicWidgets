@@ -5,21 +5,16 @@
 \title{add_multi_coverage_heatmap}
 \usage{
 add_multi_coverage_heatmap(p, mats, x = iHeatmapR:::default_x(mats[[1]]),
-  row_order = c("none", "hclust", "kmeans", "groups", "signal"), k = NULL,
-  groups = NULL, clust_dist = stats::dist, cluster_by = c("first", "all"),
-  signal = lapply(mats, rowSums), plot_signal = TRUE, name = "Coverage",
-  signal_name = "Aggregate", summary = TRUE, source = "HM",
-  scale_method = c("localRms", "localMean", "localNonZeroMean",
-  "PercentileMax", "scalar", "none"), pct = 0.95, scale_factor = rep(1,
-  length(mats)), share_z = TRUE, ticktext = TRUE, start = x[1],
-  end = default_end(x), xlab = "Position", font = list(size = 8), ...)
+  groups = NULL, signal = lapply(mats, rowMeans, na.rm = TRUE),
+  plot_signal = TRUE, name = "Coverage", signal_name = "Avg. Coverage",
+  summary = TRUE, source = "HM", scale_method = c("localRms", "localMean",
+  "localNonZeroMean", "PercentileMax", "scalar", "none"), pct = 0.95,
+  scale_factor = rep(1, length(mats)), share_z = TRUE, ticktext = TRUE,
+  start = x[1], end = default_end(x), xlab = "Position",
+  font = list(size = 8), ...)
 }
 \arguments{
 \item{x}{x axis labels}
-
-\item{row_order}{row order method}
-
-\item{k}{k to use for kmeans clustering or cutting heirarchical clustering}
 
 \item{groups}{pre-determined groups for rows}
 
@@ -32,8 +27,6 @@ add_multi_coverage_heatmap(p, mats, x = iHeatmapR:::default_x(mats[[1]]),
 \item{source}{source name in plotly}
 
 \item{scale_method}{method to use for scaling}
-
-\item{share_z}{share colorbar between heatmaps}
 
 \item{mat}{coverage matrix}
 

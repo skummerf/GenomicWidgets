@@ -1,5 +1,5 @@
 
-#' rna_heatmap
+#' genomics_heatmap
 #' 
 #' @param mat matrix of values to be plotted as heatmap
 #' @param x x xaxis labels, by default colnames of mat
@@ -25,7 +25,7 @@
 #' generate an interactive graphic
 #' @export
 #' @author Alicia Schep
-rna_heatmap <- function(mat, 
+genomics_heatmap <- function(mat, 
                            x = iHeatmapR:::default_x(mat),
                            y = iHeatmapR:::default_y(mat),   
                            row_order = c("hclust","none","kmeans","groups"),
@@ -36,14 +36,22 @@ rna_heatmap <- function(mat,
                            col_k = NULL,
                            row_clust_dist = stats::dist,
                            col_clust_dist = stats::dist,
-                           name = "RNA-seq",
+                           name = "Value",
                            source = "HM",
                            scale = c("rows","cols","none"),
                            scale_method = c("standardize","center","normalize"),
-                           x_labels = x,
+                           colorscale = continuous_colorscale(),
+                           col_groups_palette = iHeatmapR:::DEFAULT_COLORS,
+                           col_groups_name = "Column<br>Groups",
+                           row_groups_palette = iHeatmapR:::DEFAULT_COLORS,
+                           row_groups_name = "Row<br>Groups",
+                           show_row_groups_colorbar = TRUE,
+                           show_col_groups_colorbar = TRUE,
+                           x_labels = NULL,
                            y_labels = NULL,
                            x_title = NULL,
                            y_title = NULL,
+                           cbg = colorbar_grid(),
                            ...){
   
   row_order = match.arg(row_order)
@@ -58,6 +66,13 @@ rna_heatmap <- function(mat,
                             col_order = col_order,
                             row_groups = row_groups,
                             col_groups = col_groups,
+                            row_groups_name = row_groups_name,
+                            col_groups_name = col_groups_name,
+                            col_groups_palette = col_groups_palette,
+                            row_groups_palette = row_groups_palette,
+                            show_col_groups_colorbar = show_col_groups_colorbar,
+                            show_row_groups_colorbar = show_row_groups_colorbar,
+                            colorscale = colorscale,
                             row_k = row_k,
                             col_k = col_k,
                             row_clust_dist = row_clust_dist,
@@ -70,11 +85,12 @@ rna_heatmap <- function(mat,
                             y_labels = y_labels,
                             x_title = x_title,
                             y_title = y_title,
+                            cbg = cbg,
                             ...)
   
 }
 
-#' add_rna_heatmap
+#' add_genomics_heatmap
 #' 
 #' @param mat matrix of values to be plotted as heatmap
 #' @param x x xaxis labels, by default colnames of mat
@@ -93,17 +109,22 @@ rna_heatmap <- function(mat,
 #' of first heatmap
 #' @export
 #' @author Alicia Schep
-add_rna_heatmap <- function(p,
+add_genomics_heatmap <- function(p,
                                mat, 
                                x = iHeatmapR:::default_x(mat),
                                col_order = c("groups","none","hclust","kmeans"),
                                col_groups = NULL,
                                col_k = NULL,
                                col_clust_dist = stats::dist,
-                               name = "Signal",
+                               name = "Value",
                                scale = c("rows","cols","none"),
                                scale_method = c("standardize","center","normalize"),
-                               x_labels = x,
+                               colorscale = continuous_colorscale(),
+                               show_colorbar = TRUE,
+                               col_groups_palette = iHeatmapR:::DEFAULT_COLORS,
+                               col_groups_name = "Column<br>Groups",
+                               show_col_groups_colorbar = TRUE,
+                               x_labels = NULL,
                                y_labels = NULL,
                                x_title = NULL,
                                y_title = NULL,
@@ -117,13 +138,17 @@ add_rna_heatmap <- function(p,
   
   p %>% iHeatmapR::add_simple_heatmap(mat, 
                                   x = x,
-                                  row_order = row_order,
                                   col_order = col_order,
                                   col_groups = col_groups,
+                                  col_groups_name = col_groups_name,
+                                  col_groups_palette = col_groups_palette,
+                                  show_col_groups_colorbar = show_col_groups_colorbar,
+                                  colorscale = colorscale,
                                   col_k = col_k,
                                   col_clust_dist = col_clust_dist,
                                   name = name,
                                   scale = scale,
+                                  show_colorbar = show_colorbar,
                                   scale_method = scale_method,
                                   x_labels = x_labels,
                                   x_title = x_title,

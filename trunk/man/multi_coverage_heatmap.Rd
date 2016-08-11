@@ -9,12 +9,13 @@ multi_coverage_heatmap(mats, x = iHeatmapR:::default_x(mats[[1]]),
   include_method = c("signal", "first", "random"), row_order = c("none",
   "hclust", "kmeans", "groups", "signal"), k = NULL, groups = NULL,
   clust_dist = stats::dist, cluster_by = c("first", "all"),
-  signal = lapply(mats, rowSums), plot_signal = TRUE, name = "Coverage",
-  signal_name = "Aggregate", summary = TRUE, source = "HM",
-  scale_method = c("localRms", "localMean", "localNonZeroMean",
-  "PercentileMax", "scalar", "none"), pct = 0.95, scale_factor = rep(1,
-  length(mats)), share_z = TRUE, ticktext = TRUE, start = x[1],
-  end = default_end(x), xlab = "Position", font = list(size = 8), ...)
+  signal = lapply(mats, rowMeans, na.rm = TRUE), plot_signal = TRUE,
+  name = "Coverage", signal_name = "Avg. Coverage", summary = TRUE,
+  source = "HM", scale_method = c("localRms", "localMean",
+  "localNonZeroMean", "PercentileMax", "scalar", "none"), pct = 0.95,
+  scale_factor = rep(1, length(mats)), share_z = TRUE, ticktext = TRUE,
+  start = x[1], end = default_end(x), xlab = "Position",
+  font = list(size = 8), ...)
 }
 \arguments{
 \item{x}{x axis labels}

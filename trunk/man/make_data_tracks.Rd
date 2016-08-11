@@ -5,7 +5,7 @@
 \title{Make Data Tracks}
 \usage{
 make_data_tracks(cvg_list, gr, genome, chr, bg_title = "black",
-  colors = NULL, type = NULL, binwidth = 1000, val = "score",
+  colors = NULL, type = "heatmap", binwidth = 1000, val = "score",
   hm_scaling = log, kwargs = list())
 }
 \arguments{
