@@ -147,11 +147,6 @@ renameMacsColname <- function(x) {
 ##' @param broad whether the input is macs2's broadpeak file
 ##' @param as.Granges Logical. If the peaks should be returned as a GRanges object.
 ##' @return data frame of macs peaks, with cleaned up column names and FDR values converted from percentage to relative value (between 0 and 1)
-##' @examples
-##' library(gChipseq)
-##' file <- system.file("extdata","tf.macsrun_peaks.xls",  package="gChipseq")
-##' peaks <- readMacsPeaks(file)
-##' peaks.gr <- readMacsPeaks(file, as.Granges=TRUE)
 ##' @author Suchit Jhunjhunwala, Jinfeng Liu
 ##' @export
 ##' @import GenomicRanges
@@ -262,4 +257,61 @@ readMacsPeaks <- function(file, fc, minTags, neglog10pThreshold, fdr,
     mcols(gr) <- df[, -1:-3]
     return(gr)
   }
+}
+
+
+##Function from gChipseq
+ngsPipelineResult <- function (dirs, file = ".summary_alignment.tab$", sep = "\t", 
+                               column = "value", brief.name = TRUE, ncores = 1) {
+  ncores <- ifelse(is.null(ncores), detectCores(), min(ncores, 
+                                                       detectCores()))
+  value.list <- list()
+  dirs <- unique(dirs)
+  value.list <- mclapply(setNames(dirs, dirs), function(dir) {
+    dir.result <- file.path(dir, "results")
+    file.in <- list.files(dir.result, pattern = file)
+    if (length(file.in) != 1) {
+      logerror("number of files not equal to 1")
+      return(NULL)
+    }
+    file.in <- file.path(dir.result, file.in)
+    dat.in <- read.table(file.in, as.is = TRUE, header = TRUE, 
+                         row.names = 1, sep = "\t")
+    if (nrow(dat.in) < 1) 
+      next
+    if (!column %in% colnames(dat.in)) {
+      logerror(paste(column, " not in the column of", file, 
+                     "\n"))
+      return(NULL)
+    }
+    dat.out <- dat.in[, column]
+    names(dat.out) <- rownames(dat.in)
+    return(dat.out)
+  }, mc.cores = ncores)
+  if (length(value.list) < 1) {
+    logerror("no data read in")
+    return(NULL)
+  }
+  nrow.data <- unique(sapply(value.list, length))
+  rownames.data <- names(value.list[[1]])
+  if (length(nrow.data) != 1) {
+    logerror("inconsistent row numbers")
+    return(NULL)
+  }
+  dat.out <- matrix(NA, nrow = nrow.data, ncol = length(value.list), 
+                    dimnames = list(rownames.data, names(value.list)))
+  for (i in 1:length(value.list)) {
+    dat.out[, i] <- value.list[[i]][rownames.data]
+  }
+  if (brief.name) {
+    samples <- colnames(dat.out)
+    samples <- sub("\\/$", "", samples)
+    samples <- sub(".*\\/", "", samples)
+    colnames(dat.out) <- samples
+  }
+  if (ncol(dat.out) != length(dirs)) {
+    logwarn(paste(length(dirs), "input dirs,", ncol(dat.out), 
+                  " output columns\n"))
+  }
+  return(dat.out)
 }

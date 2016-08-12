@@ -15,9 +15,9 @@ Imports:
     fastcluster,
     iHeatmapR,
     annotate,
-    stringr
+    stringr,
+    bamsignals
 RoxygenNote: 5.0.1
 Suggests: 
     shiny,
-    testthat,
-    gChipseq
+    testthat

@@ -1,6 +1,6 @@
 #' make_coverage_matrix
 #' 
-#' @param inputs filenames of bigwig, bam, or RData file
+#' @param inputs filenames of bigwig or bam
 #' @param ranges ranges for which to compute coverage within
 #' @param binsize binsize to bin coverage
 #' @param format format of files, default is auto 
@@ -15,7 +15,7 @@
 make_coverage_matrix <- function(inputs, 
                                  ranges, 
                                  binsize = 1, 
-                                 format = c("auto","bigwig","bam", "rle","RData"),
+                                 format = c("auto","bigwig","bam"),
                                  up = 0,
                                  down = 0,
                                  ...){
@@ -80,24 +80,8 @@ make_coverage_matrix <- function(inputs,
     } else{
       out <- BiocParallel::bplapply(inputs, coverage_mat_from_bam, ranges, binsize, coln)
     }
-  } else if (format == "RData"){
-    out <- getCvgList(ranges, inputs, flank = 0, normalize.method = "none", bins = binsize, ...)
-    # if (length(inputs) == 1){
-    #   out <- out[[1]]
-    #   colnames(out) = coln
-    # } else{
-    #   out <- lapply(out, function(x) {colnames(x) = coln; return(x)})
-    # }
-  } else if (format == "rle"){
-    if (length(inputs) == 1){
-      out <- getBinnedCvg(ranges, inputs, bins = binsize, flank = 0)
-      #colnames(out) = coln
-    } else{
-      out <- lapply(inputs, function(x) getBinnedCvg(ranges, x, bins = binsize, flank = 0))
-      #out <- lapply(out, function(x) {colnames(x) = coln; return(x)})
-    }
   } else {
-    stop("auto method not yet implemented")
+    stop("Format not recognized")
   }
   
   return(out)

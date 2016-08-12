@@ -7,16 +7,15 @@
 #' @param pairs_file string
 #'
 #' @return list
-#' @import gChipseq
 #' @author Justin Finkle
 #' @export
 #' @examples
 get_chip_file_info <- function(samples_file, pairs_file){
   # Load, expand, and combine sample and pair tableb
   samples <- read.delim(samples_file, stringsAsFactors = FALSE)
-  samples_exp <- gChipseq::expandSampleTable(samples)
+  samples_exp <- expandSampleTable(samples)
   
-  pairs <- gChipseq::expandPairedTable(read.delim(pairs_file,
+  pairs <- expandPairedTable(read.delim(pairs_file,
                                         stringsAsFactors = FALSE))
   
   full_info <- merge(pairs, samples_exp, all = TRUE)

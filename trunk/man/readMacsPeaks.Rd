@@ -30,12 +30,6 @@ data frame of macs peaks, with cleaned up column names and FDR values converted 
 \description{
 Read peaks from MACS output, both v1.4 and v2. Column names in v1 and v2 will be harmonized, use the peak start/end position as the main positions by default
 }
-\examples{
-library(gChipseq)
-file <- system.file("extdata","tf.macsrun_peaks.xls",  package="gChipseq")
-peaks <- readMacsPeaks(file)
-peaks.gr <- readMacsPeaks(file, as.Granges=TRUE)
-}
 \author{
 Suchit Jhunjhunwala, Jinfeng Liu
 }
