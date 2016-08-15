@@ -9,7 +9,9 @@ knitr::opts_chunk$set(echo = TRUE, cache=TRUE, autodep=TRUE)
 #library(gChipseq)
 library(chipVis)
 library(TxDb.Hsapiens.BioMart.igis3.0)
+library(org.Hs.eg.db)
 library(plotly)
+library(dplyr)
 library(iHeatmapR)
 BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
 ```
@@ -401,4 +403,37 @@ mchm <- multi_coverage_heatmap(er_progesterone_peaks_cvg_mats[1:3], row_order = 
 
 ```
 
+```{r Match transcripts with symbol}
+tr <- transcriptsBy(TxDb.Hsapiens.BioMart.igis, by = "gene") %>% unlist()
+tr$entrez <- stringr::str_extract(names(tr),"(?<=:)(.*)")
+tr$symbol <- annotate::getSYMBOL(tr$entrez, data='org.Hs.eg')
+names(tr) = NULL
+trdf <- as.data.frame(tr)
 
+truniq <- trdf %>% group_by(entrez) %>% summarize(chr = first(seqnames),
+                                                  start = min(start),
+                                                  end = min(end),
+                                                  strand = first(strand),
+                                                  symbol = first(symbol))
+tx_data <- load_tx_data(TxDb.Hsapiens.BioMart.igis)
+```
+
+```{r Gene Loci}
+symbol <- "BCL6"
+sym_idx <- which(truniq$symbol == symbol)
+symbol_range <- get_view_range(chr = truniq$chr[sym_idx], start = truniq$start[sym_idx],
+                               end = truniq$end[sym_idx])
+symbol_range <- extend_grange(symbol_range, 50000)
+range_cvg <- lapply(seq_along(T47D), function(i){
+  x <- T47D[[i]]
+  n <- paste0(rep(names(T47D)[[i]], length(x)), seq_along(x))
+  tmp <- get_coverage_in_range(bwList = fi$File.bw[x], target_range = symbol_range,
+                               names = n, cvg_scaling = sf[x])})
+range_cvg <- Reduce(c, range_cvg)
+plot_browserly_tracks(symbol_range, tx_data, range_cvg, binsize = 100)
+```
+
+```{r}
+cvg_subset <- c('PR_ab_Pr_treat1', 'PR_ab5')
+plot_browserly_tracks(symbol_range, tx_data, range_cvg[cvg_subset], binsize=100)
+```
