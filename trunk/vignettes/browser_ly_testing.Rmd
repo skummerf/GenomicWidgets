@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(TxDb.Mmusculus.BioMart.igis3.0)
 library(plotly)
-library(gChipseq)
+#library(gChipseq)
 library(chipVis)
 ```
 
@@ -48,6 +48,6 @@ cvg <- get_coverage_in_range(fi[idx, "File.bw"], view_range, shortened_names, sf
 
 
 ```{r Demo}
-plot_browserly_tracks(TxDb.Mmusculus.BioMart.igis, view_range, tx_data, cvg)
+plot_browserly_tracks(view_range, tx_data, cvg)
 ```
 

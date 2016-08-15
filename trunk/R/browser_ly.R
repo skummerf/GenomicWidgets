@@ -52,7 +52,6 @@ make_arrows <- function(df, yref){
 #'
 #' @param cvg_files 
 #' @param genome 
-#' @param db_object 
 #' @param tx_data 
 #' @param hm_thresh 
 #' @param type 
@@ -64,7 +63,6 @@ make_arrows <- function(df, yref){
 #'
 #' @examples
 make_browserly_function <- function(cvg_files, 
-                                    db_object, 
                                     tx_data,
                                     hm_thresh = 4,
                                     type = NULL,
@@ -75,8 +73,7 @@ make_browserly_function <- function(cvg_files,
                                       target_range = target_range, 
                                       names = names(cvg_files), 
                                       cvg_scaling = cvg_scaling)
-    b_plot <- plot_browserly_tracks(db_object = db_object, 
-                                    range = target_range, 
+    b_plot <- plot_browserly_tracks(range = target_range, 
                                     tx_data = tx_data,
                                     cvg_list = cvg_list,
                                     hm_thresh = hm_thresh,
@@ -102,12 +99,12 @@ make_browserly_function <- function(cvg_files,
 #' @export
 #'
 #' @examples
-plot_browserly_tracks <- function(db_object, range, tx_data, cvg_list,
+plot_browserly_tracks <- function(range, tx_data, cvg_list,
                         hm_thresh = 4,
                         type = NULL,
                         binsize = 1000){
   # Make GeneRegion plot
-  tx_info <- get_tx_annotation(db_object = db_object, range=range, tx_data = tx_data)
+  tx_info <- get_tx_annotation(range=range, tx_data = tx_data)
   
   # Prepare tx info for plotting
   if(length(tx_info)){

@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(gChipseq)
+#library(gChipseq)
 library(chipVis)
 library(rtracklayer)
 library(TxDb.Mmusculus.BioMart.igis3.0)
@@ -20,7 +20,7 @@ This is intended to demonstrate how the chipVis package displays local views.
 First we load some data to use for visualization
 ```{r Load Data}
 # Specify parameters
-info_dir <- "~/workspace/BAP1/"
+info_dir <- "/gne/research/workspace/schepa/BAP1_Data/"
 s_file <- paste(info_dir, "BAP1_june_2016_samples.txt", sep='')
 p_file <- paste(info_dir, "BAP1_june_2016_pairs.txt", sep='')
 fi <- get_chip_file_info(s_file, p_file)
@@ -42,7 +42,7 @@ relevant coverage from the data samples can be pulled with the appropriate scali
 ```{r Load BigWig}
 extension <- 150000
 # Create the range for viewing. Can either specify a symbol or a range
-# view_range <- get_view_range(tx_data = tx_data, db_object = txdb, symbol = symbol, 
+# view_range <- get_view_range(tx_data = tx_data, symbol = symbol, 
                              # keytype = "SYMBOL")
 view_range <- get_view_range(chr = 1, start=159758000, end=159758000)
 
@@ -50,7 +50,7 @@ view_range <- get_view_range(chr = 1, start=159758000, end=159758000)
 view_range <- extend_grange(view_range, extension)
 
 # Get the exon list
-exon_data <- get_tx_annotation(db_object = txdb, range = view_range, 
+exon_data <- get_tx_annotation(range = view_range, 
                                tx_data = tx_data, no_introns=TRUE)
 
 # Get the coverage
@@ -69,7 +69,7 @@ cvg <- get_coverage_in_range(fi[idx, "File.bw"], view_range, shortened_names, sf
 If available, the user can also load SNP data and TSS data. TSS annotations may be useful
 if there are a lot of transcripts that will be collapsed to save vertical space.
 ```{r Extra annotation Information}
-snps <- readRDS("~/workspace/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
+snps <- readRDS("/gne/research/workspace/finklej/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
 tss_db <- tssFromTxdb(txdb)
 ```
 
@@ -90,8 +90,8 @@ coverage file names, scaling factor) so that it can be abstracted away.
 ```{r Function Abstraction}
 cvg_files <- fi[idx, 'File.bw']
 names(cvg_files) <- fi[idx, 'Genotype']
-ptv <- make_track_function(target_range = view_range, cvg_files = cvg_files,
-                           genome = genome, db_object = txdb, tx_data = tx_data,
+ptv <- make_track_function(cvg_files = cvg_files,
+                           genome = genome, tx_data = tx_data,
                            cvg_scaling = sf, plot_kwargs = list(sizes=c(0.2, 0.3, 0.3)), grtrack_kwargs = list(stacking='squish'))
 ptv(view_range)
 ```

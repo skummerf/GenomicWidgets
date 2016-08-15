@@ -3,7 +3,6 @@
 #' @param target_range 
 #' @param cvg_files 
 #' @param genome 
-#' @param db_object 
 #' @param tx_data 
 #' @param bg_title 
 #' @param colors 
@@ -27,7 +26,6 @@
 #' @examples
 make_track_function <- function(cvg_files, 
                                 genome, 
-                                db_object, 
                                 tx_data,
                                 cvg_scaling = NULL,
                                 bg_title = 'black', 
@@ -48,8 +46,7 @@ make_track_function <- function(cvg_files,
                                 plot_kwargs = list()){
   plot_tv <- function(target_range){
     if (is.null(target_range)) return(NULL)
-    exon_data <- get_tx_annotation(db_object = db_object, 
-                                   range = target_range, 
+    exon_data <- get_tx_annotation(range = target_range, 
                                    tx_data = tx_data,
                                    no_introns=TRUE)
     cvg_list <- get_coverage_in_range(bwList = cvg_files,
@@ -103,7 +100,7 @@ make_track_function <- function(cvg_files,
 ##' @param plot_kwargs 
 ##'
 ##' @return ptracks list: track objects plotted by Gviz
-##' @import Gviz gChipseq RColorBrewer
+##' @import Gviz RColorBrewer
 ##' @export
 ##' @author Justin Finkle
 plot_track_view <- function(cvg_list, target_range, exon_data, genome,

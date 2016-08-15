@@ -5,10 +5,10 @@
 \title{make_coverage_matrix}
 \usage{
 make_coverage_matrix(inputs, ranges, binsize = 1, format = c("auto",
-  "bigwig", "bam", "rle", "RData"), up = 0, down = 0, ...)
+  "bigwig", "bam"), up = 0, down = 0, ...)
 }
 \arguments{
-\item{inputs}{filenames of bigwig, bam, or RData file}
+\item{inputs}{filenames of bigwig or bam}
 
 \item{ranges}{ranges for which to compute coverage within}
 

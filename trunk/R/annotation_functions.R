@@ -16,7 +16,9 @@ load_tx_data <- function(db_object){
                   utr5 = fiveUTRsByTranscript(db_object, use.names=TRUE),
                   utr3 = threeUTRsByTranscript(db_object, use.names=TRUE),
                   cds = cdsBy(db_object, by='tx', use.names=TRUE),
-                  exon = exonsBy(db_object, by='tx', use.names=TRUE))
+                  exon = exonsBy(db_object, by='tx', use.names=TRUE),
+                  transcripts = transcripts(db_object, columns = c("TXID","TXNAME")),
+                  seqlevelsStyle =  seqlevelsStyle(db_object))
   return(tx_data)
 }
 
@@ -38,10 +40,11 @@ transcriptsByOverlaps <- function(x, ranges, maxgap = 0L, minoverlap = 1L,
 #' @export
 #'
 #' @examples
-get_tx_annotation <- function(db_object, range, tx_data, no_introns=FALSE){
+get_tx_annotation <- function(range, tx_data, no_introns=FALSE){
   in_style <- seqlevelsStyle(range)[[1]]
-  seqlevelsStyle(range) <- seqlevelsStyle(db_object)
-  tx <- chipVis:::transcriptsByOverlaps(db_object, range)
+  seqlevelsStyle(range) <- tx_data$seqlevelsStyle[1]
+  tx <- subsetByOverlaps(tx_data$transcripts, range, maxgap = 0L, 
+                   minoverlap = 1L, type = "any")
   tx_names <- unlist(tx$TXNAME)
   gr <- get_tx_features(tx_names, tx_data)
   if(length(gr)){
@@ -57,7 +60,7 @@ get_tx_annotation <- function(db_object, range, tx_data, no_introns=FALSE){
 
 get_tx_features <- function(tx_names, tx_data){
   if(!length(tx_names)){ return(GRanges())}
-  for(n in names(tx_data)){
+  for (n in c("intron","utr5","utr3","cds","exon")){
     if(length(tx_data[[n]])){
       tx_subset <- tx_names[tx_names %in% names(tx_data[[n]])]
       part_gr <- unlist(tx_data[[n]][tx_subset])

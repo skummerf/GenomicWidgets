@@ -5,7 +5,7 @@
 \title{make_coverage_tracks}
 \usage{
 make_coverage_tracks(inputs, ranges, binsize = 1, format = c("auto",
-  "bigwig", "bam", "rle", "RData"), up = 0, down = 0)
+  "bigwig", "bam"), up = 0, down = 0)
 }
 \arguments{
 \item{inputs}{filenames of bigwig, bam, or RData file}

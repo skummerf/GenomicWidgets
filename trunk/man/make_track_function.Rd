@@ -4,7 +4,7 @@
 \alias{make_track_function}
 \title{Title}
 \usage{
-make_track_function(cvg_files, genome, db_object, tx_data, cvg_scaling = NULL,
+make_track_function(cvg_files, genome, tx_data, cvg_scaling = NULL,
   bg_title = "black", colors = NULL, type = NULL, hm_thresh = 4,
   hm_binsize = 1000, hm_scaling = NULL, snp_gr = NULL, tss_gr = NULL,
   ucsc = FALSE, existing_tracks = NULL, gatrack_kwargs = list(),
@@ -15,8 +15,6 @@ make_track_function(cvg_files, genome, db_object, tx_data, cvg_scaling = NULL,
 \item{cvg_files}{}
 
 \item{genome}{}
-
-\item{db_object}{}
 
 \item{tx_data}{}
 

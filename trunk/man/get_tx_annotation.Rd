@@ -4,16 +4,16 @@
 \alias{get_tx_annotation}
 \title{Title}
 \usage{
-get_tx_annotation(db_object, range, tx_data, no_introns = FALSE)
+get_tx_annotation(range, tx_data, no_introns = FALSE)
 }
 \arguments{
-\item{db_object}{}
-
 \item{range}{}
 
 \item{tx_data}{}
 
 \item{no_introns}{}
+
+\item{db_object}{}
 }
 \description{
 Title

@@ -315,3 +315,28 @@ ngsPipelineResult <- function (dirs, file = ".summary_alignment.tab$", sep = "\t
   }
   return(dat.out)
 }
+
+##' get tss from txdb
+##'
+##' get tss information from txdb
+##' @title get tss information from txdb
+##' @param txdb input txdb object
+##' @param regularize Logical, indicating whether only the regular chromosomes should be output
+##' @return tss granges
+##' @author Jinfeng Liu, Suchit Jhunjhunwala
+##' @import GenomicFeatures
+##' @export
+tssFromTxdb <- function(txdb, regularize=TRUE) {
+  tx <- as.data.frame(transcripts(txdb))
+  tx$seqnames <- sub("chr","",tx$seqnames)
+  if(regularize) {
+    regular_chr <- c(1:26,"X","Y")
+    tx <- tx[tx$seqnames %in% regular_chr, ]
+  }
+  tss <- GRanges(seqnames=tx$seqnames,
+                 ranges=IRanges(
+                   start=ifelse(tx$strand=="+", tx$start, tx$end),
+                   width=1),
+                 names = tx$tx_name, strand =tx$strand)
+  return(tss)
+}

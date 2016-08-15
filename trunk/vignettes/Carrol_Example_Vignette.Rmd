@@ -6,7 +6,7 @@ output: html_document
 
 ```{r setup, include=FALSE, echo=TRUE}
 knitr::opts_chunk$set(echo = TRUE, cache=TRUE, autodep=TRUE)
-library(gChipseq)
+#library(gChipseq)
 library(chipVis)
 library(TxDb.Hsapiens.BioMart.igis3.0)
 library(plotly)
@@ -72,7 +72,7 @@ sig <- which(apply(results,1, function(x) sum(x!=0) > 0))
 
 rna_hm <- genomics_heatmap(v$E[sig,], col_groups = treat_groups,
             x = pData(T47D_eset)$title, y = fData(T47D_eset)$symbol[sig],
-            name = "RNA-seq",cbg = colorbar_grid(x_spacing = 0.3)) 
+            name = "RNA-seq",cbg = colorbar_grid(x_spacing = 0.3, nrow = 2)) 
 
 # rna_hm %>% plot_iHeatmap() %>% layout(margin = list(b = 250)) %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/rna_hm.pdf")
 

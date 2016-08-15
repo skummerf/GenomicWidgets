@@ -4,8 +4,8 @@
 \alias{plot_browserly_tracks}
 \title{Title}
 \usage{
-plot_browserly_tracks(db_object, range, tx_data, cvg_list, hm_thresh = 4,
-  type = NULL, binsize = 1000)
+plot_browserly_tracks(range, tx_data, cvg_list, hm_thresh = 4, type = NULL,
+  binsize = 1000)
 }
 \arguments{
 \item{range}{}
