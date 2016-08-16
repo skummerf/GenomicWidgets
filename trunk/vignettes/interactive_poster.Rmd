@@ -1,8 +1,13 @@
 ---
-title: "Interactive Poster"
+title: "chipVis Interactive Poster"
 author: "Alicia Schep and Justin Finkle"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
 runtime: shiny
 ---
 
@@ -17,6 +22,14 @@ library(dplyr)
 library(iHeatmapR)
 BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
 ```
+# Introduction
+
+chipVis is a visualization package for R that provides tools for researchers to compose interactive views of high-dimensional data from many assays. It uses the [plotly](https://plot.ly/r/) library to make interactive images with features like hovering, zooming, and clicking.
+
+chipVis also has default views that make it easy to put together informative visualizations for reports, presentations, and even publications. Using [Rmarkdown](http://rmarkdown.rstudio.com/), HTML or PDF reports like this one are easy to make and share.
+
+All data for this presentation is from: Mohammed, H. *et al.* Progesterone receptor modulates ERα action in breast cancer. *Nature*. **523**, 313-317 (2015)
+
 
 ``` {r Load Data, echo = FALSE}
 
@@ -85,10 +98,11 @@ col_group_names <- gsub(pattern = "Progesterone", replacement = "P4", treat_grou
 
 ```
 
-# Interactive RNA Heatmap
- 
-Heatmap showing relative RNA expression across samples treated with E2 (estrogen), E2 plus P4 (progesterone), or E2 plus R5020 (synthetic P4). 
+# Interactive Heatmap
 
+With chipVis it is easy and fast to turn a standard heatmap into a complex, interactive heatmap that is easy to explore. 
+
+Below is a heatmap showing the relative RNA expression across T47D cells treated with E2 (estrogen), E2 plus P4 (progesterone), or E2 plus R5020 (synthetic P4). Eight replicates were measured for each treatment, and there are 581 differentially expressed genes with a log~2~FC of 1 and an adjusted p-value less than 0.01.
 ```{r}
 rna_hm <- genomics_heatmap(v$E[sig,], 
                            col_groups = col_group_names, 
@@ -99,8 +113,7 @@ rna_hm <- genomics_heatmap(v$E[sig,],
                            y = fData(T47D_eset)$symbol[sig],
                            name = "RNA-seq", cbg = colorbar_grid(x_spacing = 0.2, nrow = 3),
                            colorscale = diverging_colorscale(c(scales::muted("blue"),
-                                                "white",
-                                                scales::muted("red")))) 
+                                                               "white", scales::muted("red")))) 
 
 rna_hm
 ```
@@ -180,7 +193,7 @@ rna_chip_collapsed_hm <- rna_hm %>%
                        col_groups_palette = "Paired",
                        colorscale = diverging_colorscale("PiYG"),
                        scale = "none",
-                       name = "ER ChIP<br>vs untreated",
+                       name = "Avg ChIP<br> treated vs untreated",
                        size = 0.2, buffer = 0.1,
                        x_title = "ER",
                        zmin = diff_range[1],
@@ -235,9 +248,9 @@ rna_chip_collapsed_hm <- rna_hm %>%
 
 ```
 
-# Add ChIP-seq data to RNA heatmap
+# Adding ChIP-seq data to RNA heatmap
 
-We can add the differential ChIP peaks for P4 and R5020 treatment for several factors (ER, PR, and p300) next to the RNA heatmap.  Each row of the ChIP heatmaps represents the differential ChIP signal in a 10000 bp window around the transcription start site of the matching gene in the RNA-seq heatmap.
+Next we can add the differential ChIP peaks for P4 and R5020 treatment for several factors (ER, PR, and p300) to the RNA heatmap.  Each row of the ChIP heatmaps represents the average differential ChIP signal (with respect to the untreated samples) in a 10,000 bp window around the transcription start site of the corresponding gene in the RNA-seq heatmap.
 
 ```{r}
 rna_chip_collapsed_hm 
@@ -275,15 +288,15 @@ range_cvg <- Reduce(c, range_cvg)
 
 ```
 
-# Individual gene views
+# ChIP coverage at individual gene loci
 
-We can also look at the ChIP-seq signal around a particular gene of interest.  If looking at many ChIP-seq samples, we can plot the coverage as a heatmap.
+We can also look at the ChIP-seq signal around a particular gene of interest or gene region.  When looking at many ChIP-seq samples, we can plot the coverage as a heatmap.
 
 ```{r}
 plot_browserly_tracks(symbol_range, tx_data, range_cvg, binsize = 100)
 ```
 
-If we want to focus in on just a couple ChIP-seq samples, we can make a line plot instead. 
+If instead we want to focus on just a couple ChIP-seq samples, we can make a line plot. 
 
 ```{r}
 cvg_subset <- c('PR_ab_Pr_treat1', 'PR_ab5')
@@ -291,6 +304,12 @@ plot_browserly_tracks(symbol_range, tx_data, range_cvg[cvg_subset], binsize=100)
 ```
 
 # Linking the heatmap with the individual view
+
+chipVis is particularly powerful when connecting different view of high-dimensional data. Multiple graphs can be linked by [Shiny](http://shiny.rstudio.com/) events that make it easy for researchers to design layouts that best let them, and collaborators, explore data.
+
+Here we link the complex heatmap that summarizes the experimental assays with the genome track views. 
+
+Click on a gene with interesting RNA-seq or ChIP-seq results to look at the ChIP coverage around that gene!
 
 ```{r, cache = FALSE, echo = FALSE}
 link_function <- heatmap_click(rna_chip_collapsed_hm, tss_ranges[sig])
