@@ -1,6 +1,9 @@
 
 HEATMAP_SOURCE = "HM"
 
+#' heatmap_click
+#' 
+#' @export
 heatmap_click <- function(heatmap, ranges, width = 50000){
   ranges <- resize(ranges, fix = "center", width = width)
   out <- function(){
@@ -13,7 +16,9 @@ heatmap_click <- function(heatmap, ranges, width = 50000){
   return(out)
 }
 
-
+#' heatmap_to_tracks_shiny
+#' 
+#' @export
 heatmap_to_tracks_shiny <- function(heatmap, 
                                     track_function,
                                     link,
@@ -56,7 +61,9 @@ heatmap_to_tracks_shiny <- function(heatmap,
   
 }
 
-
+#' heatmap_to_browserly_shiny
+#' 
+#' @export
 heatmap_to_browserly_shiny <- function(heatmap, 
                                     track_function,
                                     link,
