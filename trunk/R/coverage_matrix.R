@@ -50,14 +50,6 @@ make_coverage_matrix <- function(inputs,
         format = "bigwig"
       } else if (substr(tmp, nchar(tmp) - 3 , nchar(tmp)) == ".bam"){
         format = "bam"
-      } else if (substr(tmp, nchar(tmp) - 5 , nchar(tmp)) == ".RData"){
-        format = "RData"
-      } else{
-        stop("Cannot determine format of inputs.")
-      }
-    } else{
-      if (inherits(tmp,"RleList")){
-        format = "rle"
       } else{
         stop("Cannot determine format of inputs.")
       }
@@ -69,16 +61,16 @@ make_coverage_matrix <- function(inputs,
     if (length(inputs) == 1){
       out <- coverage_mat_from_bigwig(inputs, ranges, binsize, coln)
     } else{
-      out <- BiocParallel::bplapply(inputs, coverage_mat_from_bigwig, ranges, binsize, coln)
+      out <- lapply(inputs, coverage_mat_from_bigwig, ranges, binsize, coln)
     }
   } else if (format == "bam"){
     # bam input
-    inputs = convert_to_full_path(inputs) #bamsignals seems to fail with symlinks
+    #inputs = convert_to_full_path(inputs) #bamsignals seems to fail with symlinks
     #
     if (length(inputs) == 1){
       out <- coverage_mat_from_bam(inputs, ranges, binsize, coln)
     } else{
-      out <- BiocParallel::bplapply(inputs, coverage_mat_from_bam, ranges, binsize, coln)
+      out <- lapply(inputs, coverage_mat_from_bam, ranges, binsize, coln)
     }
   } else {
     stop("Format not recognized")
@@ -111,6 +103,7 @@ normalize_coverage_matrix <- function(mats,
         out <- lapply(1:length(mats), function(x) {
           normalize_coverage_matrix_single(mats[[x]],method = "scalar",scalar = scalar[x])
         })
+        names(out) <- names(mats)
     } else{
       out <- lapply(mats, normalize_coverage_matrix_single, method = method, pct = pct)
     }
@@ -161,12 +154,12 @@ normalize_coverage_matrix_single <- function(mat, method = c("localRms", "localM
 
 #Function to reduce size of matrix by binning columns
 bin_mat <- function(mat, binsize){
-  tmp =  ncol(mat) / binsize
-  tmp_mat = matrix(unlist(lapply(1:tmp, 
-                                 function(x) c(rep(0,(x -1)*binsize),rep(1/binsize,binsize),rep(0,(tmp-x)*binsize)))),
-                          nrow = ncol(mat), ncol = tmp)
-  return(mat %*% tmp_mat)
+  out <- sapply(seq(1, ncol(mat),binsize), function(x) rowMeans(mat[,x:(x+binsize - 1),drop =FALSE]))
+  if (dim(mat)[1] == 1) out <- matrix(out, nrow = 1)
+  return(out)
 }
+
+
 
 
 coverage_mat_from_bigwig <- function(bigwig_file, ranges, binsize, coln){
@@ -195,8 +188,8 @@ coverage_mat_from_bigwig <- function(bigwig_file, ranges, binsize, coln){
 ### flat window.  
 coverage_mat_from_bam <- function(bam_file, ranges, binsize, coln){
   stopifnot(sum(width(ranges) == width(ranges[1])) == length(ranges)) #check for equal widths
-  cvg <- bamsignals::bamCoverage(bam_file, ranges)
-  tmp_mat <- t(bamsignals::alignSignals(cvg))
+  tmp_mat <- bamsignals::bamCoverage(bam_file, ranges) %>% bamsignals::alignSignals() %>% t()
+  #tmp_mat <- t(bamsignals::alignSignals(cvg))
   if (binsize == 1){
     colnames(tmp_mat) = coln
     return(tmp_mat)
@@ -229,18 +222,6 @@ bamCoverageFrags <- function(bampath, gr, fragLength=200, ss = TRUE, ...) {
 }
 
 
-
-# coverage_mat_from_rle <- function(rle, ranges, binsize, ...){
-#   stopifnot(sum(width(ranges) == width(ranges[1])) == length(ranges)) #check for equal widths
-#   cvg <- 
-#     
-#   if (binsize == 1){
-#     return(tmp_mat)
-#   } else{
-#     return(bin_mat(tmp_mat, binsize))
-#   }
-# }
-
 convert_to_full_path <- function(x){
   for (i in 1:length(x)){
     x[[i]] = system(paste0("readlink -f ", x[[i]]), intern = TRUE)
@@ -265,14 +246,15 @@ convert_to_full_path <- function(x){
 #' @import GenomicRanges
 #' @export
 #' @author Alicia Schep
-make_coverage_tracks <- function(inputs, ranges, 
+make_coverage_tracks <- function(inputs, 
+                                 ranges, 
                                binsize = 1, 
-                               format = c("auto","bigwig","bam", "rle","RData"), 
+                               format = c("auto","bigwig","bam"), 
                                up = 0,
                                down = 0){
-
+  format = match.arg(format)
   stopifnot(length(ranges) == 1)
-  out <- make_coverage_matrix(inputs, ranges, binsize, format, up , down)
+  out <- make_coverage_matrix(inputs, ranges, binsize = binsize, format = format, up = up ,  down = down)
   out <- do.call(rbind,out)
   return(out)
 }

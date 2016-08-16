@@ -5,7 +5,7 @@
 \title{aggregate_profile_plot}
 \usage{
 aggregate_profile_plot(mats, groups = NULL, colors = "Dark2",
-  positions = colnames(mats[[1]]), ylab = "ChIP Signal",
+  positions = as.numeric(colnames(mats[[1]])), ylab = "ChIP Signal",
   xlab = "Position", scale_method = c("none", "localRms", "localMean",
   "localNonZeroMean", "PercentileMax", "scalar"), pct = 0.95,
   scale_factor = 1, showlegend = TRUE)
