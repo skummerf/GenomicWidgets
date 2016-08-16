@@ -106,7 +106,7 @@ Below is a heatmap showing the relative RNA expression across T47D cells treated
 ```{r}
 rna_hm <- genomics_heatmap(v$E[sig,], 
                            col_groups = col_group_names, 
-                           row_groups_palette = c("#832424","#3A3A98"),
+                           row_groups_palette = c("#d6696a","#69a0d6"),
                            row_groups_name = "Gene<br>Clusters",
                            row_k = 2,
                            x = pData(T47D_eset)$title, 

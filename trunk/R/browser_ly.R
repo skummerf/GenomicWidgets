@@ -2,7 +2,7 @@ coverage_heatmap <- function(b_cvg){
   hm_vals <- apply(t(as.matrix(as.data.frame(mcols(b_cvg)))), 2, rev)
   bin_df <- biovizBase::mold(b_cvg)
   p <- plot_ly(z=hm_vals, y=rownames(hm_vals), x=bin_df$midpoint, type='heatmap',
-               hoverinfo='x+z')
+               hoverinfo='x+z', colorscale = continuous_colorscale("Purples")(hm_vals))
   return(p)
 }
 
@@ -165,7 +165,7 @@ modify_y <- function(plotly_obj, cvg_list, trace_axes, grt_ax, type){
     if(type!='heatmap'){
       plotly_obj$x$layout[[ax]][['range']] <- c(0, score_max)
       plotly_obj$x$layout[[ax]][['title']] <- sample
-      plotly_obj$x$layout[[ax]][['titlefont']] <- list(size=10)
+      # plotly_obj$x$layout[[ax]][['titlefont']]2 <- list(size=10)
     } else {
       plotly_obj$x$layout[[ax]]['ticks'] <- ""
     }
