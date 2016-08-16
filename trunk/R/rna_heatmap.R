@@ -152,6 +152,7 @@ add_genomics_heatmap <- function(p,
                                   scale_method = scale_method,
                                   x_labels = x_labels,
                                   x_title = x_title,
+                                  buffer = buffer,
                                   ...)
   
 }

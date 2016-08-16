@@ -39,7 +39,6 @@ tss_ranges <- with(fData(rpkmEset), GenomicRanges::GRanges(chr,
                                                symbol = symbol,
                                                entrez = entrez))
 
-
 ```
   
  
@@ -86,9 +85,10 @@ T47D = list(
 ```
 
 ```{r}
-rna_hm <- genomics_heatmap(v$E[sig,], col_groups = treat_groups,
-            x = pData(T47D_eset)$title, y = fData(T47D_eset)$symbol[sig],
-            name = "RNA-seq",cbg = colorbar_grid(x_spacing = 0.3, nrow = 2),
+col_group_names <- gsub(pattern = "Progesterone", replacement = "P4", treat_groups)
+rna_hm <- genomics_heatmap(v$E[sig,], col_groups = col_group_names, row_k = 2,
+            x = pData(T47D_eset)$title, y = fData(T47D_eset)$symbol[sig], 
+            name = "RNA-seq", cbg = colorbar_grid(x_spacing = 0.2, nrow = 3),
             colorscale = diverging_colorscale(c(scales::muted("blue"),"white",scales::muted("red")))) 
 
 rna_hm
@@ -97,8 +97,7 @@ rna_hm
 
   
 #Get T47D Progesterone  
-  
-```{r MCF7_tss_cvg}
+```{r T47D_tss_cvg}
 
 tss_cvg_mats <- lapply(T47D, function(x){
   tmp <- make_coverage_matrix(inputs = fi$File.bam[x],
@@ -143,50 +142,6 @@ pr_chip_condition <- unlist(fi$condition[unlist(T47D[4:6])], use.names= FALSE)
 colnames(p300_promoter_counts) <- unlist(fi$source_name[unlist(T47D[7:9])], use.names= FALSE)
 p300_chip_condition <- unlist(fi$condition[unlist(T47D[7:9])], use.names= FALSE)
 
-
-
-rna_plus_er_tss_hm <- rna_hm %>% 
-  add_multi_coverage_heatmap(tss_cvg_mats[1:3],
-                             colorscale = continuous_colorscale("Reds"))
-  
-rna_plus_er_tss_hm %>%
-  plot_iHeatmap() %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/rna_plus_er_tss.png")
-  
-  
-er_chip_hm <- genomics_heatmap(er_promoter_counts, col_groups = er_chip_condition,
-            y = fData(T47D_eset)$symbol[sig],
-            x_labels = NULL, name = "ChIP-seq") 
-
-
-rna_plus_chip_hm <- rna_hm %>% add_genomics_heatmap(er_promoter_counts,
-                                col_groups = er_chip_condition,
-                                col_groups_palette = "Paired",
-                                colorscale = continuous_colorscale("Reds"),
-                                name = "ER ChIP",
-                                x_title = "ER",
-                                size = 0.8) %>% 
-  add_genomics_heatmap(pr_promoter_counts,
-                                col_groups = pr_chip_condition,
-                       colorscale = continuous_colorscale("Reds"),
-                                name = "PR ChIP",
-                       col_groups_palette = "Paired",
-                       show_col_groups_colorbar  = FALSE,
-                                x_title = "PR",
-                                size = 0.8) %>% 
-  add_genomics_heatmap(p300_promoter_counts,
-                                col_groups = p300_chip_condition,
-                                name = "P300 ChIP",
-                       colorscale = continuous_colorscale("Reds"),
-                       col_groups_palette = "Paired",
-                       show_col_groups_colorbar = FALSE,
-                                x_title = "p300",
-                                size = 0.8)
-
-
-rna_plus_chip_hm %>%
-  plot_iHeatmap()  %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/rna_plus_chip.png")
- 
-
 #COLLAPSE CHIP
 
 er_promoter_counts_collapsed <- sapply(unique(er_chip_condition),
@@ -201,198 +156,84 @@ pr_promoter_counts_collapsed <- sapply(unique(pr_chip_condition),
                                         apply(pr_promoter_counts[,tmp], 1, sum, na.rm = TRUE)
                                       })
 
-
 p300_promoter_counts_collapsed <- sapply(unique(p300_chip_condition),
                                       function(x){
                                         tmp <- which(p300_chip_condition == x)
                                         apply(p300_promoter_counts[,tmp], 1, sum, na.rm = TRUE)
                                       })
 
-
 er_promoter_counts_diff <- log2(er_promoter_counts_collapsed[,2:3] / er_promoter_counts_collapsed[,1])
-
-rna_chip_collapsed_hm <- rna_hm %>% add_genomics_heatmap(er_promoter_counts_diff,
-                              col_groups = c("Progesterone",
-                                             "R5020"),
-                              col_groups_palette = "Paired",
-                              colorscale = diverging_colorscale("PiYG"),
-                              scale = "none",
-                              name = "ER ChIP<br>vs untreated",
-                              size = 0.3,
-                              x_title = "ER") %>%
-  add_genomics_heatmap(pr_promoter_counts_collapsed,
-                              col_groups = c("Full Media", "Progesterone",
-                                             "R5020"),
-                              col_groups_palette = "Paired",
-                       colorscale = continuous_colorscale("Reds"),
-                      show_col_groups_colorbar = FALSE,
-                              name = "PR ChIP",
-                              size = 0.3,
-                              x_title = "PR")%>%
-  add_genomics_heatmap(p300_promoter_counts_collapsed,
-                              col_groups = c("Full Media", "Progesterone",
-                                             "R5020"),
-                              col_groups_palette = "Paired",
-                       colorscale = continuous_colorscale("Reds"),
-                      show_col_groups_colorbar = FALSE,
-                              name = "p300 ChIP",
-                              size = 0.3,
-                              x_title = "p300")
-
-#rna_chip_collapsed_hm %>%
-#  plot_iHeatmap()  %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/rna_plus_chip_collapsed.png")
- 
+pr_promoter_counts_diff <- log2(pr_promoter_counts_collapsed[,2:3] / pr_promoter_counts_collapsed[,1])
+p300_promoter_counts_diff <- log2(p300_promoter_counts_collapsed[,2:3] / p300_promoter_counts_collapsed[,1])
+er_untreated <- er_promoter_counts_collapsed[,1]
+pr_untreated <- pr_promoter_counts_collapsed[,1]
+p300_untreated <- p300_promoter_counts_collapsed[,1]
+untreated_range <- range(c(er_untreated, pr_untreated, p300_untreated))
+diff_range <- range(c(er_promoter_counts_diff, pr_promoter_counts_diff, p300_promoter_counts_diff))
 
 
-# tr <- transcriptsBy(TxDb.Hsapiens.BioMart.igis, by = "gene") %>% unlist()
-# tr$entrez <- stringr::str_extract(names(tr),"(?<=:)(.*)")
-# tr$symbol <- annotate::getSYMBOL(tr$entrez, data='org.Hs.eg')
-# names(tr) = NULL
-# tr <- resize(tr, fix = "start", width = 1)
-# 
-# tss_cvg_mats2 <- lapply(T47D, function(x){
-#   tmp <- make_coverage_matrix(inputs = fi$File.bam[x],
-#                                   ranges = tr[which(tr$entrez %in% tss_ranges$entrez[high_var])],
-#                                   binsize = 25,
-#                                   up = 1000,
-#                                   down = 1000)
-#   out <- Reduce("+", tmp) / length(tmp)
-#   return(out)
-# })
-
-# 
-# tss <- gChipseq::tssFromTxdb(txdb = TxDb.Hsapiens.BioMart.igis)
-# #unique_tss <- unique(tss) #Remove same positions
-# 
-# peaks <- lapply( fi$File.macs[unlist(T47D)], readMacsPeaks, fc=5, minTags=10, fdr=0.01)
-# peaks <- peaks[!sapply(peaks, is.null)]
-# 
-# merged_peaks <- reduce(do.call(c, peaks))
-# 
-# tss_in_peaks <- subsetByOverlaps(tss_ranges, merged_peaks, maxgap = 0)
-# 
-# tss_cvg_mats <- lapply(T47D, function(x){
-#   tmp <- make_coverage_matrix(inputs = fi$File.bam[x],
-#                                   ranges = tss_ranges[high_var],
-#                                   binsize = 25,
-#                                   up = 1000,
-#                                   down = 1000)
-#   out <- Reduce("+", tmp) / length(tmp)
-#   return(out)
-# })
+rna_chip_collapsed_hm <- rna_hm %>% 
+  add_genomics_heatmap(er_promoter_counts_diff,
+                       col_groups = c("P4","R5020"),
+                       col_groups_name = "Treatment",
+                       col_groups_palette = "Paired",
+                       colorscale = diverging_colorscale("PiYG"),
+                       scale = "none",
+                       name = "ER ChIP<br>vs untreated",
+                       size = 0.2, buffer = 0.1,
+                       x_title = "ER",
+                       zmin = diff_range[1],
+                       zmax = diff_range[2]) %>%
+  add_row_signal(er_untreated, 
+                 name = "Untreated", 
+                 x_title= 'ER<br> Untreated', 
+                 colorscale = continuous_colorscale("Greys"),
+                 zmin = untreated_range[1], 
+                 zmax = untreated_range[2]) %>% 
+  add_genomics_heatmap(pr_promoter_counts_diff,
+                       col_groups = c("Progesterone","R5020"),
+                       col_groups_palette = "Paired",
+                       colorscale = diverging_colorscale("PiYG"),
+                       scale = "none",
+                       show_col_groups_colorbar = FALSE,
+                       show_color = FALSE,
+                       name = "PR ChIP<br>vs untreated",
+                       size = 0.2, 
+                       buffer = 0.1,
+                       x_title = "PR",
+                       zmin = diff_range[1],
+                       zmax = diff_range[2]) %>%
+  add_row_signal(pr_untreated, 
+                 name = "PR ChIP <br> Untreated", 
+                 x_title = 'PR<br> Untreated', 
+                 colorscale = continuous_colorscale("Greys"), 
+                 show_colorbar = FALSE,
+                 zmin = untreated_range[1], 
+                 zmax = untreated_range[2]) %>%
+  add_genomics_heatmap(p300_promoter_counts_diff,
+                       col_groups = c("Progesterone","R5020"),
+                       col_groups_palette = "Paired",
+                       show_col_groups_colorbar = FALSE,
+                       show_color = FALSE,
+                       colorscale = diverging_colorscale("PiYG"),
+                       scale = "none",
+                       name = "p300 ChIP<br>vs untreated",
+                       size = 0.2, 
+                       buffer = 0.1,
+                       x_title = "p300",
+                       zmin = diff_range[1],
+                       zmax = diff_range[2]) %>%
+  add_row_signal(p300_untreated, 
+                 name="p300 ChIP <br> Untreated", 
+                 x_title = 'p300<br> Untreated',
+                 colorscale = continuous_colorscale("Greys"), 
+                 show_colorbar = FALSE,
+                 zmin = untreated_range[1], 
+                 zmax = untreated_range[2]) %>%
+  plot_iHeatmap() %>% layout(margin = list(l=0, t=0))
 
 ```
 
-
-
-```{r}
-rna_hm %>% add_coverage_heatmap(tss_cvg_mats[[2]])
-
-new_single_coverage_heatmap(tss_cvg_mats[[1]], row_order = "signal", y = tss_ranges$symbol[sig])
-```
-
-```{r}
-T47D_ER_tss_cvg_mats = tss_cvg_mats[1:3]
-names(T47D_ER_tss_cvg_mats) = c("Control","Pr","Syn. Pr")
-multi_coverage_heatmap(T47D_ER_tss_cvg_mats, row_order = "kmeans", y = tss_in_peaks$symbol, k = 3)
-```
-
-```{r}
-MCF7_PR_tss_cvg_mats = tss_cvg_mats[4:6]
-names(MCF7_PR_tss_cvg_mats) = c("Control","Pr","Syn. Pr")
-multi_coverage_heatmap(MCF7_PR_tss_cvg_mats, row_order = "kmeans", y = tss_in_peaks$symbol, k = 3)
-```
-
-
-```{r}
-peaks <- lapply( fi$File.macs[unlist(T47D)], readMacsPeaks, fc=5, minTags=10, fdr=0.01)
-peaks <- peaks[!sapply(peaks, is.null)]
-
-merged_peaks <- lapply(T47D,
-                       function(x){
-                         peaks <- lapply( fi$File.macs[x], readMacsPeaks, fc=5, minTags=10, fdr=0.01)
-                         peaks <- peaks[!sapply(peaks, is.null)]
-                         reduce(do.call(c, peaks), min.gapwidth = 500)
-                         })
-                    
-
-rp_scores <- sapply(merged_peaks, compute_regulatory_potential, tss_ranges)
-
-rna_rp_hm <- rna_hm %>% add_genomics_heatmap(rp_scores[sig,1:3],
-                              col_groups = c("Full Media", "Progesterone",
-                                             "R5020"),
-                              col_groups_palette = "Paired",
-                              colorscale = continuous_colorscale("Reds"),
-                              name = "ER<br>Regulatory<br>Potential",
-                              size = 0.3,
-                              x_title = "ER") %>%
-  add_genomics_heatmap(rp_scores[sig,4:6],
-                              col_groups = c("Full Media", "Progesterone",
-                                             "R5020"),
-                              col_groups_palette = "Paired",
-                       colorscale = continuous_colorscale("Reds"),
-                      show_col_groups_colorbar = FALSE,
-                              name = "PR<br>Regulatory<br>Potential",
-                              size = 0.3,
-                              x_title = "PR")%>%
-  add_genomics_heatmap(rp_scores[sig,7:9],
-                              col_groups = c("Full Media", "Progesterone",
-                                             "R5020"),
-                              col_groups_palette = "Paired",
-                       colorscale = continuous_colorscale("Reds"),
-                      show_col_groups_colorbar = FALSE,
-                              name = "p300<br>Regulatory<br>Potential",
-                              size = 0.3,
-                              x_title = "p300")
-
-rna_rp_hm %>%
-  plot_iHeatmap()  %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/rna_plus_rp.png")
- 
-
-
-rna_hm %>% add_genomics_heatmap(rp_scores[sig,],scale = "none",
-                              col_groups = rep(c("ER","PR","p300"), each = 3),
-                              name = "Regulatory<br>Potential") 
-
-#%>%
-#  plot_iHeatmap() %>% layout(margin = list(b = 250)) %>% export(file = #"/gne/research/workspace/schepa/Carroll_Data/Figures/rna_plus_regulatory_potential.png")
-
-
-
-
-er_progesterone_peaks_cvg_mats <- lapply(T47D, function(x){
-  tmp <- make_coverage_matrix(inputs = fi$File.bam[x],
-                                  ranges = merged_peaks[[2]][1:5000],
-                                  binsize = 50,
-                                  up = 1000,
-                                  down = 1000)
-  out <- Reduce("+", tmp) / length(tmp)
-  return(out)
-})
-#merged_peaks <- reduce(do.call(c, peaks))
-
-T47D_scale_factors = sapply(T47D, function(x) mean(sf[x]))
-
-```
-
-```{r}
-ag1 = aggregate_profile_plot(er_progesterone_peaks_cvg_mats[1:3],xlab = "",
-                            ylab = "ER ChIP-Signal")
-ag2 = aggregate_profile_plot(er_progesterone_peaks_cvg_mats[4:6],xlab = "Position relative to ER Peaks<br> in T47D + Progesterone",
-                            ylab = "PR ChIP-Signal")
-
-ag1 %>% export(file = "~/workspace//Carroll_Data/Figures/aggregate_profiles1.pdf")
-# ag2 %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/aggregate_profiles2.pdf")
-
-
-```
-
-```{r}
-mchm <- multi_coverage_heatmap(er_progesterone_peaks_cvg_mats[1:3], row_order = "kmeans", k = 3, cluster_by = "first")
-
-# mchm %>% plot_iHeatmap %>% layout(margin = list(b = 250)) %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/multi_coverage.pdf")
-
-```
 
 ```{r Match transcripts with symbol, echo = FALSE}
 tr <- transcriptsBy(TxDb.Hsapiens.BioMart.igis, by = "gene") %>% unlist()
@@ -410,7 +251,7 @@ tx_data <- load_tx_data(TxDb.Hsapiens.BioMart.igis)
 ```
 
 ```{r Gene Loci, echo=FALSE}
-symbol <- "BCL6"
+symbol <- "ZNF579"
 sym_idx <- which(truniq$symbol == symbol)
 symbol_range <- get_view_range(chr = truniq$chr[sym_idx], start = truniq$start[sym_idx],
                                end = truniq$end[sym_idx])

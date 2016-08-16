@@ -435,5 +435,5 @@ plot_browserly_tracks(symbol_range, tx_data, range_cvg, binsize = 100)
 
 ```{r}
 cvg_subset <- c('PR_ab_Pr_treat1', 'PR_ab5')
-plot_browserly_tracks(symbol_range, tx_data, range_cvg[cvg_subset], binsize=100)
+plot_browserly_tracks(range = symbol_range, tx_data = tx_data, cvg_list = range_cvg[cvg_subset], binsize=100)
 ```
