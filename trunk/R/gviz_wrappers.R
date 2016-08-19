@@ -200,7 +200,7 @@ sort_snps <- function(snp_gr, type_col = 'CONTEXT'){
 #' @import Gviz
 #'
 #' @examples
-make_data_tracks <- function(cvg_list, gr, genome, chr,
+make_data_tracks <- function(cvg, genome,
                              bg_title = 'black', 
                              colors = NULL, 
                              type = 'heatmap', 
@@ -211,13 +211,13 @@ make_data_tracks <- function(cvg_list, gr, genome, chr,
   # Compile sample coverages as datatracks
   dtrack <- list()
   if(type == 'heatmap'){
-    hm_gradient <- colorRampPalette(brewer.pal(9, "BuGn"))(100)
-    binned_cvg <- bin_coverage_in_range(cvg_list = cvg_list, gr = gr,
-                                        binwidth = binwidth,
-                                        val = val, scaling = hm_scaling)
-    hm_defaults <- list(range = binned_cvg, 
+    hm_gradient <- colorRampPalette(RColorBrewer::brewer.pal(9, "BuGn"))(100)
+    #binned_cvg <- bin_coverage_in_range(cvg_list = cvg_list, gr = gr,
+    #                                    binwidth = binwidth,
+    #                                    val = val, scaling = hm_scaling)
+    hm_defaults <- list(range = cvg, 
                         type = 'heatmap', 
-                        chromosome = chr,
+                        chromosome = as.character(seqnames(cvg)[1]),
                         genome = genome, 
                         background.title = bg_title, 
                         cex.axis = 0.6,
@@ -227,40 +227,44 @@ make_data_tracks <- function(cvg_list, gr, genome, chr,
                         showTitle = FALSE)
     hm_params <- modifyList(hm_defaults, kwargs)
     dtrack[[1]] <- do.call(Gviz::DataTrack, hm_params)
-  } else if(type == 'hist'){
-    
+  } else if(type == 'mountain'){
+    ntracks <- ncol(mcols(cvg))
     # Make colors for the plots
     if(is.null(colors)){
-      if(length(cvg_list)>8){
+      if(ntracks > 8){
         colors <- rep(RColorBrewer::brewer.pal(8, 'Dark2'), 
-                      length.out=length(cvg_list))
+                      length.out=ntracks)
         } else {
-          colors <- RColorBrewer::brewer.pal(length(cvg_list), 'Dark2')
+          colors <- RColorBrewer::brewer.pal(ntracks, 'Dark2')
         }
       }
-    colors <- rep(colors, length.out=length(cvg_list))
-    names(colors) <- names(cvg_list)
+    colors <- rep(colors, length.out = ntracks)
+    names(colors) <- names(mcols(cvg))
     
     # Add title
-    bg_title <- rep(bg_title, length.out=length(cvg_list))
-    names(bg_title) <- names(cvg_list)
+    bg_title <- rep(bg_title, length.out=ntracks)
+    names(bg_title) <- names(mcols(cvg))
     
     # Scale the data for the histograms
-    score_max <- max(sapply(cvg_list, function(x) { max(score(x)) } ))
+    score_max <- max(as.matrix(mcols(cvg)))
     
-    for (g in names(cvg_list)) {
-      coverage_defaults <- list(range=cvg_list[[g]], 
-                                chromosome=chr, 
-                                type='hist',
+    cvg_ranges <- c(cvg, ignore.mcols = TRUE)
+    
+    for (g in colnames(mcols(cvg))) {
+      coverage_defaults <- list(range=cvg_ranges,
+                                data = as.vector(mcols(cvg)[,g]),
+                                chromosome=as.character(seqnames(cvg)[1]), 
+                                type='polygon',
+                                baseline = 0,
                                 ylim=c(0, score_max),
                                 background.title=bg_title[g],
                                 genome=genome, name=g, 
-                                col.histogram=colors[g],
-                                fill.histogram=colors[g])
+                                col.mountain=colors[g],
+                                fill.mountain=c(colors[g],colors[g]))
       coverage_params <- modifyList(coverage_defaults, kwargs)
       dtrack[[g]] <- do.call(Gviz::DataTrack, coverage_params)
     }
-    names(dtrack) = names(cvg_list)
+    names(dtrack) = names(mcols(cvg))
   } else {
     stop('No valid type supplied for datatrack')
   }

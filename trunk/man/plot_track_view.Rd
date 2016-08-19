@@ -6,7 +6,7 @@
 Adapted from gChipseq function of the same name. Credit to Jinfeng Liu
 plot genomic coverage along the gene}
 \usage{
-plot_track_view(cvg_list, target_range, exon_data, genome, bg_title = "black",
+plot_track_view(cvg, target_range, exon_data, genome, bg_title = "black",
   colors = NULL, type = NULL, hm_thresh = 4, hm_binsize = 1000,
   hm_scaling = NULL, snp_gr = NULL, tss_gr = NULL, ucsc = FALSE,
   existing_tracks = NULL, gatrack_kwargs = list(),
@@ -14,8 +14,6 @@ plot_track_view(cvg_list, target_range, exon_data, genome, bg_title = "black",
   snptrack_kwargs = list(), dtrack_kwargs = list(), plot_kwargs = list())
 }
 \arguments{
-\item{cvg_list}{GRangesList: typically the results of importing wig/bw/... files for each sample}
-
 \item{target_range}{GRange: range to plot}
 
 \item{exon_data}{data.frame: exon information}
@@ -49,6 +47,8 @@ plot_track_view(cvg_list, target_range, exon_data, genome, bg_title = "black",
 \item{dtrack_kwargs}{list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks}
 
 \item{plot_kwargs}{}
+
+\item{cvg_list}{GRangesList: typically the results of importing wig/bw/... files for each sample}
 
 \item{scaling}{}
 }

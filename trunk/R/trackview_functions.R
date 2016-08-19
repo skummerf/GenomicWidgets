@@ -27,6 +27,7 @@
 make_track_function <- function(cvg_files, 
                                 genome, 
                                 tx_data,
+                                binsize = 250,
                                 cvg_scaling = NULL,
                                 bg_title = 'black', 
                                 colors = NULL, 
@@ -49,11 +50,12 @@ make_track_function <- function(cvg_files,
     exon_data <- get_tx_annotation(range = target_range, 
                                    tx_data = tx_data,
                                    no_introns=TRUE)
-    cvg_list <- get_coverage_in_range(bwList = cvg_files,
-                                      target_range = target_range, 
-                                      names = names(cvg_files), 
-                                      cvg_scaling = cvg_scaling)
-    tl <- plot_track_view(cvg_list, target_range, exon_data, genome,
+    cvg_gr <- make_coverage_tracks(inputs = cvg_files,
+                                   target_range = target_range, 
+                                   sample_names = names(cvg_files), 
+                                   binsize = binsize,
+                                   scaling_factors = cvg_scaling)
+    tl <- plot_track_view(cvg_gr, target_range, exon_data, genome,
                           bg_title = bg_title,
                           colors = colors, 
                           type = type, 
@@ -103,7 +105,7 @@ make_track_function <- function(cvg_files,
 ##' @import Gviz RColorBrewer
 ##' @export
 ##' @author Justin Finkle
-plot_track_view <- function(cvg_list, target_range, exon_data, genome,
+plot_track_view <- function(cvg, target_range, exon_data, genome,
                             bg_title = 'black', 
                             colors = NULL, 
                             type = NULL, 
@@ -130,14 +132,12 @@ plot_track_view <- function(cvg_list, target_range, exon_data, genome,
   
   # Decide the type of datatrack to plot if not provided
   if(is.null(type)){
-    type <- ifelse(length(cvg_list) > hm_thresh, "heatmap", "hist")
+    type <- ifelse(ncol(mcols(cvg)) > hm_thresh, "heatmap", "mountain")
   }
   
   # Make tracks
-  dtrack <- make_data_tracks(cvg_list = cvg_list, 
-                             gr = target_range, 
+  dtrack <- make_data_tracks(cvg = cvg, 
                              genome = genome, 
-                             chr = chr, 
                              bg_title = bg_title, 
                              type=type, 
                              colors = colors,

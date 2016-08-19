@@ -4,18 +4,12 @@
 \alias{make_data_tracks}
 \title{Make Data Tracks}
 \usage{
-make_data_tracks(cvg_list, gr, genome, chr, bg_title = "black",
-  colors = NULL, type = "heatmap", binwidth = 1000, val = "score",
-  hm_scaling = log, kwargs = list())
+make_data_tracks(cvg, genome, bg_title = "black", colors = NULL,
+  type = "heatmap", binwidth = 1000, val = "score", hm_scaling = log,
+  kwargs = list())
 }
 \arguments{
-\item{cvg_list}{}
-
-\item{gr}{GRange to plot}
-
 \item{genome}{str}
-
-\item{chr}{str}
 
 \item{bg_title}{str: color for track panel backgrounds}
 
@@ -28,6 +22,12 @@ make_data_tracks(cvg_list, gr, genome, chr, bg_title = "black",
 \item{val}{str: value in cvg.L elements to use for binning coverage. Default is "score"}
 
 \item{kwargs}{}
+
+\item{gr}{GRange to plot}
+
+\item{chr}{str}
+
+\item{cvg_list}{}
 
 \item{scaling}{}
 }

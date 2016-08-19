@@ -4,8 +4,8 @@
 \alias{make_browserly_function}
 \title{Title}
 \usage{
-make_browserly_function(cvg_files, tx_data, hm_thresh = 4, type = NULL,
-  binsize = 1000, cvg_scaling = NULL)
+make_browserly_function(cvg_files, tx_data, sample_names = names(cvg_files),
+  hm_thresh = 4, type = NULL, cvg_scaling = rep(1, length(cvg_files)))
 }
 \arguments{
 \item{cvg_files}{}
@@ -15,8 +15,6 @@ make_browserly_function(cvg_files, tx_data, hm_thresh = 4, type = NULL,
 \item{hm_thresh}{}
 
 \item{type}{}
-
-\item{binsize}{}
 
 \item{cvg_scaling}{}
 

@@ -63,7 +63,9 @@ shortened_names <- c(fi[idx[1:length(idx)-1], "Genotype"], "Input")
 sf <- get_scaling_factor(fi[idx,])/1000000
 sf <- sf[2,]
 
-cvg <- get_coverage_in_range(fi[idx, "File.bw"], view_range, shortened_names, sf)
+cvg_gr <- make_coverage_tracks(fi[idx, "File.bw"], view_range, 
+                            sample_names = shortened_names, 
+                            scaling_factors = sf)
 ```
 
 If available, the user can also load SNP data and TSS data. TSS annotations may be useful
@@ -76,7 +78,7 @@ tss_db <- tssFromTxdb(txdb)
 Now we can plot the track. See the "Trackview Options Demonstration" vignette for a more
 detailed layout of all the options that can be used from GViz.
 ```{r Basic Track}
-track_info <- plot_track_view(cvg_list = cvg, target_range = view_range, 
+track_info <- plot_track_view(cvg = cvg_gr, target_range = view_range, 
                               genome=genome, exon_data = exon_data, 
                               snp_gr = snps, tss_gr = tss_db)
 ```

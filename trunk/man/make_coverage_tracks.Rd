@@ -4,13 +4,13 @@
 \alias{make_coverage_tracks}
 \title{make_coverage_tracks}
 \usage{
-make_coverage_tracks(inputs, ranges, binsize = 1, format = c("auto",
-  "bigwig", "bam"), up = 0, down = 0)
+make_coverage_tracks(inputs, target_range, sample_names = names(inputs),
+  binsize = 100, method = c("a", "j"), format = c("auto", "bigwig",
+  "bam"), bin = TRUE, scaling_factors = rep(1, length(inputs)), up = 0,
+  down = 0, stranded = FALSE)
 }
 \arguments{
 \item{inputs}{filenames of bigwig, bam, or RData file}
-
-\item{ranges}{ranges for which to compute coverage within}
 
 \item{binsize}{binsize to bin coverage}
 
@@ -19,6 +19,8 @@ make_coverage_tracks(inputs, ranges, binsize = 1, format = c("auto",
 \item{up}{basepairs upstream of center to use}
 
 \item{down}{basepairs downstream of center to use}
+
+\item{ranges}{ranges for which to compute coverage within}
 }
 \description{
 make_coverage_tracks

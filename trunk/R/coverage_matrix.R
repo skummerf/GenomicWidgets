@@ -188,7 +188,7 @@ coverage_mat_from_bigwig <- function(bigwig_file, ranges, binsize, coln){
 ### flat window.  
 coverage_mat_from_bam <- function(bam_file, ranges, binsize, coln){
   stopifnot(sum(width(ranges) == width(ranges[1])) == length(ranges)) #check for equal widths
-  tmp_mat <- bamsignals::bamCoverage(bam_file, ranges) %>% bamsignals::alignSignals() %>% t()
+  tmp_mat <- bamsignals::bamCoverage(bam_file, ranges, verbose = FALSE) %>% bamsignals::alignSignals() %>% t()
   #tmp_mat <- t(bamsignals::alignSignals(cvg))
   if (binsize == 1){
     colnames(tmp_mat) = coln
@@ -229,7 +229,26 @@ convert_to_full_path <- function(x){
   x
 }
 
+bin_track_mat <- function(track_mat, target_range, tiled_range, scaling_factors){
+  w <- width(tiled_range)
+  wcs <- c(1,cumsum(w))
+  out <- sapply(seq_along(tiled_range), function(x){
+    s <- wcs[x]
+    e <- wcs[x + 1] - 1
+    colMeans(track_mat[s:e,], na.rm = TRUE)
+  } )
+  out <- t(out / scaling_factors)
+  return(out)
+}
 
+
+coverage_track_from_bigwig <- function(bigwig_file, target_range){
+  rtracklayer::import.bw(bigwig_file, selection = target_range, as = "NumericList")@listData[[1]]
+}
+
+coverage_track_from_bam <- function(bam_file, target_range){
+  as.list(bamsignals::bamCoverage(bam_file, target_range, verbose = FALSE))[[1]]
+}
 
 
 
@@ -247,14 +266,79 @@ convert_to_full_path <- function(x){
 #' @export
 #' @author Alicia Schep
 make_coverage_tracks <- function(inputs, 
-                                 ranges, 
-                               binsize = 1, 
+                                 target_range, 
+                                 sample_names = names(inputs),
+                               binsize = 100, 
+                               method = c("a","j"),
                                format = c("auto","bigwig","bam"), 
+                               bin = TRUE,
+                               scaling_factors = rep(1, length(inputs)),
                                up = 0,
-                               down = 0){
+                               down = 0,
+                               stranded = FALSE){
   format = match.arg(format)
-  stopifnot(length(ranges) == 1)
-  out <- make_coverage_matrix(inputs, ranges, binsize = binsize, format = format, up = up ,  down = down)
-  out <- do.call(rbind,out)
+  method = match.arg(method)
+  stopifnot(length(target_range) == 1)
+  negative_strand <- FALSE
+  
+  if (up > 0 || down > 0){
+      target_range <- resize(target_range, fix = "center", width = 1)
+      target_range <- promoters(target_range, upstream = up, downstream = down)
+    } 
+  #if (binsize > 1 && width(target_range[1]) %% binsize != 0){
+  #    target_range <- resize(target_range, fix = "center", width = (width(target_range[1]) %/% binsize +1)*binsize)
+  #}
+  if (stranded && strand(target_range) == "-"){
+    negative_strand <- TRUE
+  }
+  if (format == "auto"){
+    if (length(inputs) == 1){
+      tmp = inputs
+    } else{
+      tmp = inputs[[1]]
+    }
+    if (is.character(tmp)){
+      if (substr(tmp, nchar(tmp) - 6 , nchar(tmp)) == ".bigwig" || 
+          substr(tmp, nchar(tmp) - 2 , nchar(tmp)) == ".bw"){
+        format = "bigwig"
+      } else if (substr(tmp, nchar(tmp) - 3 , nchar(tmp)) == ".bam"){
+        format = "bam"
+      } else{
+        stop("Cannot determine format of inputs.")
+      }
+    }
+  }
+  strand(target_range) <- "*"
+  if (method == "a"){
+    if (format == "bigwig"){
+      tracks <- sapply(inputs, coverage_track_from_bigwig, target_range)
+    } else if (format == "bam"){
+      tracks <- sapply(inputs, coverage_track_from_bam, target_range)
+    } else{
+      stop("Incorrect format!")
+    }
+    colnames(tracks) <- sample_names
+    out <- GenomicRanges::tile(target_range, width = binsize)[[1]]
+    tracks <- bin_track_mat(tracks, target_range, out, scaling_factors)
+    mcols(out) <- tracks
+    if (stranded && negative_strand) out <- rev(out)
+  } else{
+    stopifnot(format == "bigwig")
+    out <- get_coverage_in_range(inputs, 
+                                 target_range = target_range, 
+                                 cvg_scaling = scaling_factors,
+                                 sample_names = sample_names)
+    out <- bin_coverage_in_range(out, target_range, binwidth = binsize)
+    if (stranded && negative_strand) out <- rev(out)
+  }
   return(out)
+}
+
+#' @subset_coverage
+#' 
+#' @export
+#' @author Alicia Schep
+subset_coverage <- function(coverage, idx){
+  mcols(coverage) <- mcols(coverage)[,idx]
+  coverage
 }

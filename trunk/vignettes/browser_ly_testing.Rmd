@@ -43,11 +43,20 @@ sf <- get_scaling_factor(fi[idx,])/1000000
 sf <- sf[2,]
 
 # Get the coverage
-cvg <- get_coverage_in_range(fi[idx, "File.bw"], view_range, shortened_names, sf)
+cvg <- make_coverage_tracks(fi[idx, "File.bw"], 
+                            target_range = view_range, 
+                            sample_names = shortened_names, 
+                            scaling_factors = sf)
 ```
 
 
-```{r Demo}
+```{r Demo_hm}
 plot_browserly_tracks(view_range, tx_data, cvg)
 ```
+
+```{r Demo_line}
+plot_browserly_tracks(view_range, tx_data, cvg, type = "line")
+```
+
+
 

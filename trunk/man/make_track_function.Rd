@@ -4,12 +4,13 @@
 \alias{make_track_function}
 \title{Title}
 \usage{
-make_track_function(cvg_files, genome, tx_data, cvg_scaling = NULL,
-  bg_title = "black", colors = NULL, type = NULL, hm_thresh = 4,
-  hm_binsize = 1000, hm_scaling = NULL, snp_gr = NULL, tss_gr = NULL,
-  ucsc = FALSE, existing_tracks = NULL, gatrack_kwargs = list(),
-  grtrack_kwargs = list(), tsstrack_kwargs = list(),
-  snptrack_kwargs = list(), dtrack_kwargs = list(), plot_kwargs = list())
+make_track_function(cvg_files, genome, tx_data, binsize = 250,
+  cvg_scaling = NULL, bg_title = "black", colors = NULL, type = NULL,
+  hm_thresh = 4, hm_binsize = 1000, hm_scaling = NULL, snp_gr = NULL,
+  tss_gr = NULL, ucsc = FALSE, existing_tracks = NULL,
+  gatrack_kwargs = list(), grtrack_kwargs = list(),
+  tsstrack_kwargs = list(), snptrack_kwargs = list(),
+  dtrack_kwargs = list(), plot_kwargs = list())
 }
 \arguments{
 \item{cvg_files}{}

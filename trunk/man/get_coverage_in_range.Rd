@@ -4,16 +4,17 @@
 \alias{get_coverage_in_range}
 \title{Get Coverage in Range}
 \usage{
-get_coverage_in_range(bwList, target_range, names, cvg_scaling = NULL)
+get_coverage_in_range(bwList, target_range, sample_names = NULL,
+  cvg_scaling = NULL)
 }
 \arguments{
 \item{bwList}{vector: list of files to use to get coverage. Currently only accepts BigWig files}
 
 \item{target_range}{GRange: specifies the range in which to get coverage}
 
-\item{names}{vector: names to give each GRange coverage created}
-
 \item{cvg_scaling}{vector: values by which to scale each coverage value. See get_cvg_scaling for more information.}
+
+\item{names}{vector: names to give each GRange coverage created}
 }
 \value{
 cvg_list GRangesList: coverage for each file supplied

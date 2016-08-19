@@ -4,23 +4,19 @@
 \alias{plot_browserly_tracks}
 \title{Title}
 \usage{
-plot_browserly_tracks(range, tx_data, cvg_list, hm_thresh = 4, type = NULL,
-  binsize = 1000)
+plot_browserly_tracks(target_range, tx_data, cvg, hm_thresh = 4,
+  type = NULL)
 }
 \arguments{
-\item{range}{}
-
 \item{tx_data}{}
-
-\item{cvg_list}{}
 
 \item{hm_thresh}{}
 
 \item{type}{}
 
-\item{binsize}{}
-
 \item{txdb}{}
+
+\item{range}{}
 }
 \description{
 Title

@@ -279,12 +279,23 @@ sym_idx <- which(truniq$symbol == symbol)
 symbol_range <- get_view_range(chr = truniq$chr[sym_idx], start = truniq$start[sym_idx],
                                end = truniq$end[sym_idx])
 symbol_range <- extend_grange(symbol_range, 50000)
-range_cvg <- lapply(seq_along(T47D), function(i){
-  x <- T47D[[i]]
-  n <- paste0(rep(names(T47D)[[i]], length(x)), seq_along(x))
-  tmp <- get_coverage_in_range(bwList = fi$File.bw[x], target_range = symbol_range,
-                               names = n, cvg_scaling = sf[x])})
-range_cvg <- Reduce(c, range_cvg)
+
+sample_names <- sapply(seq_along(T47D), function(i){
+   x <- T47D[[i]]
+   n <- paste0(rep(names(T47D)[[i]], length(x)), seq_along(x))})
+idx <- unlist(T47D, use.names = FALSE)
+range_cvg <- make_coverage_tracks(fi$File.bw[idx], 
+                                  target_range = symbol_range,
+                                  sample_names = sample_names,
+                                  scaling_factors = sf[idx],
+                                  binsize = 100)
+
+# range_cvg <- lapply(seq_along(T47D), function(i){
+#   x <- T47D[[i]]
+#   n <- paste0(rep(names(T47D)[[i]], length(x)), seq_along(x))
+#   tmp <- get_coverage_in_range(bwList = fi$File.bw[x], target_range = symbol_range,
+#                                names = n, cvg_scaling = sf[x])})
+# range_cvg <- Reduce(c, range_cvg)
 
 ```
 
@@ -293,14 +304,15 @@ range_cvg <- Reduce(c, range_cvg)
 We can also look at the ChIP-seq signal around a particular gene of interest or gene region.  When looking at many ChIP-seq samples, we can plot the coverage as a heatmap.
 
 ```{r}
-plot_browserly_tracks(symbol_range, tx_data, range_cvg, binsize = 100)
+plot_browserly_tracks(symbol_range, tx_data, range_cvg)
 ```
 
 If instead we want to focus on just a couple ChIP-seq samples, we can make a line plot. 
 
 ```{r}
 cvg_subset <- c('PR_ab_Pr_treat1', 'PR_ab5')
-plot_browserly_tracks(symbol_range, tx_data, range_cvg[cvg_subset], binsize=100)
+
+plot_browserly_tracks(symbol_range, tx_data, subset_coverage(range_cvg,cvg_subset))
 ```
 
 # Linking the heatmap with the individual view
@@ -315,7 +327,7 @@ Click on a gene with interesting RNA-seq or ChIP-seq results to look at the ChIP
 link_function <- heatmap_click(rna_chip_collapsed_hm, tss_ranges[sig])
 
 bw_files <- fi$File.bw[unlist(T47D)]
-names(bw_files) <- sapply(1:length(T47D), function(i) paste0(rep(names(T47D)[[i]], length(T47D[[i]])), seq_along(T47D[[i]])))
+names(bw_files) <- sample_names
 track_function <- make_browserly_function(bw_files, tx_data)
 
 heatmap_to_browserly_shiny(rna_chip_collapsed_hm, track_function, link_function)

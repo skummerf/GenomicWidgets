@@ -19,10 +19,12 @@ in coordinating Gviz tracks to most appropriately match the available data.
 
 ```{r setup, include=FALSE, echo=TRUE}
 knitr::opts_chunk$set(echo = TRUE, cache=TRUE, autodep=TRUE)
-library(gChipseq)
+#library(gChipseq)
 library(chipVis)
 library(TxDb.Hsapiens.BioMart.igis3.0)
-library(Homo.sapiens)
+library(org.Hs.eg.db)
+library(dplyr)
+#library(Homo.sapiens)
 ```
 
 ## Load Data
@@ -36,17 +38,27 @@ trackview to be displayed:
 We use the samples/pairs tables as in gChipseq, and then pull a few sample files
 for reference
 ``` {r Load Data}
-info_dir <- "~/CARROLL_PR/data/"
+info_dir <- "/gne/research/workspace/schepa/Carroll_Data/CARROLL_PR/data/"
 s_file <- paste(info_dir, "samples.txt", sep='')
 p_file <- paste(info_dir, "pairs.txt", sep='')
-fi <- chipVis::get_chip_file_info(s_file, p_file)
+fi <- get_chip_file_info(s_file, p_file)
 org <- "human"
 genome <- "GRCh38"
 
 # Pre loading the transcript data makes for faster interactive plots.
 # it won't matter much here though
-txdb <- Homo.sapiens
-tx_data <- load_tx_data(txdb)
+tr <- transcriptsBy(TxDb.Hsapiens.BioMart.igis, by = "gene") %>% unlist()
+tr$entrez <- stringr::str_extract(names(tr),"(?<=:)(.*)")
+tr$symbol <- annotate::getSYMBOL(tr$entrez, data='org.Hs.eg.db')
+names(tr) = NULL
+trdf <- as.data.frame(tr)
+
+truniq <- trdf %>% group_by(entrez) %>% summarize(chr = first(seqnames),
+                                                  start = min(start),
+                                                  end = max(end),
+                                                  strand = first(strand),
+                                                  symbol = first(symbol))
+tx_data <- load_tx_data(TxDb.Hsapiens.BioMart.igis)
 
 
 # Get the coverage files
@@ -58,7 +70,7 @@ idx <- c(2:4, input_idx)
 shortened_names <- c(fi[idx[1:length(idx)-1], "Sample.Name"], "Input")
 
 # Get scaling factors based on library size
-sf <- chipVis::get_scaling_factor(fi[idx,])/1000000
+sf <- get_scaling_factor(fi[idx,])/1000000
 sf
 sf <- sf[2,]
 ```
@@ -71,10 +83,11 @@ Here we'll get the view by giving a range. Gene names are supported, but only
 if an OrganismDb object is supplied
 ```{r Get the range that will be displayed}
 # This range should correspond to NRIP1
-range.gene <- chipVis::get_view_range(txdb, "NRIP1", keytype="SYMBOL")
-seqlevelsStyle(range.gene) <- "NCBI"
-# range.gene <- chipVis::get_view_range(chr = 21, start=14865936, end=14961235)
-range.gene <- chipVis::extend_grange(range.gene, extend=100000)
+symbol <- "NRIP1"
+sym_idx <- which(truniq$symbol == symbol)
+symbol_range <- get_view_range(chr = truniq$chr[sym_idx], start = truniq$start[sym_idx],
+                               end = truniq$end[sym_idx])
+symbol_range <- extend_grange(symbol_range, 50000)
 ```
 
 With this in hand we can get the annotation and the coverage from the files provided
@@ -82,10 +95,11 @@ for the specified range. The exon data can be either a dataframe or GRanges obje
 and the coverage is a GRangesList object.
 ``` {r  Get data}
 # Get the exon list. We specifically ignore introns because Gviz calculates them on its own
-exon_data <- get_tx_annotation(db_object = txdb, range = range.gene, 
+exon_data <- get_tx_annotation( range = symbol_range, 
                                tx_data = tx_data, no_introns=TRUE)
-cvg <- chipVis::get_coverage_in_range(fi[idx, "File.bw"], range.gene, 
-                                      shortened_names, cvg_scaling = sf)
+cvg <- make_coverage_tracks(fi[idx, "File.bw"], symbol_range, 
+                                      sample_names = shortened_names, 
+                            scaling_factors = sf, binsize = 500)
 
 cvg
 ```
@@ -99,7 +113,7 @@ to better display a varied range of data.
 #### Standard Coverage view
 Now we can start plotting! This is a standard coverage plot in the region.
 ```{r Standard plot}
-track_info <- chipVis::plot_track_view(cvg_list = cvg, target_range = range.gene, 
+track_info <- plot_track_view(cvg = cvg, target_range = symbol_range, 
                               genome=genome, exon_data = exon_data)
 ```
 
@@ -109,11 +123,12 @@ By default, if more than 4 samples are supplied, a heatmap will be used.
 ```{r Many samples}
 idx <- c(2:10, input_idx)
 shortened_names <- c(fi[idx[1:length(idx)-1], "Sample.Name"], "Input")
-sf <- chipVis::get_scaling_factor(fi[idx,])/1000000
+sf <- get_scaling_factor(fi[idx,])/1000000
 sf <- sf[2,]
-more_cvg <- chipVis::get_coverage_in_range(fi[idx, "File.bw"], range.gene, 
-                                      shortened_names, cvg_scaling = sf)
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome)
+more_cvg <- make_coverage_tracks(fi[idx, "File.bw"], symbol_range, 
+                                      sample_names = shortened_names, 
+                            scaling_factors = sf, binsize = 500)
+track_info <- plot_track_view(more_cvg, symbol_range, exon_data, genome)
 ```
 
 #### Plot type
@@ -121,8 +136,8 @@ If you are very committed to using a specific type of plot you can use different
 parameters. It is recommended that you don't change "hm.thresh", but instead specify
 the plot "type"
 ``` {r Specifying plot type}
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
-                                       type='hist')
+track_info <- plot_track_view(more_cvg, symbol_range, exon_data, genome, 
+                                       type='mountain')
 ```
 
 ### Additional Annotations
@@ -138,8 +153,8 @@ stacks in the annotation, saving space.
 TSS can be determined from TxDb objects, but must be supplied as a GRanges object
 
 ``` {r Plot with TSS}
-tss_db <- gChipseq::tssFromTxdb(txdb)
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+tss_db <- tssFromTxdb(TxDb.Hsapiens.BioMart.igis)
+track_info <- plot_track_view(more_cvg, symbol_range, exon_data, genome, 
                                        tss_gr = tss_db)
 ```
 
@@ -152,8 +167,8 @@ However, the stratification and location are accurate.
 
 
 ``` {r Plot with SNPs}
-snps <- readRDS("~/workspace/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+snps <- readRDS("/gne/research//workspace/finklej/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
+track_info <- plot_track_view(more_cvg, symbol_range, exon_data, genome, 
                                        tss_gr = tss_db, snp_gr = snps)
 ```
 
@@ -177,7 +192,7 @@ not recommended.
 
 ``` {r sizing, fig.height=3}
 sizes <- c(0.2, 0.3, 0.5)
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+track_info <- plot_track_view(more_cvg, symbol_range, exon_data, genome, 
                                        plot_kwargs = list(sizes=sizes))
 ```
 
@@ -203,7 +218,7 @@ colors <- c('black', 'blue', 'green')
 dkwargs <- list(groups=grouping, col=colors, background.title='gray50')
 
 # Then we just supply it as a list of kwargs
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+track_info <- plot_track_view(more_cvg, symbol_range, exon_data, genome, 
                                        dtrack_kwargs = dkwargs)
 
 ```
@@ -217,7 +232,7 @@ is a vector specifying the types to plot. All plotted types will be overlaid.
 dkwargs <- list(groups=grouping, col=colors, type=c('a', 'confint'))
 
 # Then we just supply it as a list of kwargs
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+track_info <- plot_track_view(more_cvg, symbol_range, exon_data, genome, 
                                        dtrack_kwargs = dkwargs)
 ```
 
@@ -236,7 +251,7 @@ and sync:
 # Colors match the samples and will be repeated to equal the number of samples used
 colors <- c('red', 'black')
 # Then we just supply it as a list of kwargs
-track_info <- chipVis::plot_track_view(more_cvg[1:4], range.gene, exon_data, genome, 
+track_info <- plot_track_view(cvg, symbol_range, exon_data, genome, 
                                        colors = colors, bg_title = colors)
 ```
 
@@ -246,7 +261,7 @@ all this is a very easy fix.
 
 ``` {r expand annotation}
 # Then we just supply it as a list of kwargs
-track_info <- chipVis::plot_track_view(more_cvg, range.gene, exon_data, genome, 
+track_info <- plot_track_view(more_cvg, symbol_range, exon_data, genome, 
                                        grtrack_kwargs = list(stacking='squish'))
 ```
 

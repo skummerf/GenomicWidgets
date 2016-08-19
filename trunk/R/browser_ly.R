@@ -1,14 +1,14 @@
-coverage_heatmap <- function(b_cvg){
-  hm_vals <- apply(t(as.matrix(as.data.frame(mcols(b_cvg)))), 2, rev)
-  bin_df <- biovizBase::mold(b_cvg)
-  p <- plot_ly(z=hm_vals, y=rownames(hm_vals), x=bin_df$midpoint, type='heatmap',
+coverage_heatmap <- function(cvg){
+  hm_vals <- apply(t(as.matrix((mcols(cvg)))), 2, rev)
+  midpoint <- get_midpoint(cvg)
+  p <- plot_ly(z=hm_vals, y=rev(colnames(mcols(cvg))), x=midpoint, type='heatmap',
                hoverinfo='x+z', colorscale = continuous_colorscale("Purples")(hm_vals))
   return(p)
 }
 
-crop_introns <- function(introns, range){
-  introns$start <- pmax(introns$start, start(range))
-  introns$end <- pmin(introns$end, end(range))
+crop_introns <- function(introns, target_range){
+  introns$start <- pmax(introns$start, start(target_range))
+  introns$end <- pmin(introns$end, end(target_range))
   return(introns)
 }
 
@@ -47,6 +47,56 @@ make_arrows <- function(df, yref){
   return(arrow_list)
 }
 
+arrow_helper <- function(arrow_start, strand, arrowlen, arrowheight, y, yref){
+  arrow_end <- ifelse(strand =="-", arrow_start + arrowlen, arrow_start - arrowlen)
+  list(list(x0 = arrow_start, x1=arrow_end, 
+            y0 = y, y1 = y - arrowheight, 
+            xref = "x", yref = yref,
+            type = "line",
+            line = list(width = 0.5)),
+       list(x0 = arrow_start, x1=arrow_end, 
+            y0 = y, y1 = y + arrowheight, 
+            xref = "x", yref = yref,
+            type = "line",
+            line = list(width = 0.5)))
+}
+
+make_arrows2 <- function(df, yref, arrowlen = 500, arrowheight = 0.15, arrowgap = 1500){
+  yref <- gsub("yaxis", "y", yref)
+  if(nrow(df)>0){
+    line_list <- vector("list", nrow(df))
+    arrow_list <- vector("list", nrow(df))
+    for(i in 1:nrow(df)){
+      row <- df[i, ]
+      xstart <- 
+      xend <- ifelse(row$strand =="-", row$end, row$start)
+      line_list[[i]] <- list(x0 = row$start, y0=row$stepping, 
+                             x1 = row$end, y1 = row$stepping, 
+                             xref = "x", yref = yref,
+                             type = "line",
+                             line = list(width = 0.5, 
+                                         dash = ifelse(row$strand == "-", "dot","solid")))
+      if (row$end - row$start > 2 * arrowlen){
+        if (row$strand == "-"){
+          arrow_pos <- row$midpoint - arrowlen * 0.5
+        } else{
+          arrow_pos <- row$midpoint + arrowlen * 0.5
+        }
+        arrow_list[[i]] <- arrow_helper(arrow_pos,
+                                             row$strand,
+                                             arrowlen,
+                                             arrowheight,
+                                             row$stepping,
+                                             yref)
+      }
+    }
+    out <- c(unlist(arrow_list, recursive = FALSE), line_list)
+  } else {
+    out <- NULL
+  }
+  return(out)
+}
+
 
 #' Title
 #'
@@ -55,7 +105,6 @@ make_arrows <- function(df, yref){
 #' @param tx_data 
 #' @param hm_thresh 
 #' @param type 
-#' @param binsize 
 #' @param cvg_scaling 
 #'
 #' @return
@@ -64,21 +113,20 @@ make_arrows <- function(df, yref){
 #' @examples
 make_browserly_function <- function(cvg_files, 
                                     tx_data,
+                                    sample_names = names(cvg_files),
                                     hm_thresh = 4,
                                     type = NULL,
-                                    binsize = 1000,
-                                    cvg_scaling = NULL){
+                                    cvg_scaling = rep(1, length(cvg_files))){
   plot_browserly <- function(target_range){
-    cvg_list <- get_coverage_in_range(bwList = cvg_files,
+    cvg_gr <- make_coverage_tracks(inputs = cvg_files,
                                       target_range = target_range, 
-                                      names = names(cvg_files), 
-                                      cvg_scaling = cvg_scaling)
-    b_plot <- plot_browserly_tracks(range = target_range, 
+                                      sample_names = names(cvg_files), 
+                                      scaling_factors = cvg_scaling)
+    b_plot <- plot_browserly_tracks(target_range = target_range, 
                                     tx_data = tx_data,
-                                    cvg_list = cvg_list,
+                                    cvg = cvg_gr,
                                     hm_thresh = hm_thresh,
-                                    type = type,
-                                    binsize = binsize)
+                                    type = type)
     return(b_plot)
   }
   return(plot_browserly)
@@ -90,21 +138,19 @@ make_browserly_function <- function(cvg_files,
 #' @param txdb 
 #' @param range 
 #' @param tx_data 
-#' @param cvg_list 
+#' @param cvg
 #' @param hm_thresh 
 #' @param type 
-#' @param binsize 
 #'
 #' @return
 #' @export
 #'
 #' @examples
-plot_browserly_tracks <- function(range, tx_data, cvg_list,
+plot_browserly_tracks <- function(target_range, tx_data, cvg,
                         hm_thresh = 4,
-                        type = NULL,
-                        binsize = 1000){
+                        type = NULL){
   # Make GeneRegion plot
-  tx_info <- get_tx_annotation(range=range, tx_data = tx_data)
+  tx_info <- get_tx_annotation(range=target_range, tx_data = tx_data)
   
   # Prepare tx info for plotting
   if(length(tx_info)){
@@ -120,11 +166,11 @@ plot_browserly_tracks <- function(range, tx_data, cvg_list,
   # Make supblots
   # Decide the type of datatrack to plot if not provided
   if(is.null(type)){
-    type <- ifelse(length(cvg_list) > hm_thresh, "heatmap", "hist")
+    type <- ifelse(ncol(mcols(cvg)) > hm_thresh, "heatmap", "hist")
   }
   
-  cvg_track <- browserly_cvg_track(cvg_list=cvg_list, range = range,
-                                   type = type, binsize = binsize)
+  cvg_track <- browserly_cvg_track(cvg = cvg, target_range = target_range,
+                                   type = type)
   
   plots <- modifyList(plots, cvg_track)
   track_heights <- c(0.3, rep(0.7/length(cvg_track), length(cvg_track)))
@@ -137,22 +183,22 @@ plot_browserly_tracks <- function(range, tx_data, cvg_list,
   grt_ax <- trace_axes[["GeneRegion"]]
   
   letterwidth <- 9
-  maxlabellength <- max(sapply(names(cvg_list), nchar))
+  maxlabellength <- max(sapply(colnames(mcols(cvg)), nchar))
   if(type == 'heatmap'){
     left_margin = max(letterwidth*maxlabellength, 60)
     margin = list(l=left_margin)
   } else {
     margin =  list()
   }
-  sp <- add_tx_shapes(sp, tx_info, range, grt_ax)
-  sp <- modify_y(sp, cvg_list, trace_axes, grt_ax, type)
-  sp <- sp %>% layout(xaxis=list(range=c(start(range), end(range))),
+  sp <- add_tx_shapes(sp, tx_info, target_range, grt_ax)
+  sp <- modify_y(sp, trace_axes, grt_ax, type)
+  sp <- sp %>% layout(xaxis=list(range=c(start(target_range), end(target_range))),
                       margin=margin)
   return(sp)
   
 }
 
-modify_y <- function(plotly_obj, cvg_list, trace_axes, grt_ax, type){
+modify_y <- function(plotly_obj, trace_axes, grt_ax, type){
   data_axes <- trace_axes[trace_axes!=grt_ax]
   
   # Scale the data for the histograms
@@ -173,17 +219,18 @@ modify_y <- function(plotly_obj, cvg_list, trace_axes, grt_ax, type){
   return(plotly_obj)
 }
 
-add_tx_shapes <- function(plotly_obj, tx_info, range, grt_ax){
+add_tx_shapes <- function(plotly_obj, tx_info, target_range, grt_ax){
   # Add annotations
   cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ], height = 0.4, grt_ax)
-  utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], height=0.2, grt_ax)
-  ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ], height=0.2, grt_ax)
+  utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], height=0.25, grt_ax)
+  ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ], height=0.25, grt_ax)
   
   # Crop arrows to view range
-  cropped_introns <- crop_introns(tx_info[tx_info$feature == 'intron', ], range)
-  intron_arrow <- make_arrows(cropped_introns, grt_ax)
-  grt_layout <- list(showlegend=FALSE, shapes=c(cds_rect, utr_rect, ncRNA_rect),
-                     annotations=intron_arrow)
+  cropped_introns <- crop_introns(tx_info[tx_info$feature == 'intron', ], target_range)
+  intron_arrow <- make_arrows2(cropped_introns, grt_ax, 
+                               arrowlen = width(target_range) * 0.01)
+  grt_layout <- list(showlegend=FALSE, shapes=c(cds_rect, utr_rect, ncRNA_rect, intron_arrow))
+                     #annotations=intron_arrow)
   plotly_obj$x$layout <- modifyList(plotly_obj$x$layout, grt_layout)
   grt_y_layout <- list(autorange='reversed', showticklabels=FALSE, showticks=FALSE,
                        title='Transcripts')
@@ -207,19 +254,18 @@ browserly_tx_track <- function(tx_info,
   return(tx_track)
 }
 
-browserly_cvg_track <- function(cvg_list, range, 
-                                binsize = 1000,
+browserly_cvg_track <- function(cvg, target_range, 
                                 type = 'heatmap',
                                 colors = NULL){
-  bin_cvg <- bin_coverage_in_range(cvg_list, range, binwidth = binsize)
-  bin_df <- biovizBase::mold(bin_cvg)
+  
   cvg_track <- list()
   if(type == 'heatmap'){
-    cvg_track[['heatmap']] <- coverage_heatmap(bin_cvg)
+    cvg_track[['heatmap']] <- coverage_heatmap(cvg)
   }
   else{
-    for(n in names(cvg_list)){
-      cvg_track[[n]] <- plot_ly(x=bin_df$midpoint, y=bin_df[[n]], type='scatter',
+    midpoint <- get_midpoint(cvg)
+    for(n in colnames(mcols(cvg))){
+      cvg_track[[n]] <- plot_ly(x=midpoint, y=mcols(cvg)[,n], type='scatter',
                                 fill='tozeroy', mode='', showlegend=FALSE, name=n,
                                 hoverinfo='x+y')
     }

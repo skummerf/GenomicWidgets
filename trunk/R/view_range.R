@@ -121,7 +121,7 @@ extend_grange <- function(gr, extend=0){
 #' @examples
 get_coverage_in_range <- function(bwList, 
                                   target_range, 
-                                  names, 
+                                  sample_names = NULL, 
                                   cvg_scaling=NULL){
   # Import only the range that matches target_range
   cvg_list <- lapply(bwList, function(x) import.bw(x, which=target_range))
@@ -133,11 +133,15 @@ get_coverage_in_range <- function(bwList,
   }
   
   # Name the list
-  if (!missing(names) && !is.null(names)){
-    names(cvg_list) <- names
+  if (!missing(sample_names) && !is.null(sample_names)){
+    names(cvg_list) <- sample_names
   } else {
     warning("Coverage file list supplied without names. Sequential numbering will be used")
     names(cvg_list) <- seq_along(cvg_list)
   }
   return(cvg_list)
+}
+
+get_midpoint <- function(gr){
+  start(gr) + width(gr) %/% 2
 }
