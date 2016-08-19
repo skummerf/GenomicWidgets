@@ -6,11 +6,13 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 library(chipVis)
 library(TxDb.Hsapiens.BioMart.igis3.0)
 library(org.Hs.eg.db)
 library(dplyr)
+library(plotly)
+library(iHeatmapR)
 ```
 
 ```{r Load Data}
@@ -53,7 +55,7 @@ truniq <- trdf %>% group_by(entrez) %>% dplyr::summarize(chr = first(seqnames),
 ```
 
 ```{r}
-symbol <- "GREB1"
+symbol <- "NRIP1"
 sym_idx <- which(truniq$symbol == symbol)
 symbol_range <- get_view_range(chr = truniq$chr[sym_idx], start = truniq$start[sym_idx],
                                end = truniq$end[sym_idx], strand = as.character(truniq$strand[sym_idx]))
@@ -68,73 +70,60 @@ scaled_range <- log_scale_range(center = pseudo_tss,
                                 min_bin = 100)
 ```
 
+# Log-Scale for NRIP1
+The log scale gives us a good dynamic range for seeing peaks. The plot shows the 
+average peak height per bin. Peaks don't really show up until 100kb from the TSS
 ```{r}
-range_peaks <- mclapply(seq_along(T47D), function(i, fi, scaled_range){
-  x <- T47D[[i]]
-  new_names <- paste0(rep(names(T47D)[[i]], length(x)), seq_along(x))
-  tmp <- scaled_range
-  for(n in seq_along(x)){
-    peaks <- readMacsPeaks(fi$File.macs[x[[n]]])
-    peaks_in_range <- avg_peak_in_range(gr = scaled_range, peaks_gr = peaks)
-    mcols(tmp)[[new_names[n]]] <- mcols(peaks_in_range)[['avg_peak']]
-  }
-  return(mcols(tmp))
-}, fi, scaled_range, mc.cores=8)
+log_peaks <- peaks_per_sample(T47D, fi, scaled_range)
 all_peaks <- scaled_range
-mcols(all_peaks) <- Reduce(cbind, range_peaks)
-```
-
-```{r}
+mcols(all_peaks) <- Reduce(cbind, log_peaks)
 df <- biovizBase::mold(all_peaks)
 hm_vals <- apply(t(as.matrix(as.data.frame(mcols(all_peaks)))), 2, rev)+1
-hm_vals <- matrix(rnorm(length(hm_vals)), nrow=nrow(hm_vals))
+# hm_vals <- matrix(rnorm(length(hm_vals)), nrow=nrow(hm_vals))
 p <- plot_ly(z=hm_vals, y=rownames(hm_vals),type='heatmap', colorscale = continuous_colorscale("Purples")(hm_vals),
                hoverinfo='x+z')
-make_lines <- function(symbol_range, scaled_range, hm_vals, base){
-  n_bins <- ncol(hm_vals)
-  center <- (start(symbol_range) + end(symbol_range))/2
-  left_width <- floor(log(cumsum(sort(width(scaled_range[1:floor(n_bins/2)]))), base))
-  l_log_scale <- unique(left_width)[unique(left_width) >2 ]
-  left_lines <- sapply(l_log_scale, function(x, widths){
-    first(which(widths==x))
-  }, widths=left_width)
-  right_width <- floor(log(cumsum(sort(width(scaled_range[(floor(n_bins/2)+1):n_bins]))), base))
-  r_log_scale <- unique(left_width)[unique(left_width) >2 ]
-  right_lines <- sapply(r_log_scale, function(x, widths){
-    first(which(widths==x))
-  }, widths=right_width)
-  center_line_x <- ncol(hm_vals)/2-0.5
-  binsize <- floor(log(width(scaled_range), base))
-  log_lines <- sort(c(-left_lines, 0, right_lines)) + center_line_x
-  names(log_lines) <-  sapply(sort(c(-l_log_scale, 0, r_log_scale)), function(x) {
-    if(x > 0){
-      sign_val <- "+"
-    } else if( x< 0){
-      sign_val <- "-"
-    } else {
-      sign_val <- ""
-    }
-    return(paste0(sign_val, base, "<sup>", x, "</sup>")
-  })
-  line_list <- list()
-  label_list <- list()
-  for(ll in seq_along(log_lines)){
-    x <- log_lines[[ll]]
-    if(x == center_line_x){
-      color <- 'red'
-      label_list[[ll]] <- list(x = x, y=1, xref='x', yref='paper', text="center", showarrow=FALSE, yanchor='bottom')
-    } else {
-      color <- 'black'
-      label_list[[ll]] <- list(showarrow=FALSE, text="")
-    }
-    line_list[[ll]] <- list(type='line', line=list(dash=3, color=color), x0=x, x1=x, y0=0, y1=1, yref='paper')
-  }
-  scale_list <- list(lines = line_list, labels = label_list, vals = log_lines)
-  return(scale_list)
-}
 lines <- make_lines(symbol_range = symbol_range, scaled_range = scaled_range, hm_vals = hm_vals, base = n_recurse_tiles)
-p %>% layout(shapes=lines$lines, annotations=lines$labels,
-             xaxis=list(zeroline=TRUE, mirror=TRUE, linewidth=3,
-                        tickvals = lines$vals, ticktext = names(lines$vals), tickmode='array'))
+p %>% layout(shapes=lines$lines,
+             xaxis=list(tickvals = lines$vals, ticktext = names(lines$vals), tickmode='array',
+                        zeroline=FALSE, showline=TRUE, mirror=TRUE))
 ```
 
+# Linear Scale
+The plot below shows the same range for peaks, but on a linear scale. Bins are 
+around 27kb long. This makes it look like peaks are right next to the TSS, which
+is not the case
+```{r Large Scale}
+tiled_range <- tile(reduce(scaled_range), n = length(scaled_range))[[1]]
+even_peaks <- peaks_per_sample(T47D, fi, tiled_range)
+all_peaks <- tiled_range
+mcols(all_peaks) <- Reduce(cbind, even_peaks)
+df <- biovizBase::mold(all_peaks)
+hm_vals <- apply(t(as.matrix(as.data.frame(mcols(all_peaks)))), 2, rev)+1
+# hm_vals <- matrix(rnorm(length(hm_vals)), nrow=nrow(hm_vals))
+p <- plot_ly(z=hm_vals, y=rownames(hm_vals),type='heatmap', colorscale = continuous_colorscale("Purples")(hm_vals),
+               hoverinfo='x+z')
+lines <- make_lines(symbol_range = symbol_range, scaled_range = tiled_range, hm_vals = hm_vals, base = n_recurse_tiles)
+p %>% layout(xaxis=list(tickvals = lines$vals, ticktext = names(lines$vals), tickmode='array',
+                        zeroline=FALSE, showline=TRUE, mirror=TRUE))
+```
+
+# Linear Scale, small bins
+Here we also use a linear scale, but with smaller bins of 1kb. We no longer have
+the issue of thinking peaks are close to the TSS, however visually it is hard to
+see much signal. If you zoom to +100kb, you'll see that there are indeed strong
+peaks. Overall though, the heatmap is very sparse, and it it isn't clear where
+the user should zoom to see the strong peaks. 
+```{r 1000bp bins}
+tiled_range <- tile(reduce(scaled_range), width = 1000)[[1]]
+even_peaks <- peaks_per_sample(T47D, fi, tiled_range)
+all_peaks <- tiled_range
+mcols(all_peaks) <- Reduce(cbind, even_peaks)
+df <- biovizBase::mold(all_peaks)
+hm_vals <- apply(t(as.matrix(as.data.frame(mcols(all_peaks)))), 2, rev)+1
+# hm_vals <- matrix(rnorm(length(hm_vals)), nrow=nrow(hm_vals))
+p <- plot_ly(z=hm_vals, y=rownames(hm_vals),type='heatmap', colorscale = continuous_colorscale("Purples")(hm_vals),
+               hoverinfo='x+z')
+lines <- make_lines(symbol_range = symbol_range, scaled_range = tiled_range, hm_vals = hm_vals, base = n_recurse_tiles)
+p %>% layout(xaxis=list(tickvals = lines$vals, ticktext = names(lines$vals), tickmode='array',
+                        zeroline=FALSE, showline=TRUE, mirror=TRUE))
+```

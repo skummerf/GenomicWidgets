@@ -89,3 +89,79 @@ recursive_tile_range <- function(gr,
     return(c(left_range, right_range))
   }
 }
+
+#' Title
+#'
+#' @param symbol_range 
+#' @param scaled_range 
+#' @param hm_vals 
+#' @param base 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_lines <- function(symbol_range, scaled_range, hm_vals, base){
+  n_bins <- ncol(hm_vals)
+  center <- (start(symbol_range) + end(symbol_range))/2
+  left_width <- floor(log(cumsum(sort(width(scaled_range[1:floor(n_bins/2)]))), base))
+  l_log_scale <- unique(left_width)[unique(left_width) >2 ]
+  left_lines <- sapply(l_log_scale, function(x, widths){
+    first(which(widths==x))
+  }, widths=left_width)
+  right_width <- floor(log(cumsum(sort(width(scaled_range[(floor(n_bins/2)+1):n_bins]))), base))
+  r_log_scale <- unique(left_width)[unique(left_width) >2 ]
+  right_lines <- sapply(r_log_scale, function(x, widths){
+    first(which(widths==x))
+  }, widths=right_width)
+  center_line_x <- ncol(hm_vals)/2-0.5
+  binsize <- floor(log(width(scaled_range), base))
+  log_lines <- sort(c(-left_lines, 0, right_lines)) + center_line_x
+  names(log_lines) <-  sapply(sort(c(-l_log_scale, 0, r_log_scale)), function(x) {
+    if(x > 0){
+      sign_val <- "+"
+    } else if( x< 0){
+      sign_val <- "-"
+    } else {
+      sign_val <- ""
+    }
+    return(paste0(sign_val, base, "<sup>", abs(x), "</sup>"))
+  })
+  line_list <- list()
+  for(ll in seq_along(log_lines)){
+    x <- log_lines[[ll]]
+    if(x == center_line_x){
+      color <- 'red'
+    } else {
+      color <- 'black'
+    }
+    line_list[[ll]] <- list(type='line', line=list(width=1, color=color), x0=x, x1=x, y0=0, y1=1, yref='paper')
+  }
+  scale_list <- list(lines = line_list, vals = log_lines)
+  return(scale_list)
+}
+
+## This probably shouldn't be a function. It's too specific
+#' Title
+#'
+#' @param sample_list 
+#' @param file_info 
+#' @param gr 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+peaks_per_sample <- function(sample_list, file_info, gr){
+  mclapply(seq_along(sample_list), function(i, file_info, gr){
+    x <- sample_list[[i]]
+    new_names <- paste0(rep(names(sample_list)[[i]], length(x)), seq_along(x))
+    tmp <- gr
+    for(n in seq_along(x)){
+      peaks <- readMacsPeaks(file_info$File.macs[x[[n]]])
+      peaks_in_range <- avg_peak_in_range(gr = gr, peaks_gr = peaks)
+      mcols(tmp)[[new_names[n]]] <- mcols(peaks_in_range)[['avg_peak']]
+      }
+    return(mcols(tmp))
+    }, file_info, gr, mc.cores=8)
+}
