@@ -65,16 +65,16 @@ get_tx_features <- function(tx_names, tx_data){
     tx_subset <- tx_names[tx_names %in% names(tx_data[[n]])]
     if (length(tx_subset)){
       part_gr <- unlist(tx_data[[n]][tx_subset])
-      part_gr$transcript <- names(part_gr)
-      part_gr$feature <- n
-      if(!('exon_name' %in% colnames(mcols(part_gr)))){
-        part_gr$exon_name <- NA
+      if (length(part_gr)){
+        part_gr$transcript <- names(part_gr)
+        part_gr$feature <- n
+        if(!('exon_name' %in% colnames(mcols(part_gr)))){
+          part_gr$exon_name <- NA
+        }
+        part_gr <- part_gr[, c('transcript', 'feature', 'exon_name')]
+        parts <- c(parts, part_gr)
       }
-      part_gr <- part_gr[, c('transcript', 'feature', 'exon_name')]
-    } else {
-      part_gr <- GenomicRanges::GRanges()
-    }
-    parts <- c(parts, part_gr)
+    } 
   }
   
   # Find ncRNA in exons
