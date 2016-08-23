@@ -55,7 +55,7 @@ truniq <- trdf %>% group_by(entrez) %>% dplyr::summarize(chr = first(seqnames),
 ```
 
 ```{r}
-symbol <- "NRIP1"
+symbol <- "LEF1"
 sym_idx <- which(truniq$symbol == symbol)
 symbol_range <- get_view_range(chr = truniq$chr[sym_idx], start = truniq$start[sym_idx],
                                end = truniq$end[sym_idx], strand = as.character(truniq$strand[sym_idx]))
@@ -126,4 +126,62 @@ p <- plot_ly(z=hm_vals, y=rownames(hm_vals),type='heatmap', colorscale = continu
 lines <- make_lines(symbol_range = symbol_range, scaled_range = tiled_range, hm_vals = hm_vals, base = n_recurse_tiles)
 p %>% layout(xaxis=list(tickvals = lines$vals, ticktext = names(lines$vals), tickmode='array',
                         zeroline=FALSE, showline=TRUE, mirror=TRUE))
+```
+
+```{r}
+rpkmEset <- readRDS("/gne/research/workspace/schepa/Carroll_Data/GSE68358.rpkmEset.with_fdata.Rds")
+T47D_eset <- rpkmEset[,grep("T47D",pData(rpkmEset)$celltype)]
+treat_groups = stringr::str_trim(sapply(stringr::str_split(pData(T47D_eset)$treatment,":"), 
+                      function(x) x[[2]])) %>% gsub("+","_",., fixed= TRUE) %>% 
+  gsub("_3hr","",.)
+
+library(limma)
+library(edgeR)
+
+dge <- DGEList(counts = exprs(T47D_eset)) %>% calcNormFactors()
+design <- model.matrix(~ 0 +treat_groups)
+colnames(design) = gsub("treat_groups", "", colnames(design))
+v <- voom(dge, design=design)
+
+symbol_exprs <- v$E[which(fData(T47D_eset)$symbol == symbol),]
+names(symbol_exprs) <- pData(T47D_eset)$title
+symbol_exprs <- as.data.frame(symbol_exprs)
+symbol_exprs$cond <- gsub("_Rep([0-9]{1})", "", rownames(symbol_exprs))
+```
+
+```{r}
+conditions <- c("E2", "P4", "R5020")
+by_cond <- group_by(symbol_exprs, cond)
+exprs_stats <- summarize(by_cond, mean=mean(symbol_exprs), sd = sd(symbol_exprs))
+exprs_stats$cond <- conditions
+cvg_df <- as.data.frame(hm_vals)
+cvg_df$cond <- "E2"
+cvg_df$cond[grep("Pr", rownames(cvg_df))] <- "P4"
+cvg_df$cond[grep("R5020", rownames(cvg_df))] <- "R5020"
+cvg_by_cond <- group_by(cvg_df, cond)
+set.seed(8)
+if(exists("filtered")){
+  rm(filtered)
+}
+for(c in conditions){
+  data <- rnorm(n = nrow(filter(cvg_by_cond, cond==c)),
+                                              mean = filter(exprs_stats, cond==c)$mean,
+                                              sd = filter(exprs_stats, cond==c)$sd)
+  cur_sample <- filter(cvg_by_cond, cond==c)
+  cur_sample$exprs <- data
+  if(exists("filtered")){
+    filtered <- rbind(filtered, cur_sample)
+  } else{
+    filtered <- cur_sample
+  }
+}
+```
+
+```{r}
+library(glmnet)
+x <- (as.matrix(filtered[, 1:(ncol(filtered)-2)]))
+scale <- cumsum(sort(width(scaled_range)[1:37]))
+colnames(x) <- c(-rev(scale), scale)
+y <-  filtered$exprs
+cvfit <- cv.glmnet(x, y)
 ```
