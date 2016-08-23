@@ -60,9 +60,10 @@ get_tx_annotation <- function(range, tx_data, no_introns=FALSE){
 
 get_tx_features <- function(tx_names, tx_data){
   if(!length(tx_names)){ return(GRanges())}
+  parts <- GenomicRanges::GRanges()
   for (n in c("intron","utr5","utr3","cds","exon")){
-    if(length(tx_data[[n]])){
-      tx_subset <- tx_names[tx_names %in% names(tx_data[[n]])]
+    tx_subset <- tx_names[tx_names %in% names(tx_data[[n]])]
+    if (length(tx_subset)){
       part_gr <- unlist(tx_data[[n]][tx_subset])
       part_gr$transcript <- names(part_gr)
       part_gr$feature <- n
@@ -71,13 +72,9 @@ get_tx_features <- function(tx_names, tx_data){
       }
       part_gr <- part_gr[, c('transcript', 'feature', 'exon_name')]
     } else {
-      part_gr <- GRanges()
+      part_gr <- GenomicRanges::GRanges()
     }
-    if(exists("parts")){
-      parts <- c(parts, part_gr)
-    } else {
-      parts <- part_gr
-    }
+    parts <- c(parts, part_gr)
   }
   
   # Find ncRNA in exons
