@@ -178,7 +178,10 @@ peaks_per_sample <- function(peak_list, gr){
   }
   return(tmp)
 }
- 
+
+
+# This is a terrible function. It should probably not be exported without a
+# SIGNIFICANT refactor
 learning <- function(s, 
                      T47D_eset,
                      truniq,

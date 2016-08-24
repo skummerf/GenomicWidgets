@@ -4,7 +4,9 @@ author: "Justin Finkle"
 date: "8/17/2016"
 output: html_document
 ---
-d
+# **Note to user**
+This is very preliminary code to give a sense of how machine learning can be used
+to reduce dimensions, and infer regulatory regions that govern gene expression. If the ideas intrigue you, this code could easily be adapted into an analysis pipeline 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 library(chipVis)
@@ -170,6 +172,8 @@ sig_genes <- fData(T47D_eset)$symbol[sig]
 # Learning
 **Note** By default this code will not run. It uses basic parallelization, but can
 still take a while to run.
+
+A matrix of the coefficients is saved to avoid rerunning this section.
 ```{r eval=FALSE}
 library(glmnet)
 library(BiocParallel)
@@ -183,17 +187,18 @@ c_list <- mclapply(X = sig,
                          T47D_eset,
                          truniq,
                          peaks, mc.cores=4)
-```
-
-```{r}
 all_coefs <- matrix(unlist(c_list), nrow=length(c_list), byrow = T)
 rownames(all_coefs) <- sig_genes
 scale <- cumsum(sort(width(scaled_range)[1:37]))
 colnames(all_coefs) <- c(-rev(scale), scale)
 ```
 
-
+# Positional importance
+This plot shows the coefficients for each gene along the log-scaled positions. How
+the rows should be clustered is unknown, but there is clearly some structure. 
 ```{r}
+# Load precomputed coefficients
+all_coefs <- readRDS("~/workspace/test_coeffs.Rds")
 coef_hm <- simple_heatmap(mat = all_coefs, 
                           row_order = "kmeans",
                           row_k = 8,
@@ -208,18 +213,35 @@ coef_hm %>% add_genomics_heatmap(v$E[sig,],
 
 ```
 
-```{r}
-rna_hm <- genomics_heatmap(v$E[sig,], 
-                           col_groups = col_group_names, 
-                           row_groups_palette = c("#d6696a","#69a0d6"),
-                           row_groups_name = "Gene<br>Clusters",
-                           row_k = 2,
-                           x = pData(T47D_eset)$title, 
-                           y = fData(T47D_eset)$symbol[sig],
-                           name = "RNA-seq", cbg = colorbar_grid(x_spacing = 0.2, nrow = 3),
-                           colorscale = diverging_colorscale(c(scales::muted("blue"),
-                                                               "white", scales::muted("red")))) 
 
-rna_hm %>% add_genomics_heatmap(mat = all_coefs,
-                                col_groups = width(scaled_range))
+```{r}
+# For one sample get the the peaks on log-scale for all significant genes
+n_genes <- 100
+peak_list <- sapply(X = sig[1:n_genes], function(x) {
+  symbol_range <-get_view_range(chr = truniq$chr[x],
+                              start = truniq$start[x],
+                              end = truniq$end[x],
+                              strand = as.character(truniq$strand[x]))
+  n_recurse_tiles <- 10
+  pseudo_tss <- ifelse(strand(symbol_range)=="-", 
+                     end(symbol_range), 
+                     start(symbol_range))
+  scaled_range <- log_scale_range(center = pseudo_tss, 
+                                chromosome = seqnames(symbol_range),
+                                n = n_recurse_tiles, 
+                                min_bin = 100)
+  log_peaks <- peaks_per_sample(peak_list = peaks[1], gr = scaled_range)
+  as.matrix(mcols(log_peaks))
+})
+gene_peaks <- matrix(unlist(peak_list), nrow=n_genes, byrow = T)
+rownames(gene_peaks) <- truniq$symbol[1:n_genes]
+```
+
+```{r}
+hm <- genomics_heatmap(gene_peaks, 
+                       col_groups = width(scaled_range),
+                       col_order = 'none',
+                       row_order = "hclust")
+hm
+
 ```
