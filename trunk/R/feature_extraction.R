@@ -152,16 +152,107 @@ make_lines <- function(symbol_range, scaled_range, hm_vals, base){
 #' @export
 #'
 #' @examples
-peaks_per_sample <- function(sample_list, file_info, gr){
-  mclapply(seq_along(sample_list), function(i, file_info, gr){
+read_macs_peaks <- function(sample_list, file_info){
+  peak_list <- mclapply(seq_along(sample_list), function(i, file_info){
+    # The name of each treatment is being amended, so an index is passed
+    # for reference
     x <- sample_list[[i]]
     new_names <- paste0(rep(names(sample_list)[[i]], length(x)), seq_along(x))
-    tmp <- gr
+    tmp <- list()
     for(n in seq_along(x)){
-      peaks <- readMacsPeaks(file_info$File.macs[x[[n]]])
-      peaks_in_range <- avg_peak_in_range(gr = gr, peaks_gr = peaks)
-      mcols(tmp)[[new_names[n]]] <- mcols(peaks_in_range)[['avg_peak']]
-      }
-    return(mcols(tmp))
-    }, file_info, gr, mc.cores=8)
+      tmp[new_names[[n]]] <- readMacsPeaks(file_info$File.macs[x[[n]]])
+    }
+    return(tmp)
+  }, file_info, mc.cores=8)
+  
+  # Unlist the peaks to turn it into a named list
+  return(unlist(peak_list))
 }
+
+peaks_per_sample <- function(peak_list, gr){
+  tmp <- gr
+  for(sample in names(peak_list)){
+    sample_peaks <- peak_list[[sample]]
+    peaks_in_range <- avg_peak_in_range(gr = gr, peaks_gr = sample_peaks)
+    mcols(tmp)[[sample]] <- mcols(peaks_in_range)[['avg_peak']]  
+  }
+  return(tmp)
+}
+ 
+learning <- function(s, 
+                     T47D_eset,
+                     truniq,
+                     peaks,
+                     n_recurse_tiles = 10,
+                     min_bin = 100,
+                     conditions = c("E2", "P4", "R5020")){
+  gene <- fData(T47D_eset)$symbol[[s]]
+  # print(gene)
+  # Handle when genes are not in the lookup table
+  if(is.na(gene) | !gene %in% truniq$symbol){
+    #Need a better way to initialize zeros
+    return(c(rep(0, 74)))
+  }
+  # Get the range
+  gene_idx <- which(truniq$symbol == gene)
+  gene_range <-get_view_range(chr = truniq$chr[gene_idx],
+                              start = truniq$start[gene_idx],
+                              end = truniq$end[gene_idx],
+                              strand = as.character(truniq$strand[gene_idx]))
+  pseudo_tss <- ifelse(strand(gene_range)=="-", 
+                       end(gene_range), 
+                       start(gene_range))
+  scaled_gene_range <- log_scale_range(center = pseudo_tss, 
+                                       chromosome = seqnames(gene_range),
+                                       n = n_recurse_tiles,
+                                       min_bin = min_bin)
+  # Get the peaks
+  log_peaks <- peaks_per_sample(peak_list = peaks, gr = scaled_gene_range)
+  df <- biovizBase::mold(log_peaks)
+  hm_vals <- apply(t(as.matrix(as.data.frame(mcols(log_peaks)))), 2, rev)+1
+  
+  # Get the expression
+  symbol_exprs <- v$E[which(fData(T47D_eset)$symbol == gene),]
+  names(symbol_exprs) <- pData(T47D_eset)$title
+  symbol_exprs <- as.data.frame(symbol_exprs)
+  symbol_exprs$cond <- gsub("_Rep([0-9]{1})", "", rownames(symbol_exprs))
+  by_cond <- group_by(symbol_exprs, cond)
+  exprs_stats <- summarize(by_cond, mean=mean(symbol_exprs), sd = sd(symbol_exprs))
+  exprs_stats$cond <- conditions
+  cvg_df <- as.data.frame(hm_vals)
+  cvg_df$cond <- "E2"
+  cvg_df$cond[grep("Pr", rownames(cvg_df))] <- "P4"
+  cvg_df$cond[grep("R5020", rownames(cvg_df))] <- "R5020"
+  cvg_by_cond <- group_by(cvg_df, cond)
+  if(exists("filtered")){
+    rm(filtered)
+  }
+  for(c in conditions){
+    data <- rnorm(n = nrow(filter(cvg_by_cond, cond==c)),
+                  mean = filter(exprs_stats, cond==c)$mean,
+                  sd = filter(exprs_stats, cond==c)$sd)
+    cur_sample <- filter(cvg_by_cond, cond==c)
+    cur_sample$exprs <- data
+    if(exists("filtered")){
+      filtered <- rbind(filtered, cur_sample)
+    } else{
+      filtered <- cur_sample
+    }
+  }
+  # Learn
+  x <- (as.matrix(filtered[, 1:(ncol(filtered)-2)]))
+  scale <- cumsum(sort(width(scaled_range)[1:37]))
+  colnames(x) <- c(-rev(scale), scale)
+  y <-  filtered$exprs
+  result <- tryCatch({
+    cvfit <- cv.glmnet(x, y)
+    coefs <- coef(cvfit, s = "lambda.min")
+    matrix(coefs)[2:length(coefs)]
+  }, warning = function(w) {
+    c(rep(0, 74))
+  }, error = function(e) {
+    c(rep(0, 74))
+  })
+  return(result)
+}
+

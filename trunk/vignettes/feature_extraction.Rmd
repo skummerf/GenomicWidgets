@@ -4,7 +4,7 @@ author: "Justin Finkle"
 date: "8/17/2016"
 output: html_document
 ---
-
+d
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 library(chipVis)
@@ -13,6 +13,20 @@ library(org.Hs.eg.db)
 library(dplyr)
 library(plotly)
 library(iHeatmapR)
+```
+
+```{r Match transcripts with symbol, echo = FALSE}
+tr <- transcriptsBy(TxDb.Hsapiens.BioMart.igis, by = "gene") %>% unlist()
+tr$entrez <- stringr::str_extract(names(tr),"(?<=:)(.*)")
+tr$symbol <- annotate::getSYMBOL(tr$entrez, data='org.Hs.eg')
+names(tr) = NULL
+trdf <- as.data.frame(tr)
+
+truniq <- trdf %>% group_by(entrez) %>% dplyr::summarize(chr = first(seqnames),
+                                                  start = min(start),
+                                                  end = max(end),
+                                                  strand = first(strand),
+                                                  symbol = first(symbol))
 ```
 
 ```{r Load Data}
@@ -40,30 +54,25 @@ T47D = list(
 )
 ```
 
-```{r Match transcripts with symbol, echo = FALSE}
-tr <- transcriptsBy(TxDb.Hsapiens.BioMart.igis, by = "gene") %>% unlist()
-tr$entrez <- stringr::str_extract(names(tr),"(?<=:)(.*)")
-tr$symbol <- annotate::getSYMBOL(tr$entrez, data='org.Hs.eg')
-names(tr) = NULL
-trdf <- as.data.frame(tr)
-
-truniq <- trdf %>% group_by(entrez) %>% dplyr::summarize(chr = first(seqnames),
-                                                  start = min(start),
-                                                  end = max(end),
-                                                  strand = first(strand),
-                                                  symbol = first(symbol))
+```{r Read in peaks}
+peaks <- read_macs_peaks(T47D, fi)
 ```
 
+# Example Log plot for 1 gene
 ```{r}
 symbol <- "LEF1"
 sym_idx <- which(truniq$symbol == symbol)
-symbol_range <- get_view_range(chr = truniq$chr[sym_idx], start = truniq$start[sym_idx],
-                               end = truniq$end[sym_idx], strand = as.character(truniq$strand[sym_idx]))
+symbol_range <-get_view_range(chr = truniq$chr[sym_idx],
+                              start = truniq$start[sym_idx],
+                              end = truniq$end[sym_idx],
+                              strand = as.character(truniq$strand[sym_idx]))
 ```
 
 ```{r}
 n_recurse_tiles <- 10
-pseudo_tss <- ifelse(strand(symbol_range)=="-", end(symbol_range), start(symbol_range))
+pseudo_tss <- ifelse(strand(symbol_range)=="-", 
+                     end(symbol_range), 
+                     start(symbol_range))
 scaled_range <- log_scale_range(center = pseudo_tss, 
                                 chromosome = seqnames(symbol_range),
                                 n = n_recurse_tiles, 
@@ -73,10 +82,10 @@ scaled_range <- log_scale_range(center = pseudo_tss,
 # Log-Scale for NRIP1
 The log scale gives us a good dynamic range for seeing peaks. The plot shows the 
 average peak height per bin. Peaks don't really show up until 100kb from the TSS
-```{r}
-log_peaks <- peaks_per_sample(T47D, fi, scaled_range)
-all_peaks <- scaled_range
-mcols(all_peaks) <- Reduce(cbind, log_peaks)
+```{r, eval=FALSE, include=FALSE}
+log_peaks <- peaks_per_sample(peak_list = peaks, gr = scaled_range)
+all_peaks <- log_peaks
+# mcols(all_peaks) <- Reduce(cbind, log_peaks)
 df <- biovizBase::mold(all_peaks)
 hm_vals <- apply(t(as.matrix(as.data.frame(mcols(all_peaks)))), 2, rev)+1
 # hm_vals <- matrix(rnorm(length(hm_vals)), nrow=nrow(hm_vals))
@@ -92,7 +101,7 @@ p %>% layout(shapes=lines$lines,
 The plot below shows the same range for peaks, but on a linear scale. Bins are 
 around 27kb long. This makes it look like peaks are right next to the TSS, which
 is not the case
-```{r Large Scale}
+```{r Large Scale, eval=FALSE, include=FALSE}
 tiled_range <- tile(reduce(scaled_range), n = length(scaled_range))[[1]]
 even_peaks <- peaks_per_sample(T47D, fi, tiled_range)
 all_peaks <- tiled_range
@@ -113,7 +122,7 @@ the issue of thinking peaks are close to the TSS, however visually it is hard to
 see much signal. If you zoom to +100kb, you'll see that there are indeed strong
 peaks. Overall though, the heatmap is very sparse, and it it isn't clear where
 the user should zoom to see the strong peaks. 
-```{r 1000bp bins}
+```{r 1000bp bins eval=FALSE, include=FALSE}
 tiled_range <- tile(reduce(scaled_range), width = 1000)[[1]]
 even_peaks <- peaks_per_sample(T47D, fi, tiled_range)
 all_peaks <- tiled_range
@@ -128,7 +137,9 @@ p %>% layout(xaxis=list(tickvals = lines$vals, ticktext = names(lines$vals), tic
                         zeroline=FALSE, showline=TRUE, mirror=TRUE))
 ```
 
-```{r}
+
+# Prep expression data
+```{r Get Significant expression}
 rpkmEset <- readRDS("/gne/research/workspace/schepa/Carroll_Data/GSE68358.rpkmEset.with_fdata.Rds")
 T47D_eset <- rpkmEset[,grep("T47D",pData(rpkmEset)$celltype)]
 treat_groups = stringr::str_trim(sapply(stringr::str_split(pData(T47D_eset)$treatment,":"), 
@@ -143,45 +154,72 @@ design <- model.matrix(~ 0 +treat_groups)
 colnames(design) = gsub("treat_groups", "", colnames(design))
 v <- voom(dge, design=design)
 
-symbol_exprs <- v$E[which(fData(T47D_eset)$symbol == symbol),]
-names(symbol_exprs) <- pData(T47D_eset)$title
-symbol_exprs <- as.data.frame(symbol_exprs)
-symbol_exprs$cond <- gsub("_Rep([0-9]{1})", "", rownames(symbol_exprs))
+fit <- lmFit(v, design)
+contrasts <- makeContrasts(E2_Progesterone-E2, 
+                           E2_R5020-E2, 
+                           E2_R5020-E2_Progesterone, levels = design)
+fit2 <- contrasts.fit(fit, contrasts) %>% eBayes()
+results_Progesterone <- topTable(fit2, coef = 1, adjust = "BH")
+results_R5020 <- topTable(fit2, coef = 2, adjust = "BH")
+
+results <- decideTests(fit2, p.value = 0.01, lfc = 1)
+sig <- which(apply(results,1, function(x) sum(x!=0) > 0))
+sig_genes <- fData(T47D_eset)$symbol[sig]
 ```
 
-```{r}
-conditions <- c("E2", "P4", "R5020")
-by_cond <- group_by(symbol_exprs, cond)
-exprs_stats <- summarize(by_cond, mean=mean(symbol_exprs), sd = sd(symbol_exprs))
-exprs_stats$cond <- conditions
-cvg_df <- as.data.frame(hm_vals)
-cvg_df$cond <- "E2"
-cvg_df$cond[grep("Pr", rownames(cvg_df))] <- "P4"
-cvg_df$cond[grep("R5020", rownames(cvg_df))] <- "R5020"
-cvg_by_cond <- group_by(cvg_df, cond)
-set.seed(8)
-if(exists("filtered")){
-  rm(filtered)
-}
-for(c in conditions){
-  data <- rnorm(n = nrow(filter(cvg_by_cond, cond==c)),
-                                              mean = filter(exprs_stats, cond==c)$mean,
-                                              sd = filter(exprs_stats, cond==c)$sd)
-  cur_sample <- filter(cvg_by_cond, cond==c)
-  cur_sample$exprs <- data
-  if(exists("filtered")){
-    filtered <- rbind(filtered, cur_sample)
-  } else{
-    filtered <- cur_sample
-  }
-}
-```
-
-```{r}
+# Learning
+**Note** By default this code will not run. It uses basic parallelization, but can
+still take a while to run.
+```{r eval=FALSE}
 library(glmnet)
-x <- (as.matrix(filtered[, 1:(ncol(filtered)-2)]))
+library(BiocParallel)
+# For each significant gene
+n_recurse_tiles <- 10
+min_bin <- 100
+conditions <- c("E2", "P4", "R5020")
+set.seed(8)
+c_list <- mclapply(X = sig,
+                   FUN = learning,
+                         T47D_eset,
+                         truniq,
+                         peaks, mc.cores=4)
+```
+
+```{r}
+all_coefs <- matrix(unlist(c_list), nrow=length(c_list), byrow = T)
+rownames(all_coefs) <- sig_genes
 scale <- cumsum(sort(width(scaled_range)[1:37]))
-colnames(x) <- c(-rev(scale), scale)
-y <-  filtered$exprs
-cvfit <- cv.glmnet(x, y)
+colnames(all_coefs) <- c(-rev(scale), scale)
+```
+
+
+```{r}
+coef_hm <- simple_heatmap(mat = all_coefs, 
+                          row_order = "kmeans",
+                          row_k = 8,
+                          col_groups = width(scaled_range),
+                          colorscale = diverging_colorscale())
+coef_hm %>% add_genomics_heatmap(v$E[sig,], 
+                           col_groups = col_group_names, 
+                           x = pData(T47D_eset)$title, 
+                           colorscale = diverging_colorscale(c(scales::muted("blue"),
+                                                               "white", scales::muted("red")))) 
+
+
+```
+
+```{r}
+rna_hm <- genomics_heatmap(v$E[sig,], 
+                           col_groups = col_group_names, 
+                           row_groups_palette = c("#d6696a","#69a0d6"),
+                           row_groups_name = "Gene<br>Clusters",
+                           row_k = 2,
+                           x = pData(T47D_eset)$title, 
+                           y = fData(T47D_eset)$symbol[sig],
+                           name = "RNA-seq", cbg = colorbar_grid(x_spacing = 0.2, nrow = 3),
+                           colorscale = diverging_colorscale(c(scales::muted("blue"),
+                                                               "white", scales::muted("red")))) 
+
+rna_hm %>% add_genomics_heatmap(mat = all_coefs,
+                                col_groups = width(scaled_range))
 ```
