@@ -87,3 +87,18 @@ get_tx_features <- function(tx_names, tx_data){
   
   return(parts)
 }
+
+match_tx_to_gene <- function(txdb, org_db, str_regex = "(?<=:)(.*)" ){
+  tr <- transcriptsBy(txdb, by = "gene") %>% unlist()
+  tr$entrez <- stringr::str_extract(names(tr), str_regex)
+  tr$symbol <- annotate::getSYMBOL(tr$entrez, data=org_db)
+  names(tr) = NULL
+  trdf <- as.data.frame(tr)
+  
+  truniq <- trdf %>% group_by(entrez) %>% dplyr::summarize(chr = first(seqnames),
+                                                           start = min(start),
+                                                           end = max(end),
+                                                           strand = first(strand),
+                                                           symbol = first(symbol))
+  return(truniq)
+}

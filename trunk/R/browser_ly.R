@@ -148,15 +148,13 @@ make_browserly_function <- function(cvg_files,
 #' @examples
 plot_browserly_tracks <- function(target_range, tx_data, cvg,
                         hm_thresh = 4,
+                        stacking = 'dense',
                         type = NULL){
   # Make GeneRegion plot
   tx_info <- get_tx_annotation(range=target_range, tx_data = tx_data)
   
   # Prepare tx info for plotting
-  if(length(tx_info)){
-    tx_info <- biovizBase::addStepping(tx_info, group.name = "transcript",
-                                       group.selfish = FALSE)
-  }
+  tx_info <- set_tx_level(tx_info, stacking = stacking)
   tx_info <- biovizBase::mold(tx_info)
   
   # Make "invisible" transcript plot
@@ -272,3 +270,37 @@ browserly_cvg_track <- function(cvg, target_range,
   }
   return(cvg_track)
 }
+
+set_tx_level <- function(tx_gr, 
+                         stacking = c('dense', 'squish')){
+  stacking <- match.arg(stacking)
+  if(length(tx_gr)){
+    if(stacking == 'squish'){
+      tx_gr <- biovizBase::addStepping(tx_gr, group.name = "transcript",
+                                       group.selfish = FALSE)
+    } else if(stacking == 'dense'){
+      # tx_gr <- collapse_tx(tx_gr)
+      mcols(tx_gr)$stepping <- 1
+    }
+    return(tx_gr)
+  }
+}
+
+collapse_tx <- function(gr){
+  # Reduce introns and RNA into minimal set of ranges
+  introns <- gr[mcols(gr)$feature == 'intron']
+  dense_introns <- reduce(introns)
+  mcols(dense_introns)$feature <- 'intron'
+  rna <- gr[mcols(gr)$feature != 'intron']
+  dense_rna <- reduce(rna)
+  
+  # Add metadata to RNA to keep track of transcripts and features
+  overlaps <- findOverlaps(rna, dense_rna)
+  mcols(dense_rna)$feature <- splitAsList(mcols(rna)$feature[queryHits(overlaps)],
+                           factor(subjectHits(overlaps)))
+  mcols(dense_rna)$transcript <- splitAsList(mcols(rna)$transcript[queryHits(overlaps)],
+                                      factor(subjectHits(overlaps)))
+  return(c(dense_introns, dense_rna))
+}
+  
+  

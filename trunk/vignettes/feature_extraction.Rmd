@@ -199,6 +199,7 @@ the rows should be clustered is unknown, but there is clearly some structure.
 ```{r}
 # Load precomputed coefficients
 all_coefs <- readRDS("~/workspace/test_coeffs.Rds")
+col_group_names <- gsub(pattern = "Progesterone", replacement = "P4", treat_groups)
 coef_hm <- simple_heatmap(mat = all_coefs, 
                           row_order = "kmeans",
                           row_k = 8,
@@ -242,6 +243,8 @@ hm <- genomics_heatmap(gene_peaks,
                        col_groups = width(scaled_range),
                        col_order = 'none',
                        row_order = "hclust")
-hm
+hm %>% add_genomics_heatmap(all_coefs[1:n_genes,],
+                            col_groups = width(scaled_range),
+                            col_order = "none")
 
 ```

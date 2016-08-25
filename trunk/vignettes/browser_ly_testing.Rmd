@@ -57,6 +57,3 @@ plot_browserly_tracks(view_range, tx_data, cvg)
 ```{r Demo_line}
 plot_browserly_tracks(view_range, tx_data, cvg, type = "line")
 ```
-
-
-
