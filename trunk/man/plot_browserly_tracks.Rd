@@ -5,7 +5,7 @@
 \title{Title}
 \usage{
 plot_browserly_tracks(target_range, tx_data, cvg, hm_thresh = 4,
-  type = NULL)
+  stacking = "dense", type = NULL)
 }
 \arguments{
 \item{tx_data}{}

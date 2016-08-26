@@ -9,6 +9,7 @@ coverage_heatmap <- function(cvg){
 crop_introns <- function(introns, target_range){
   introns$start <- pmax(introns$start, start(target_range))
   introns$end <- pmin(introns$end, end(target_range))
+  introns$midpoint <- pmin(pmax(introns$midpoint, start(target_range)), end(target_range))
   return(introns)
 }
 
@@ -217,6 +218,17 @@ modify_y <- function(plotly_obj, trace_axes, grt_ax, type){
   return(plotly_obj)
 }
 
+#' Title
+#'
+#' @param plotly_obj 
+#' @param tx_info 
+#' @param target_range 
+#' @param grt_ax 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 add_tx_shapes <- function(plotly_obj, tx_info, target_range, grt_ax){
   # Add annotations
   cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ], height = 0.4, grt_ax)
@@ -227,12 +239,17 @@ add_tx_shapes <- function(plotly_obj, tx_info, target_range, grt_ax){
   cropped_introns <- crop_introns(tx_info[tx_info$feature == 'intron', ], target_range)
   intron_arrow <- make_arrows2(cropped_introns, grt_ax, 
                                arrowlen = width(target_range) * 0.01)
-  grt_layout <- list(showlegend=FALSE, shapes=c(cds_rect, utr_rect, ncRNA_rect, intron_arrow))
+  tx_shapes <- c(cds_rect, utr_rect, ncRNA_rect, intron_arrow)
+  if(!is.null(plotly_obj$x$layout$shapes)){
+    tx_shapes <- c(plotly_obj$x$layout$shapes, tx_shapes)
+  }
+  grt_layout <- list(showlegend=FALSE)
                      #annotations=intron_arrow)
   plotly_obj$x$layout <- modifyList(plotly_obj$x$layout, grt_layout)
-  grt_y_layout <- list(autorange='reversed', showticklabels=FALSE, showticks=FALSE,
-                       title='Transcripts')
-  plotly_obj$x$layout[[grt_ax]] <- modifyList(plotly_obj$x$layout[[grt_ax]], grt_y_layout)
+  plotly_obj$x$layout$shapes <- tx_shapes
+  # grt_y_layout <- list(autorange='reversed', showticklabels=FALSE, showticks=FALSE,
+  #                      title='Transcripts')
+  # plotly_obj$x$layout[[grt_ax]] <- modifyList(plotly_obj$x$layout[[grt_ax]], grt_y_layout)
   return(plotly_obj)
 }
 
