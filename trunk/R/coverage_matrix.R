@@ -231,10 +231,10 @@ convert_to_full_path <- function(x){
 
 bin_track_mat <- function(track_mat, target_range, tiled_range, scaling_factors){
   w <- width(tiled_range)
-  wcs <- c(1,cumsum(w))
+  wcs <- c(0,cumsum(w))
   out <- sapply(seq_along(tiled_range), function(x){
-    s <- wcs[x]
-    e <- wcs[x + 1] - 1
+    s <- wcs[x] + 1
+    e <- wcs[x + 1]
     colMeans(track_mat[s:e,], na.rm = TRUE)
   } )
   out <- t(out / scaling_factors)
