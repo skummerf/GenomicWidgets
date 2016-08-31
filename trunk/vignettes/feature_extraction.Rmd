@@ -7,7 +7,7 @@ output: html_document
 # **Note to user**
 This is very preliminary code to give a sense of how machine learning can be used
 to reduce dimensions, and infer regulatory regions that govern gene expression. If the ideas intrigue you, this code could easily be adapted into an analysis pipeline 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 library(chipVis)
 library(TxDb.Hsapiens.BioMart.igis3.0)
@@ -62,7 +62,7 @@ peaks <- read_macs_peaks(T47D, fi)
 
 # Example Log plot for 1 gene
 ```{r}
-symbol <- "LEF1"
+symbol <- "GREB1"
 sym_idx <- which(truniq$symbol == symbol)
 symbol_range <-get_view_range(chr = truniq$chr[sym_idx],
                               start = truniq$start[sym_idx],
@@ -84,7 +84,7 @@ scaled_range <- log_scale_range(center = pseudo_tss,
 # Log-Scale for NRIP1
 The log scale gives us a good dynamic range for seeing peaks. The plot shows the 
 average peak height per bin. Peaks don't really show up until 100kb from the TSS
-```{r, eval=FALSE, include=FALSE}
+```{r, eval=TRUE, include=TRUE}
 log_peaks <- peaks_per_sample(peak_list = peaks, gr = scaled_range)
 all_peaks <- log_peaks
 # mcols(all_peaks) <- Reduce(cbind, log_peaks)
@@ -96,26 +96,29 @@ p <- plot_ly(z=hm_vals, y=rownames(hm_vals),type='heatmap', colorscale = continu
 lines <- make_lines(symbol_range = symbol_range, scaled_range = scaled_range, hm_vals = hm_vals, base = n_recurse_tiles)
 p %>% layout(shapes=lines$lines,
              xaxis=list(tickvals = lines$vals, ticktext = names(lines$vals), tickmode='array',
-                        zeroline=FALSE, showline=TRUE, mirror=TRUE))
+                        zeroline=FALSE, showline=TRUE, mirror=TRUE),
+             margin = list(l=150))
 ```
 
 # Linear Scale
 The plot below shows the same range for peaks, but on a linear scale. Bins are 
 around 27kb long. This makes it look like peaks are right next to the TSS, which
 is not the case
-```{r Large Scale, eval=FALSE, include=FALSE}
+```{r Large Scale, eval=TRUE, include=TRUE}
 tiled_range <- tile(reduce(scaled_range), n = length(scaled_range))[[1]]
-even_peaks <- peaks_per_sample(T47D, fi, tiled_range)
-all_peaks <- tiled_range
-mcols(all_peaks) <- Reduce(cbind, even_peaks)
+all_peaks <- peaks_per_sample(peak_list = peaks, gr = tiled_range)
+# all_peaks <- tiled_range
+# mcols(all_peaks) <- Reduce(cbind, even_peaks)
 df <- biovizBase::mold(all_peaks)
 hm_vals <- apply(t(as.matrix(as.data.frame(mcols(all_peaks)))), 2, rev)+1
 # hm_vals <- matrix(rnorm(length(hm_vals)), nrow=nrow(hm_vals))
+n_bins <- length(tiled_range)
+x_vals <- c(-rev(cumsum(width(tiled_range)[1:(n_bins/2)])), cumsum(width(tiled_range)[(n_bins/2+1):n_bins]))
 p <- plot_ly(z=hm_vals, y=rownames(hm_vals),type='heatmap', colorscale = continuous_colorscale("Purples")(hm_vals),
-               hoverinfo='x+z')
-lines <- make_lines(symbol_range = symbol_range, scaled_range = tiled_range, hm_vals = hm_vals, base = n_recurse_tiles)
-p %>% layout(xaxis=list(tickvals = lines$vals, ticktext = names(lines$vals), tickmode='array',
-                        zeroline=FALSE, showline=TRUE, mirror=TRUE))
+               hoverinfo='x+z', x = x_vals)
+# lines <- make_lines(symbol_range = symbol_range, scaled_range = tiled_range, hm_vals = hm_vals, base = n_recurse_tiles)
+p %>% layout(xaxis=list(zeroline=FALSE, showline=TRUE, mirror=TRUE),
+             margin = list(l=150))
 ```
 
 # Linear Scale, small bins
@@ -124,19 +127,22 @@ the issue of thinking peaks are close to the TSS, however visually it is hard to
 see much signal. If you zoom to +100kb, you'll see that there are indeed strong
 peaks. Overall though, the heatmap is very sparse, and it it isn't clear where
 the user should zoom to see the strong peaks. 
-```{r 1000bp bins eval=FALSE, include=FALSE}
+```{r 1000bp bins, eval=TRUE, include=TRUE}
 tiled_range <- tile(reduce(scaled_range), width = 1000)[[1]]
-even_peaks <- peaks_per_sample(T47D, fi, tiled_range)
-all_peaks <- tiled_range
-mcols(all_peaks) <- Reduce(cbind, even_peaks)
+all_peaks <- peaks_per_sample(peak_list = peaks, gr = tiled_range)
+# all_peaks <- tiled_range
+# mcols(all_peaks) <- Reduce(cbind, even_peaks)
 df <- biovizBase::mold(all_peaks)
 hm_vals <- apply(t(as.matrix(as.data.frame(mcols(all_peaks)))), 2, rev)+1
 # hm_vals <- matrix(rnorm(length(hm_vals)), nrow=nrow(hm_vals))
+n_bins <- length(tiled_range)
+x_vals <- c(-rev(cumsum(width(tiled_range)[1:(n_bins/2)])), 
+            cumsum(width(tiled_range)[(n_bins/2+1):n_bins]))
 p <- plot_ly(z=hm_vals, y=rownames(hm_vals),type='heatmap', colorscale = continuous_colorscale("Purples")(hm_vals),
-               hoverinfo='x+z')
-lines <- make_lines(symbol_range = symbol_range, scaled_range = tiled_range, hm_vals = hm_vals, base = n_recurse_tiles)
-p %>% layout(xaxis=list(tickvals = lines$vals, ticktext = names(lines$vals), tickmode='array',
-                        zeroline=FALSE, showline=TRUE, mirror=TRUE))
+               hoverinfo='x+z', x = x_vals)
+# lines <- make_lines(symbol_range = symbol_range, scaled_range = tiled_range, hm_vals = hm_vals, base = n_recurse_tiles)
+p %>% layout(xaxis=list(zeroline=FALSE, showline=TRUE, mirror=TRUE),
+             margin = list(l=150))
 ```
 
 

@@ -18,7 +18,7 @@ local coverage, annotation, and epigenome information. The main functionality is
 in coordinating Gviz tracks to most appropriately match the available data.
 
 ```{r setup, include=FALSE, echo=TRUE}
-knitr::opts_chunk$set(echo = TRUE, cache=TRUE, autodep=TRUE)
+knitr::opts_chunk$set(echo = TRUE)
 #library(gChipseq)
 library(chipVis)
 library(TxDb.Hsapiens.BioMart.igis3.0)
@@ -169,7 +169,7 @@ However, the stratification and location are accurate.
 ``` {r Plot with SNPs}
 snps <- readRDS("/gne/research//workspace/finklej/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
 track_info <- plot_track_view(more_cvg, symbol_range, exon_data, genome, 
-                                       tss_gr = tss_db, snp_gr = snps)
+                              tss_gr = tss_db, snp_gr = snps, snptrack_kwargs = list(legend=TRUE))
 ```
 
 ## Display Options
@@ -209,17 +209,13 @@ Notice that the background panel color is also changed. The kwargs give you all
 the flexibility available in Gviz!
 
 ``` {r Grouping}
-# These are made up groups for the example
 grouping <- c(rep('WT', 5), rep('KO', 4), 'Input')
-
-# For whatever reason, the colors are in reverse order from the groups. Probably
-# a bug in Gviz somewhere
 colors <- c('black', 'blue', 'green')
 dkwargs <- list(groups=grouping, col=colors, background.title='gray50')
 
-# Then we just supply it as a list of kwargs
 track_info <- plot_track_view(more_cvg, symbol_range, exon_data, genome, 
-                                       dtrack_kwargs = dkwargs)
+                              dtrack_kwargs = dkwargs,
+                              grtrack_kwargs = list(stacking='squish'))
 
 ```
 

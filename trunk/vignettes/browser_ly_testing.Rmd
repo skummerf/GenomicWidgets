@@ -7,37 +7,51 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-library(TxDb.Mmusculus.BioMart.igis3.0)
+library(TxDb.Hsapiens.BioMart.igis)
 library(plotly)
-library(org.Mm.eg.db)
+library(org.Hs.eg.db)
 library(chipVis)
 ```
 
 
 ```{r}
-# Specify parameters
-info_dir <- "/gne/research/workspace/schepa/BAP1_Data/"
-s_file <- paste(info_dir, "BAP1_june_2016_samples.txt", sep='')
-p_file <- paste(info_dir, "BAP1_june_2016_pairs.txt", sep='')
-fi <- get_chip_file_info(s_file, p_file)
-symbol <- "RNF2"
-org <- "mouse"
-genome <- "GRCm38"
+fi <- readRDS("/gne/research/workspace/schepa/Carroll_Data/chip_file_info.Rds")
+org <- "human"
+genome <- "GRCh38"
+
+
+T47D = list(
+  ER_ab = which(fi$source_name == "T47D_ER_Full_Media_3hr"),
+  ER_ab_Pr_treat = which(fi$source_name == "T47D_ER_Progesterone_3hr"),
+  ER_ab_R5020_treat = which(fi$source_name == "T47D_ER_R5020_3hr"),
+  
+  PR_ab  = which(fi$source_name == "T47D_PR_Full_Media_3hr"),
+  PR_ab_Pr_treat = which(fi$source_name == "T47D_PR_Progesterone_3hr"),
+  PR_ab_R5020_treat = which(fi$source_name == "T47D_PR_R5020_3hr"),
+  
+  p300_ab  = which(fi$source_name == "T47D_p300_Full_Media_3hr"),
+  p300_ab_Pr_treat  = which(fi$source_name == "T47D_p300_Progesterone_3hr"),
+  p300_ab_R5020_treat = which(fi$source_name == "T47D_p300_R5020_3hr")
+  
+)
 ```
 
 ```{r}
-tx_data <- load_tx_data(TxDb.Mmusculus.BioMart.igis)
-symbol_table <- match_tx_to_gene(TxDb.Mmusculus.BioMart.igis, 'org.Mm.eg')
+tx_data <- load_tx_data(TxDb.Hsapiens.BioMart.igis)
+symbol_table <- match_tx_to_gene(TxDb.Hsapiens.BioMart.igis, 'org.Hs.eg')
 ```
 
 ```{r}
-view_range <- get_view_range(chr = 5, start=76287400, end=76373827)
-view_range <- extend_grange(view_range, 2000)
+# This happens to be the gene region of AGGF1 and ZBED3
+view_range <- get_view_range(chr = 5, start=76320000, end=76400000)
+
 # Get the coverage
 input <- fi[2, 'Sample.Control']
 input_idx <- which(fi$Sample.Name==input)
-idx <- c(18:23)
-shortened_names <- c(fi[idx[1:length(idx)-1], "Genotype"], "Input")
+idx <- sapply(T47D[c(1,2,4,5)], function(x){x[[1]]})
+idx <- c(1, idx)
+names(idx)[[1]] <- "ER_input"
+shortened_names <- names(idx)
 
 # Get scaling factor
 sf <- get_scaling_factor(fi[idx,])/1000000
@@ -59,14 +73,19 @@ plot_browserly_tracks(view_range, tx_data, cvg)
 plot_browserly_tracks(view_range, tx_data, cvg, type = "line")
 ```
 
+```{r Demo_stacking}
+plot_browserly_tracks(view_range, tx_data, cvg, stacking='squish', type='line')
+```
+
 # Plotting multiple genes for several conditions
 ```{r}
 # set the gene list
-genes <- c('RNF2', 'E2F1', 'GREB1', 'BAP1')
+genes <- c('IL20RA', 'CFAP20', 'PACSIN1', 'ST6GALNAC1', 'GREB1',
+           'ZNF579', 'PRKAB2')
 
 # Select the indices of the chip-seq experiments
 # c_idx stands for conditions index
-c_idx <- c(2, 6, 10, 14, 19)
+c_idx <- sapply(T47D[c(1,2,4,5)], function(x){x[[1]]})
 
 # Set how far upstream and downstream  you want to view from the TSS
 extension <- 50000
@@ -74,7 +93,7 @@ extension <- 50000
 
 ```{r Multiple Genes, echo=FALSE}
 lib_size <- get_scaling_factor(fi[c_idx,])[2,]/1000000
-conditions <- fi$Genotype[c_idx]
+conditions <- names(c_idx)
 p_list <- list()
 a_list <- list()
 r_list <- list()

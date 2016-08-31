@@ -169,6 +169,15 @@ read_macs_peaks <- function(sample_list, file_info){
   return(unlist(peak_list))
 }
 
+#' Title
+#'
+#' @param peak_list 
+#' @param gr 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 peaks_per_sample <- function(peak_list, gr){
   tmp <- gr
   for(sample in names(peak_list)){

@@ -198,6 +198,12 @@ plot_browserly_tracks <- function(target_range, tx_data, cvg,
 }
 
 modify_y <- function(plotly_obj, trace_axes, grt_ax, type){
+  # Modify transcript axis
+  plotly_obj$x$layout[[grt_ax]][['ticks']] <- ""
+  plotly_obj$x$layout[[grt_ax]][['showticklabels']] <- FALSE
+  plotly_obj$x$layout[[grt_ax]][['title']] <- "Transcripts"
+  plotly_obj$x$layout[[grt_ax]][['showgrid']] <- FALSE
+  
   data_axes <- trace_axes[trace_axes!=grt_ax]
   
   # Scale the data for the histograms
@@ -210,6 +216,7 @@ modify_y <- function(plotly_obj, trace_axes, grt_ax, type){
     if(type!='heatmap'){
       plotly_obj$x$layout[[ax]][['range']] <- c(0, score_max)
       plotly_obj$x$layout[[ax]][['title']] <- sample
+      
       # plotly_obj$x$layout[[ax]][['titlefont']]2 <- list(size=10)
     } else {
       plotly_obj$x$layout[[ax]]['ticks'] <- ""
@@ -229,7 +236,7 @@ modify_y <- function(plotly_obj, trace_axes, grt_ax, type){
 #' @export
 #'
 #' @examples
-add_tx_shapes <- function(plotly_obj, tx_info, target_range, grt_ax){
+add_tx_shapes <- function(plotly_obj, tx_info, target_range, grt_ax, y_scaling=0){
   # Add annotations
   cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ], height = 0.4, grt_ax)
   utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], height=0.25, grt_ax)
@@ -240,6 +247,16 @@ add_tx_shapes <- function(plotly_obj, tx_info, target_range, grt_ax){
   intron_arrow <- make_arrows2(cropped_introns, grt_ax, 
                                arrowlen = width(target_range) * 0.01)
   tx_shapes <- c(cds_rect, utr_rect, ncRNA_rect, intron_arrow)
+  tx_shapes <- lapply(tx_shapes, function(x, y_scaling){
+    if(x$type == 'rect'){
+      x$y0 <- x$y0-y_scaling*0.1
+    } else if(x$type == 'line'){
+      x$y0 <- x$y0-y_scaling*0.05
+      x$y1 <- x$y1-y_scaling*0.05
+    }
+    
+    return(x)
+  }, y_scaling)
   if(!is.null(plotly_obj$x$layout$shapes)){
     tx_shapes <- c(plotly_obj$x$layout$shapes, tx_shapes)
   }
