@@ -80,12 +80,11 @@ plot_browserly_tracks(view_range, tx_data, cvg, stacking='squish', type='line')
 # Plotting multiple genes for several conditions
 ```{r}
 # set the gene list
-genes <- c('IL20RA', 'CFAP20', 'PACSIN1', 'ST6GALNAC1', 'GREB1',
-           'ZNF579', 'PRKAB2')
+genes <- c('RNF2', 'E2F1', 'GREB1', 'BAP1')
 
 # Select the indices of the chip-seq experiments
 # c_idx stands for conditions index
-c_idx <- sapply(T47D[c(1,2,4,5)], function(x){x[[1]]})
+c_idx <- c(2, 6, 10, 14, 19)
 
 # Set how far upstream and downstream  you want to view from the TSS
 extension <- 50000
@@ -93,7 +92,7 @@ extension <- 50000
 
 ```{r Multiple Genes, echo=FALSE}
 lib_size <- get_scaling_factor(fi[c_idx,])[2,]/1000000
-conditions <- names(c_idx)
+conditions <- fi$Genotype[c_idx]
 p_list <- list()
 a_list <- list()
 r_list <- list()

@@ -1,104 +1,3 @@
-coverage_heatmap <- function(cvg){
-  hm_vals <- apply(t(as.matrix((mcols(cvg)))), 2, rev)
-  midpoint <- get_midpoint(cvg)
-  p <- plot_ly(z=hm_vals, y=rev(colnames(mcols(cvg))), x=midpoint, type='heatmap',
-               hoverinfo='x+z', colorscale = continuous_colorscale("Purples")(hm_vals))
-  return(p)
-}
-
-crop_introns <- function(introns, target_range){
-  introns$start <- pmax(introns$start, start(target_range))
-  introns$end <- pmin(introns$end, end(target_range))
-  introns$midpoint <- pmin(pmax(introns$midpoint, start(target_range)), end(target_range))
-  return(introns)
-}
-
-make_rect <- function(df, height, yref){
-  yref <- gsub("yaxis", "y", yref)
-  if(nrow(df)>0){
-    rect_list <- vector("list", nrow(df))
-    for(e in 1:nrow(df)){
-      row <- df[e, ]
-      rect_list[[e]] <- list(type = "rect", fillcolor = "blue", opacity = 1, line=list(width=0),
-                           x0 = row$start, x1 = row$end, xref = "x",
-                           y0 = row$stepping-height, y1 = row$stepping+height, yref = yref)
-    }
-  } else {
-    rect_list <- NULL
-  }
-  return(rect_list)
-}
-
-make_arrows <- function(df, yref){
-  yref <- gsub("yaxis", "y", yref)
-  if(nrow(df)>0){
-    arrow_list <- vector("list", nrow(df))
-    for(i in 1:nrow(df)){
-      row <- df[i, ]
-      xstart <- ifelse(row$strand =="-", row$start, row$end)
-      xend <- ifelse(row$strand =="-", row$end, row$start)
-      arrow_list[[i]] <- list(x = xstart, y=row$stepping, xref = "x", yref = yref,
-                              showarrow = TRUE, ax = xend, ay=row$stepping,
-                              axref='x', ayref= yref, arrowwidth = 1, text="")
-    
-    }
-  } else {
-    arrow_list <- NULL
-  }
-  return(arrow_list)
-}
-
-arrow_helper <- function(arrow_start, strand, arrowlen, arrowheight, y, yref){
-  arrow_end <- ifelse(strand =="-", arrow_start + arrowlen, arrow_start - arrowlen)
-  list(list(x0 = arrow_start, x1=arrow_end, 
-            y0 = y, y1 = y - arrowheight, 
-            xref = "x", yref = yref,
-            type = "line",
-            line = list(width = 0.5)),
-       list(x0 = arrow_start, x1=arrow_end, 
-            y0 = y, y1 = y + arrowheight, 
-            xref = "x", yref = yref,
-            type = "line",
-            line = list(width = 0.5)))
-}
-
-make_arrows2 <- function(df, yref, arrowlen = 500, arrowheight = 0.15, arrowgap = 1500){
-  yref <- gsub("yaxis", "y", yref)
-  if(nrow(df)>0){
-    line_list <- vector("list", nrow(df))
-    arrow_list <- vector("list", nrow(df))
-    for(i in 1:nrow(df)){
-      row <- df[i, ]
-      xstart <- 
-      xend <- ifelse(row$strand =="-", row$end, row$start)
-      line_list[[i]] <- list(x0 = row$start, y0=row$stepping, 
-                             x1 = row$end, y1 = row$stepping, 
-                             xref = "x", yref = yref,
-                             type = "line",
-                             line = list(width = 0.5, 
-                                         dash = ifelse(row$strand == "-", "dot","solid")))
-      if (row$end - row$start > 2 * arrowlen){
-        if (row$strand == "-"){
-          arrow_pos <- row$midpoint - arrowlen * 0.5
-        } else{
-          arrow_pos <- row$midpoint + arrowlen * 0.5
-        }
-        arrow_list[[i]] <- arrow_helper(arrow_pos,
-                                             row$strand,
-                                             arrowlen,
-                                             arrowheight,
-                                             row$stepping,
-                                             yref)
-      }
-    }
-    out <- c(unlist(arrow_list, recursive = FALSE), line_list)
-  } else {
-    out <- NULL
-  }
-  return(out)
-}
-
-
 #' Title
 #'
 #' @param cvg_files 
@@ -147,39 +46,50 @@ make_browserly_function <- function(cvg_files,
 #' @export
 #'
 #' @examples
-plot_browserly_tracks <- function(target_range, tx_data, cvg,
-                        hm_thresh = 4,
-                        stacking = 'dense',
-                        type = NULL){
+plot_single_locus <- function(target_range, 
+                              tx_data, 
+                              cvg,
+                              hm_thresh = 4,
+                              stacking = 'dense',
+                              type = NULL,
+                              ...){
   # Make GeneRegion plot
   tx_info <- get_tx_annotation(range=target_range, tx_data = tx_data)
   
   # Prepare tx info for plotting
   tx_info <- set_tx_level(tx_info, stacking = stacking)
-  tx_info <- biovizBase::mold(tx_info)
   
   # Make "invisible" transcript plot
-  tx_track <- browserly_tx_track(tx_info = tx_info)
+  tx_track <- browserly_tx_track(tx_info = tx_info, track_name = 'main_annotation')
   
-  plots <- list("GeneRegion"= tx_track)
   # Make supblots
   # Decide the type of datatrack to plot if not provided
   if(is.null(type)){
-    type <- ifelse(ncol(mcols(cvg)) > hm_thresh, "heatmap", "hist")
+    if(ncol(mcols(cvg)) > hm_thresh) {
+      type = 'heatmap'
+      cvg_L = GRangesList(cvg)
+      names(cvg_L) <- 'Heatmap'
+    } else {
+      type <- "scatter"
+      # Convert the GRanges object to a GRanges List
+      cvg_L <- sapply(names(mcols(cvg)), function(x) {cvg[, x]})
+    }
   }
   
-  cvg_track <- browserly_cvg_track(cvg = cvg, target_range = target_range,
-                                   type = type)
+  # Make the subplots
+  cvg_tracks <- make_subplots(grl = cvg_L, type = type, ...)
+  plots <- c(tx_track, cvg_tracks)
   
-  plots <- modifyList(plots, cvg_track)
-  track_heights <- c(0.3, rep(0.7/length(cvg_track), length(cvg_track)))
+  # Set the track heights and plot them
+  track_heights <- c(0.3, rep(0.7/length(cvg_tracks), length(cvg_tracks)))
   sp <- subplot(plots, nrows=length(plots), shareX = TRUE, heights=track_heights)
+  sp_info <- get_subplot_ax_info(sp)
   
   # Modify layouts
   trace_names <- sapply(sp$x$data, function(x){x$name})
   trace_axes <- lapply(sp$x$data, function(x) {gsub("y", "yaxis", x$yaxis)})
   names(trace_axes) <- trace_names                                                                                                     
-  grt_ax <- trace_axes[["GeneRegion"]]
+  grt_ax <- "yaxis"
   
   letterwidth <- 9
   maxlabellength <- max(sapply(colnames(mcols(cvg)), nchar))
@@ -238,6 +148,7 @@ modify_y <- function(plotly_obj, trace_axes, grt_ax, type){
 #' @examples
 add_tx_shapes <- function(plotly_obj, tx_info, target_range, grt_ax, y_scaling=0){
   # Add annotations
+  tx_info <- biovizBase::mold(tx_info)
   cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ], height = 0.4, grt_ax)
   utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], height=0.25, grt_ax)
   ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ], height=0.25, grt_ax)
@@ -270,41 +181,155 @@ add_tx_shapes <- function(plotly_obj, tx_info, target_range, grt_ax, y_scaling=0
   return(plotly_obj)
 }
 
-browserly_tx_track <- function(tx_info, 
-                               hover_info = c('cds', 'utr3', 'utr5', 'ncRNA')){
-  
-  # Initizialize Plot
-  tx_track <- plot_ly(type='scatter', name = 'GeneRegion')
-  for(h_feature in hover_info){
-    h <- tx_info[tx_info$feature == h_feature, ]
-    tx_track <- tx_track %>% add_trace(x=h$midpoint, y=h$stepping, opacity=0,
-                                       text = h$transcript, 
-                                       name=h_feature,
-                                       hoverinfo="x+name+text", showlegend=FALSE)
-  }
-  
-  return(tx_track)
-}
 
-browserly_cvg_track <- function(cvg, target_range, 
-                                type = 'heatmap',
-                                colors = NULL){
+
+#' browserly_cvg_track
+#' Make an interactive coverage track plot that can stand alone or be used as a subplot
+#'
+#' @param cvg GRanges: mcols should include the data to be plotted
+#' @param track_name str: unique identifier for the plot. This is used to find appropriate axes when controlling annotations and domains
+#' @param type str: type of plot
+#' @param ... additional arguments passed to plotly function "add_trace"
+#'
+#' @return plotly object
+#' @export
+#'
+#' @examples
+browserly_cvg_track <- function(cvg,
+                                track_name,
+                                type = c('scatter', 'heatmap'),
+                                ...){
+  type <- match.arg(type)
   
-  cvg_track <- list()
-  if(type == 'heatmap'){
-    cvg_track[['heatmap']] <- coverage_heatmap(cvg)
-  }
-  else{
-    midpoint <- get_midpoint(cvg)
-    for(n in colnames(mcols(cvg))){
-      cvg_track[[n]] <- plot_ly(x=midpoint, y=mcols(cvg)[,n], type='scatter',
-                                fill='tozeroy', mode='', showlegend=FALSE, name=n,
-                                hoverinfo='x+y')
+  # Pull the coverage data as a matrix
+  track_data <- t(as.matrix(mcols(cvg)))
+  colnames(track_data) <- get_midpoint(cvg)
+  
+  # Initialize the plot object that will contain the traces
+  p <- plot_ly(type=type, source = track_name,
+               name = paste0('main_', track_name))
+  if(type == 'scatter'){
+    for(name in rownames(track_data)){
+      p <- p %>% add_trace(x = colnames(track_data), 
+                           y = track_data[name, ],
+                           name = name, 
+                           hoverinfo='x+y+name',
+                           ...)
     }
   }
-  return(cvg_track)
+  else  if(type == 'heatmap'){
+    p <- p %>% add_heatmap(z=track_data, 
+                           y=rownames(track_data), 
+                           x=colnames(track_data),
+                           hoverinfo='x+y+z',
+                           name = track_name,
+                           colorscale = continuous_colorscale("Purples")(track_data),
+                           ...)
+  }
+  return(p)
 }
 
+
+
+# =============================================================================
+# =============================================================================
+# Helper functions - not exported
+# =============================================================================
+# =============================================================================
+#' browserly_tx_track
+#' Make the invisible points for an annotation track.
+#' 
+#' Currently this is only a helper function, but it could be made to stand alone
+#'
+#' @param tx_info GRanges: mcols describe the annotation features
+#'
+#' @return plotly_object
+#'
+#' @examples
+browserly_tx_track <- function(tx_info, 
+                               track_name,
+                               add_shapes = FALSE,
+                               target_range = NULL){
+  # Make GRanges into df
+  tx_df <- biovizBase::mold(tx_info) %>% group_by(feature)
+  tx_df['text'] <- paste0('Tx ID: ', tx_df$transcript)
+  
+  # Plot the annotation features
+  p <- plot_ly(tx_df, 
+               type='scatter', 
+               mode='',
+               name = track_name) %>% 
+    add_markers(x = ~midpoint, 
+                y=~stepping, 
+                color=~feature, 
+                showlegend=FALSE,
+                text=~text, 
+                hoverinfo='x+name+text',
+                opacity = 0)
+  target_range <- if(is.null(target_range)) reduce(range(tx_info), 
+                                                   ignore.strand=TRUE)
+  # Build the plot so it can be referenced. Return as list for subploting
+  p <- list(plotly_build(p))
+  return(p)
+}
+
+#' make_subplots
+#' Make subplots of coverage tracks
+#'
+#' @param grl GRangesList: a named list. Each GRanges object in the list will be plotted on a separate axis
+#' @param type str: type of plot to use
+#' @param ... additional parameters to pass to browserly_cvg_track
+#'
+#' @return
+#'
+#' @examples
+make_subplots <- function(grl,
+                          type,
+                          ...){
+  # Make the subplots
+  plot_list <- lapply(names(grl), function(x, grl, type, ...){
+    browserly_cvg_track(cvg = grl[[x]],
+                        track_name = x,
+                        type = type,
+                        ...)
+  }, grl, type, ...)
+  return(plot_list)
+}
+
+#' get_subplot_ax_info
+#' Get the axes information in a plotly object. This is meant to be
+#' called on an object created by the subplot function
+#'
+#' @param plotly_obj 
+#'
+#' @return
+#'
+#' @examples
+get_subplot_ax_info <- function(plotly_obj){
+  sp_ax_info <- sapply(plotly_obj$x$data, function(x){
+    # The string "main_" was added to the main plotly objects
+    # during creation in the fuction browserly_cvg_track
+    data_info <- list(subplot_name = x$name,
+                      xid = x$xaxis,
+                      yid = x$yaxis,
+                      xaxis = gsub("x", "xaxis", x$xaxis),
+                      yaxis = gsub("y", "yaxis", x$yaxis),
+                      main_plot = grepl('main_', x$name))
+    return(data_info)
+  })
+  sp_ax_info <- data.frame(t(sp_ax_info))
+  return(sp_ax_info)
+}
+
+#' set_tx_level
+#' Set the level that that transcripts will be displayed on
+#'
+#' @param tx_gr GRanges: contains transcript information 
+#' @param stacking str: dense collapses transcripts, squish expands them
+#'
+#' @return
+#'
+#' @examples
 set_tx_level <- function(tx_gr, 
                          stacking = c('dense', 'squish')){
   stacking <- match.arg(stacking)
@@ -313,11 +338,116 @@ set_tx_level <- function(tx_gr,
       tx_gr <- biovizBase::addStepping(tx_gr, group.name = "transcript",
                                        group.selfish = FALSE)
     } else if(stacking == 'dense'){
-      # tx_gr <- collapse_tx(tx_gr)
+      # The simple solution for now
       mcols(tx_gr)$stepping <- 1
     }
     return(tx_gr)
   }
+}
+
+crop_introns <- function(introns, target_range){
+  introns$start <- pmax(introns$start, start(target_range))
+  introns$end <- pmin(introns$end, end(target_range))
+  introns$midpoint <- pmin(pmax(introns$midpoint, start(target_range)), end(target_range))
+  return(introns)
+}
+
+make_rect <- function(df, height, yref){
+  yref <- gsub("yaxis", "y", yref)
+  if(nrow(df)>0){
+    rect_list <- vector("list", nrow(df))
+    for(e in 1:nrow(df)){
+      row <- df[e, ]
+      rect_list[[e]] <- list(type = "rect", fillcolor = "blue", opacity = 1, line=list(width=0),
+                             x0 = row$start, x1 = row$end, xref = "x",
+                             y0 = row$stepping-height, y1 = row$stepping+height, yref = yref)
+    }
+  } else {
+    rect_list <- NULL
+  }
+  return(rect_list)
+}
+
+make_arrows <- function(df, yref){
+  yref <- gsub("yaxis", "y", yref)
+  if(nrow(df)>0){
+    arrow_list <- vector("list", nrow(df))
+    for(i in 1:nrow(df)){
+      row <- df[i, ]
+      xstart <- ifelse(row$strand =="-", row$start, row$end)
+      xend <- ifelse(row$strand =="-", row$end, row$start)
+      arrow_list[[i]] <- list(x = xstart, y=row$stepping, xref = "x", yref = yref,
+                              showarrow = TRUE, ax = xend, ay=row$stepping,
+                              axref='x', ayref= yref, arrowwidth = 1, text="")
+      
+    }
+  } else {
+    arrow_list <- NULL
+  }
+  return(arrow_list)
+}
+
+arrow_helper <- function(arrow_start, strand, arrowlen, arrowheight, y, yref){
+  arrow_end <- ifelse(strand =="-", arrow_start + arrowlen, arrow_start - arrowlen)
+  list(list(x0 = arrow_start, x1=arrow_end, 
+            y0 = y, y1 = y - arrowheight, 
+            xref = "x", yref = yref,
+            type = "line",
+            line = list(width = 0.5)),
+       list(x0 = arrow_start, x1=arrow_end, 
+            y0 = y, y1 = y + arrowheight, 
+            xref = "x", yref = yref,
+            type = "line",
+            line = list(width = 0.5)))
+}
+
+make_arrows2 <- function(df, yref, arrowlen = 500, arrowheight = 0.15, arrowgap = 1500){
+  yref <- gsub("yaxis", "y", yref)
+  if(nrow(df)>0){
+    line_list <- vector("list", nrow(df))
+    arrow_list <- vector("list", nrow(df))
+    for(i in 1:nrow(df)){
+      row <- df[i, ]
+      xstart <- 
+        xend <- ifelse(row$strand =="-", row$end, row$start)
+      line_list[[i]] <- list(x0 = row$start, y0=row$stepping, 
+                             x1 = row$end, y1 = row$stepping, 
+                             xref = "x", yref = yref,
+                             type = "line",
+                             line = list(width = 0.5, 
+                                         dash = ifelse(row$strand == "-", "dot","solid")))
+      if (row$end - row$start > 2 * arrowlen){
+        if (row$strand == "-"){
+          arrow_pos <- row$midpoint - arrowlen * 0.5
+        } else{
+          arrow_pos <- row$midpoint + arrowlen * 0.5
+        }
+        arrow_list[[i]] <- arrow_helper(arrow_pos,
+                                        row$strand,
+                                        arrowlen,
+                                        arrowheight,
+                                        row$stepping,
+                                        yref)
+      }
+    }
+    out <- c(unlist(arrow_list, recursive = FALSE), line_list)
+  } else {
+    out <- NULL
+  }
+  return(out)
+}
+# =============================================================================
+# =============================================================================
+# Deprecated Functions
+# =============================================================================
+# =============================================================================
+
+coverage_heatmap <- function(cvg){
+  hm_vals <- apply(t(as.matrix((mcols(cvg)))), 2, rev)
+  midpoint <- get_midpoint(cvg)
+  p <- plot_ly(z=hm_vals, y=rev(colnames(mcols(cvg))), x=midpoint, type='heatmap',
+               hoverinfo='x+z', colorscale = continuous_colorscale("Purples")(hm_vals))
+  return(p)
 }
 
 collapse_tx <- function(gr){
@@ -331,10 +461,8 @@ collapse_tx <- function(gr){
   # Add metadata to RNA to keep track of transcripts and features
   overlaps <- findOverlaps(rna, dense_rna)
   mcols(dense_rna)$feature <- splitAsList(mcols(rna)$feature[queryHits(overlaps)],
-                           factor(subjectHits(overlaps)))
+                                          factor(subjectHits(overlaps)))
   mcols(dense_rna)$transcript <- splitAsList(mcols(rna)$transcript[queryHits(overlaps)],
-                                      factor(subjectHits(overlaps)))
+                                             factor(subjectHits(overlaps)))
   return(c(dense_introns, dense_rna))
 }
-  
-  
