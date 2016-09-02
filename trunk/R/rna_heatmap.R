@@ -20,9 +20,10 @@
 #' @param y_labels axis labels for y axis (default is NULL)
 #' @param x_title x axis title (default is NULL)
 #' @param y_title y axis title (default is NULL)
-#' @param ... additional argument to iheatmap
-#' @return iheatmap object, which can be printed or passed to \code{\link{plot_iheatmap}} to
-#' generate an interactive graphic
+#' @param colorbar_grid colorbar grid parameters, to be set by \code{\link[iheatmapr]{setup_colorbar_grid}}
+#' @param font list of font attributes
+#' @param ... additional argument to \code{\link[iheatmapr]{simple_heatmap}}
+#' @return iheatmap object, which can be printed to generate an interactive graphic
 #' @export
 #' @author Alicia Schep
 genomics_heatmap <- function(mat, 

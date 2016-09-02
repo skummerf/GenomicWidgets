@@ -21,13 +21,24 @@ get_left_row_groups <- function(p){
 #' @param mat coverage matrix
 #' @param x x axis labels
 #' @param y y axis labels
+#' @param include how many rows to include in plot
+#' @param include_method how to choose which rows to include in plot
 #' @param row_order row order method
 #' @param k k to use for kmeans clustering or cutting heirarchical clustering
 #' @param groups pre-determined groups for rows
+#' @param clust_dist distance function to use for clustering
 #' @param signal signal along row
+#' @param plot_signal add an annotation heatmap showing the average signal? default is TRUE
 #' @param name name of colorbar
-#' @param summary make summary plot, boolean
-#' @param source source name in plotly
+#' @param summary make summary plot, boolean, default is TRUE
+#' @param scale_method how to scale matrix before displaying in heatmap
+#' @param pct percentile to use if scale_method is "PercentileMax"
+#' @param scale_factor scale_factor to use if scale_method is "scalar"
+#' @param show_xlabels show xlabels?  default is TRUE
+#' @param start label for start of x range
+#' @param end label for end of x range
+#' @param xlab x axis label
+#' @param font list of font attributes
 #' @return iheatmap object
 #' @export
 #' @author Alicia Schep
@@ -45,7 +56,6 @@ single_coverage_heatmap <- function(mat,
                                     name = "Coverage",
                                     signal_name = "Avg. Coverage",
                                     summary = TRUE,
-                                    source = "HM",
                                     scale_method = c("localRms", 
                                                      "localMean", 
                                                      "localNonZeroMean", 
@@ -54,7 +64,7 @@ single_coverage_heatmap <- function(mat,
                                                      "none"),
                                     pct = 0.95,
                                     scale_factor = 1, 
-                                    ticktext = TRUE,
+                                    show_xlabels = TRUE,
                                     start = x[1],
                                     end = default_end(x),     
                                     xlab = "Position",
@@ -67,7 +77,7 @@ single_coverage_heatmap <- function(mat,
   scale_method <- match.arg(scale_method)
   include_method <- match.arg(include_method)
   
-  force(signal)
+  
   if (length(signal) != nrow(mat)){
     stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
   }
@@ -77,7 +87,7 @@ single_coverage_heatmap <- function(mat,
       keep <- include
     } else {
       keep <- which(y %in% include)
-      if (length(keep) == 0) stop("Values for incluce don't match y")
+      if (length(keep) == 0) stop("Values for include don't match y")
     }
   } else if (include < nrow(mat)){
     if (include_method  == "signal"){
@@ -130,12 +140,11 @@ single_coverage_heatmap <- function(mat,
                 font = font,
                 ...) 
   
-  if (isTRUE(ticktext)){
+  if (show_xlabels){
     if ("0" %in% x || 0 %in% x){
       ticktext = c(start, "0",end)
       tickvals = as.numeric(c(x[1], 0, x[length(x)]))
     } else{
-      tickvals = c(0, ncol(mats[[1]]) - 1)
       ticktext = c(start, end)
       tickvals = as.numeric(c(x[1], x[length(x)]))
     }
@@ -167,15 +176,21 @@ single_coverage_heatmap <- function(mat,
 }
 
 #' add_coverage_heatmap
-#' @param mat coverage matrix
+#' @param mat
 #' @param x x axis labels
 #' @param groups pre-determined groups for rows
 #' @param signal signal along row
+#' @param plot_signal add an annotation heatmap showing the average signal? default is TRUE
 #' @param name name of colorbar
-#' @param summary make summary plot, boolean
-#' @param scale "rows" or "none"
-#' @param scale_method "normalize", "standardize", "center"
-#' @return iheatmap object
+#' @param summary make summary plot, boolean, default is TRUE
+#' @param scale_method how to scale matrix before displaying in heatmap
+#' @param pct percentile to use if scale_method is "PercentileMax"
+#' @param scale_factor scale_factor to use if scale_method is "scalar"
+#' @param show_xlabels show xlabels?  default is TRUE
+#' @param start label for start of x range
+#' @param end label for end of x range
+#' @param xlab x axis label
+#' @param font list of font attributes
 #' @export
 #' @author Alicia Schep
 add_coverage_heatmap <- function(p,
@@ -195,7 +210,7 @@ add_coverage_heatmap <- function(p,
                                                   "none"),
                                  pct = 0.95,
                                  scale_factor = 1, 
-                                 ticktext = TRUE,
+                                 show_xlabels = TRUE,
                                  start = x[1],
                                  end = default_end(x),     
                                  xlab = "Position",
@@ -221,7 +236,7 @@ add_coverage_heatmap <- function(p,
                           buffer = 0.1,
                           ...) 
   
-  if (isTRUE(ticktext)){
+  if (show_xlabels){
     if ("0" %in% x){
       tickvals = c(0, which(x == "0") - 1, ncol(mat) - 1)
       ticktext = c(start, "0",end)
@@ -254,21 +269,32 @@ add_coverage_heatmap <- function(p,
 
 
 #' multi_coverage_heatmap
-#' @param mat coverage matrix
+#' 
+#' makes multiple coverage heatmaps sharing the same scale
+#' @param mats list of coverage matrices
 #' @param x x axis labels
 #' @param y y axis labels
+#' @param include how many rows to include in plot
+#' @param include_method how to choose which rows to include in plot
+#' @param cluster_by cluster using only first matrix or all matrices concatenated?
 #' @param row_order row order method
 #' @param k k to use for kmeans clustering or cutting heirarchical clustering
 #' @param groups pre-determined groups for rows
+#' @param clust_dist distance function to use for clustering
 #' @param signal signal along row
+#' @param plot_signal add an annotation heatmap showing the average signal? default is TRUE
 #' @param name name of colorbar
-#' @param summary make summary plot, boolean
-#' @param source source name in plotly
-#' @param scale scale rows? or none
-#' @param scale_method method to use for scaling
-#' @param share_z share colorbar between heatmaps
+#' @param summary make summary plot, boolean, default is TRUE
+#' @param scale_method how to scale matrix before displaying in heatmap
+#' @param pct percentile to use if scale_method is "PercentileMax"
+#' @param scale_factor scale_factor to use if scale_method is "scalar"
+#' @param show_xlabels show xlabels?  default is TRUE
+#' @param start label for start of x range
+#' @param end label for end of x range
+#' @param xlab x axis label
+#' @param font list of font attributes
+#' 
 #' @return iheatmap object
-#' @export
 #' @import iheatmapr
 #' @author Alicia Schep
 multi_coverage_heatmap <- function(mats, 
@@ -286,7 +312,6 @@ multi_coverage_heatmap <- function(mats,
                                    name = "Coverage",
                                    signal_name = "Avg. Coverage",
                                    summary = TRUE,
-                                   source = "HM",
                                    scale_method = c("localRms", 
                                                     "localMean", 
                                                     "localNonZeroMean", 
@@ -295,8 +320,7 @@ multi_coverage_heatmap <- function(mats,
                                                     "none"),
                                    pct = 0.95,
                                    scale_factor = rep(1, length(mats)), 
-                                   share_z = TRUE,
-                                   ticktext = TRUE,
+                                   show_xlabels = TRUE,
                                    start = x[1],
                                    end = default_end(x),     
                                    xlab = "Position",
@@ -312,10 +336,7 @@ multi_coverage_heatmap <- function(mats,
   
   if (length(unique(lapply(mats, nrow))) > 1) stop("All input matrices must be of same length")
   
-  force(signal)
-  if (length(signal[[1]]) != nrow(mats[[1]])){
-    stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
-  }
+  stopifnot(length(signal[[1]]) != nrow(mats[[1]]))
   
   if (length(include) > 1){
     if (is.numeric(include)){
@@ -348,11 +369,11 @@ multi_coverage_heatmap <- function(mats,
   if (row_order == "hclust"){
     mats_sub <- lapply(mats, function(z) z[keep,])
     if (cluster_by == "first"){
-      dendro = fastcluster::hclust(clust_dist(mats_sub[[1]]))
+      dendro <- fastcluster::hclust(clust_dist(mats_sub[[1]]))
     } else{
-      dendro = fastcluster::hclust(clust_dist(do.call(cbind,mats_sub)))
+      dendro <- fastcluster::hclust(clust_dist(do.call(cbind,mats_sub)))
     }
-    row_order = keep[dendro$order]
+    row_order <- keep[dendro$order]
     if (!is.null(k)){
       groups = rep(NA, nrow(mats[[1]]))
       groups[keep] = cutree(dendro, k = k)
@@ -401,12 +422,11 @@ multi_coverage_heatmap <- function(mats,
                 x_categorical = FALSE,
                 ...) 
   
-  if (isTRUE(ticktext)){
+  if (show_xlabels){
     if ("0" %in% x || 0 %in% x){
       ticktext = c(start, "0",end)
       tickvals = as.numeric(c(x[1], 0, x[length(x)]))
     } else{
-      tickvals = c(0, ncol(mats[[1]]) - 1)
       ticktext = c(start, end)
       tickvals = as.numeric(c(x[1], x[length(x)]))
     }
@@ -459,7 +479,7 @@ multi_coverage_heatmap <- function(mats,
         p <- p %>% add_col_summary(groups, showlegend = FALSE, yname = summary_yaxis)
       }
       
-      if (!is.null(tickvals)){
+      if (show_xlabels){
         p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
       }
       if (!is.null(xlab)){
@@ -483,18 +503,25 @@ multi_coverage_heatmap <- function(mats,
 
 
 #' add_multi_coverage_heatmap
-#' @param mat coverage matrix
+#' 
+#' adds makes multiple coverage heatmaps sharing the same scale
+#' @param mats list of coverage matrices
 #' @param x x axis labels
-#' @param y y axis labels
 #' @param groups pre-determined groups for rows
 #' @param signal signal along row
+#' @param plot_signal add an annotation heatmap showing the average signal? default is TRUE
 #' @param name name of colorbar
-#' @param summary make summary plot, boolean
-#' @param source source name in plotly
-#' @param scale scale rows? or none
-#' @param scale_method method to use for scaling
+#' @param summary make summary plot, boolean, default is TRUE
+#' @param scale_method how to scale matrix before displaying in heatmap
+#' @param pct percentile to use if scale_method is "PercentileMax"
+#' @param scale_factor scale_factor to use if scale_method is "scalar"
+#' @param show_xlabels show xlabels?  default is TRUE
+#' @param start label for start of x range
+#' @param end label for end of x range
+#' @param xlab x axis label
+#' @param font list of font attributes
+#' 
 #' @return iheatmap object
-#' @export
 #' @import iheatmapr
 #' @author Alicia Schep
 add_multi_coverage_heatmap <- function(p,
@@ -506,7 +533,6 @@ add_multi_coverage_heatmap <- function(p,
                                        name = "Coverage",
                                        signal_name = "Avg. Coverage",
                                        summary = TRUE,
-                                       source = "HM",
                                        scale_method = c("localRms", 
                                                         "localMean", 
                                                         "localNonZeroMean", 
@@ -516,7 +542,7 @@ add_multi_coverage_heatmap <- function(p,
                                        pct = 0.95,
                                        scale_factor = rep(1, length(mats)), 
                                        share_z = TRUE,
-                                       ticktext = TRUE,
+                                       show_xlabels = TRUE,
                                        start = x[1],
                                        end = default_end(x),     
                                        xlab = "Position",
@@ -555,12 +581,11 @@ add_multi_coverage_heatmap <- function(p,
                           x_categorical = FALSE,
                           ...) 
   
-  if (isTRUE(ticktext)){
+  if (show_xlabels){
     if ("0" %in% x || 0 %in% x){
       ticktext = c(start, "0",end)
       tickvals = as.numeric(c(x[1], 0, x[length(x)]))
     } else{
-      tickvals = c(0, ncol(mats[[1]]) - 1)
       ticktext = c(start, end)
       tickvals = as.numeric(c(x[1], x[length(x)]))
     }
@@ -620,7 +645,7 @@ add_multi_coverage_heatmap <- function(p,
         p <- p %>% add_col_summary(groups, showlegend = FALSE, yname = summary_yaxis)
       }
       
-      if (!is.null(tickvals)){
+      if (show_xlabels){
         p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
       }
       if (!is.null(xlab)){
