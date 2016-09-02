@@ -66,15 +66,15 @@ cvg <- make_coverage_tracks(fi[idx, "File.bw"],
 
 
 ```{r Demo_hm}
-plot_browserly_tracks(view_range, tx_data, cvg)
+plot_single_locus(view_range, tx_data, cvg)
 ```
 
 ```{r Demo_line}
-plot_browserly_tracks(view_range, tx_data, cvg, type = "line")
+plot_single_locus(view_range, tx_data, cvg, type = "scatter")
 ```
 
 ```{r Demo_stacking}
-plot_browserly_tracks(view_range, tx_data, cvg, stacking='squish', type='line')
+plot_single_locus(view_range, tx_data, cvg, stacking='squish', type="scatter")
 ```
 
 # Plotting multiple genes for several conditions

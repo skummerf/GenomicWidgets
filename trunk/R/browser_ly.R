@@ -108,7 +108,7 @@ modify_y <- function(plotly_obj,
                      title_rotation = 0){
   
   # Get the data traces and their axes
-  plot_axes <- filter(ax_info, is_trace == FALSE)
+  plot_axes <- filter(ax_info, is_trace == FALSE | type == 'heatmap')
   
   # Get the max y value
   score_max <- max(unlist(filter(ax_info, is_trace == TRUE, yaxis != grt_ax)$ymax))
@@ -229,6 +229,8 @@ add_tx_shapes <- function(plotly_obj, tx_info, target_range, grt_ax, y_scaling=0
 browserly_cvg_track <- function(cvg,
                                 track_name,
                                 type = c('scatter', 'heatmap'),
+                                fill = 'tozeroy',
+                                mode = 'lines',
                                 ...){
   type <- match.arg(type)
   
@@ -236,26 +238,36 @@ browserly_cvg_track <- function(cvg,
   track_data <- t(as.matrix(mcols(cvg)))
   colnames(track_data) <- get_midpoint(cvg)
   
-  # Initialize the plot object that will contain the traces
-  p <- plot_ly(type=type, source = track_name,
-               name = track_name)
+  # Plots are initialized before adding traces. This allows there to be one
+  # "reference" plot, which can be used for adding titles or checking domains
+  x_data <- as.numeric(colnames(track_data))
   if(type == 'scatter'){
+    # Initialize the plot object that will contain the traces
+    p <- plot_ly(source = track_name,
+                 type = 'scatter',
+                 name = track_name)
     for(name in rownames(track_data)){
-      p <- p %>% add_trace(x = colnames(track_data), 
+      p <- p %>% add_trace(x = x_data, 
                            y = track_data[name, ],
-                           name = name, 
+                           name = name,
+                           type = type,
                            hoverinfo='x+y+name',
+                           fill = fill,
+                           mode = mode,
                            ...)
     }
   }
   else  if(type == 'heatmap'){
-    p <- p %>% add_heatmap(z=track_data, 
-                           y=rownames(track_data), 
-                           x=colnames(track_data),
-                           hoverinfo='x+y+z',
-                           name = track_name,
-                           colorscale = continuous_colorscale("Purples")(track_data),
-                           ...)
+    # A heatmap is only a single trace
+    p <- plot_ly(source = track_name,
+                 type = 'heatmap',
+                 z = track_data,
+                 y = rownames(track_data),
+                 x=x_data,
+                 hoverinfo='x+y+z',
+                 name = track_name,
+                 colorscale = continuous_colorscale("Purples")(track_data),
+                 ...)
   }
   return(p)
 }
@@ -288,8 +300,7 @@ browserly_tx_track <- function(tx_info,
   
   # Plot the annotation features
   p <- plot_ly(tx_df, 
-               type='scatter', 
-               mode='',
+               type='scatter',
                name = track_name) %>% 
     add_markers(x = ~midpoint, 
                 y=~stepping, 
