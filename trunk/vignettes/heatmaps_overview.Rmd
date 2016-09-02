@@ -14,11 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 # Preparing Inputs
 
 ```{r libraries, message = FALSE, warning=FALSE, error=FALSE, cache = FALSE}
-#require(gChipseq)
 require(chipVis)
 require(TxDb.Mmusculus.BioMart.igis)
 require(plotly)
-require(iHeatmapR)
+require(iheatmapr)
 BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
 ```
 
@@ -119,7 +118,7 @@ If row_order is set to signal, then rows are ordered based on the overall level 
 ## No summary
 
 ```{r}
-single_coverage_heatmap(cvg_mats[[1]], row_order = "kmeans", k = 3, summary = FALSE) %>% plot_iHeatmap()
+single_coverage_heatmap(cvg_mats[[1]], row_order = "kmeans", k = 3, summary = FALSE) 
 ```
 
 
@@ -134,8 +133,8 @@ peak_cvg_mats1 <- make_coverage_matrix(inputs = bam_files[mRNF2[1]],
                                   up = 2500,
                                   down = 2500)
 
-single_coverage_heatmap(peak_cvg_mats1, row_order = "signal", signal = rowSums(peak_cvg_mats1)) %>% 
-  add_dist_to_tss(peaks[[mRNF2[1]]][1:1000],tss)
+single_coverage_heatmap(peak_cvg_mats1, row_order = "signal", signal = rowSums(peak_cvg_mats1)) #%>% 
+  #add_dist_to_tss(peaks[[mRNF2[1]]][1:1000],tss)
 
 ```
 

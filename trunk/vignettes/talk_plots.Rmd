@@ -382,24 +382,6 @@ rna_rp_hm <- rna_hm %>% add_genomics_heatmap(rp_scores[,1:3],
                               x_title = "p300", scale = "none")
 ```
 
-```{r}
-##tmp function for now till fixed issue
-update_annotation_fonts <- function(p, anno_size = 16, other_size = 16){
-  for (i in seq_along(p$layout$annotations)){
-    p$layout$annotations[[i]]$font$size = anno_size
-  }
-  p$layout$font$size = other_size
-  return(p)
-}
-
-rna_chip_collapsed_hm2 <- update_annotation_fonts(rna_chip_collapsed_hm, 32, 24)
-
-rna_chip_diff_hm2 <- update_annotation_fonts(rna_chip_diff_hm, 32, 24)
-
-rna_rp_hm2 <- update_annotation_fonts(rna_rp_hm, 32, 24)
-
-```
-
 
 
 # Adding ChIP-seq data to RNA heatmap
