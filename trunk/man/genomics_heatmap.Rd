@@ -17,7 +17,8 @@ genomics_heatmap(mat, x = iHeatmapR:::default_x(mat),
   row_groups_palette = iHeatmapR:::DEFAULT_COLORS,
   row_groups_name = "Row<br>Groups", show_row_groups_colorbar = TRUE,
   show_col_groups_colorbar = TRUE, x_labels = NULL, y_labels = NULL,
-  x_title = NULL, y_title = NULL, cbg = colorbar_grid(), ...)
+  x_title = NULL, y_title = NULL, colorbar_grid = setup_colorbar_grid(),
+  font = list(), ...)
 }
 \arguments{
 \item{mat}{matrix of values to be plotted as heatmap}
@@ -58,7 +59,7 @@ genomics_heatmap(mat, x = iHeatmapR:::default_x(mat),
 
 \item{y_title}{y axis title (default is NULL)}
 
-\item{...}{additional argument to make_main_hm}
+\item{...}{additional argument to iheatmap}
 }
 \value{
 iHeatmap object, which can be printed or passed to \code{\link{plot_iHeatmap}} to

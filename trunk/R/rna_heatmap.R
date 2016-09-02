@@ -20,7 +20,7 @@
 #' @param y_labels axis labels for y axis (default is NULL)
 #' @param x_title x axis title (default is NULL)
 #' @param y_title y axis title (default is NULL)
-#' @param ... additional argument to make_main_hm
+#' @param ... additional argument to iheatmap
 #' @return iHeatmap object, which can be printed or passed to \code{\link{plot_iHeatmap}} to
 #' generate an interactive graphic
 #' @export
@@ -51,7 +51,8 @@ genomics_heatmap <- function(mat,
                            y_labels = NULL,
                            x_title = NULL,
                            y_title = NULL,
-                           cbg = colorbar_grid(),
+                           colorbar_grid = setup_colorbar_grid(),
+                           font = list(),
                            ...){
   
   row_order = match.arg(row_order)
@@ -85,7 +86,8 @@ genomics_heatmap <- function(mat,
                             y_labels = y_labels,
                             x_title = x_title,
                             y_title = y_title,
-                            cbg = cbg,
+                            colorbar_grid = colorbar_grid,
+                            font = font,
                             ...)
   
 }

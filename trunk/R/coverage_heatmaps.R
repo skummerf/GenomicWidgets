@@ -4,7 +4,20 @@ default_end <- function(x){
   as.character(end)
 }
 
-#' new_single_coverage_heatmap
+get_left_row_groups <- function(p){
+  stopifnot(p$orientation == "horizontal")
+  xcandidates_id <- p$plots %>% filter(type == "row_groups") %>% select(xid) %>% unlist()
+  xcandidates <- p$xaxes %>% filter(xid %in% xcandidates_id)
+  min_start <- min(xcandidates$domain_start)
+  xaxis <- xcandidates %>% filter(domain_start == min_start) %>% select(xid) %>% unlist()
+  gr_pid <- p$plots %>% filter(xid == xaxis, type == "row_groups") %>% select(pid) %>% unlist()
+  groups <- p$plots %>% filter(pid == gr_pid) %>% 
+    select(input_data) %>% 
+    unlist(recursive = FALSE)
+  return(groups[[1]])
+}
+
+#' single_coverage_heatmap
 #' @param mat coverage matrix
 #' @param x x axis labels
 #' @param y y axis labels
@@ -18,7 +31,7 @@ default_end <- function(x){
 #' @return iHeatmap object
 #' @export
 #' @author Alicia Schep
-new_single_coverage_heatmap <- function(mat, 
+single_coverage_heatmap <- function(mat, 
                                     x = iHeatmapR:::default_x(mat),
                                     y = iHeatmapR:::default_y(mat),
                                     include = 1000,
@@ -59,7 +72,14 @@ new_single_coverage_heatmap <- function(mat,
     stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
   }
   
-  if (include < nrow(mat)){
+  if (length(include) > 1){
+    if (is.numeric(include)){
+      keep <- include
+    } else {
+      keep <- which(y %in% include)
+      if (length(keep) == 0) stop("Values for incluce don't match y")
+    }
+  } else if (include < nrow(mat)){
     if (include_method  == "signal"){
       keep <- which(signal >= quantile(signal, (length(signal) - include) / length(signal), na.rm = TRUE))
     } else if (include_method == "first"){
@@ -67,11 +87,8 @@ new_single_coverage_heatmap <- function(mat,
     } else if (include_method == "random"){
       keep <- sample(1:nrow(mat), include)
     }
-    mat <- mat[keep,]
-    y <- y[keep]
-    signal <- signal[keep]
   } else{
-    keep <- NULL
+    keep <- 1:nrow(mat)
   }
   
   if (scale_method != "none") mat <- normalize_coverage_matrix(mat, method = scale_method, pct = pct, scalar = scale_factor)
@@ -79,45 +96,53 @@ new_single_coverage_heatmap <- function(mat,
   dendro = NULL
   
   if (row_order == "hclust"){
-    dendro = fastcluster::hclust(clust_dist(mat))
-    row_order = dendro$order
+    mat_sub <- mat[keep,]
+    dendro = fastcluster::hclust(clust_dist(mat_sub))
+    row_order = keep[dendro$order]
     if (!is.null(k)){
-      groups = cutree(dendro, k = k)
+      groups = rep(NA, nrow(mat))
+      groups[keep] = cutree(dendro, k = k)
     }
   } else if (row_order == "kmeans"){
+    mat_sub <- mat[keep,]
     stopifnot(!is.null(k))
-    groups = kmeans(mat, centers = k)$cluster
-    row_order = order(groups)
+    groups = rep(NA, nrow(mat))
+    groups[keep] = kmeans(mat_sub, centers = k)$cluster
+    row_order = keep[order(groups[keep])]
   } else if (row_order == "groups"){
-    row_order = order(groups)
+    stopifnot(!is.null(groups))
+    groups_sub <- groups[keep]
+    row_order = keep[order(groups_sub)]
   } else if (row_order == "signal"){
-    row_order = order(signal, decreasing = FALSE)
+    signal_sub <- signal[keep]
+    row_order = keep[order(signal_sub, decreasing = FALSE)]
   } else{
-    row_order = 1:nrow(mat)
+    row_order = keep
   }
   
-  p <- make_main_hm(mat, 
-                    x = x, 
-                    y = y, 
-                    row_order = row_order, 
-                    name = name,
-                    ...) 
+  
+  p <- iheatmap(mat, 
+                x = x, 
+                y = y, 
+                row_order = row_order, 
+                name = name,
+                x_categorical = FALSE,
+                font = font,
+                ...) 
   
   if (isTRUE(ticktext)){
-    if ("0" %in% x){
-      tickvals = c(0, which(x == "0") - 1, ncol(mat) - 1)
+    if ("0" %in% x || 0 %in% x){
       ticktext = c(start, "0",end)
+      tickvals = as.numeric(c(x[1], 0, x[length(x)]))
     } else{
-      tickvals = c(0, ncol(mat) - 1)
+      tickvals = c(0, ncol(mats[[1]]) - 1)
       ticktext = c(start, end)
+      tickvals = as.numeric(c(x[1], x[length(x)]))
     }
-  
+    
     p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
-  
-  } else if (!is.null(ticktext) && ticktext != FALSE){
-    tickvals = which(x %in% ticktext) - 1
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
-  }
+    
+  } 
   
   if (is.character(xlab) && nchar(xlab) > 0){
     p <- p %>% add_x_axis_title(xlab, font = font)
@@ -138,13 +163,6 @@ new_single_coverage_heatmap <- function(mat,
                                y_layout = list(font = font))
   }
   
-  p$row_groups <- groups
-  
-  p$layout$font <- font
-  
-  if (!is.null(keep)){
-    p$keep = keep
-  }
   return(p)
 }
 
@@ -192,21 +210,16 @@ add_coverage_heatmap <- function(p,
     stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
   }
   
-  if (!is.null(p$keep)){
-    mat <- mat[p$keep,]
-    signal <- signal[p$keep]
-  }
-
   if (scale_method != "none") mat <- normalize_coverage_matrix(mat, method = scale_method, pct = pct, scalar = scale_factor)
   
   
   dendro = NULL
   
-  p <- p %>% add_main_hm(mat, 
-                    x = x, 
-                    name = name,
-                    buffer = 0.1,
-                    ...) 
+  p <- p %>% add_iheatmap(mat, 
+                          x = x, 
+                          name = name,
+                          buffer = 0.1,
+                          ...) 
   
   if (isTRUE(ticktext)){
     if ("0" %in% x){
@@ -220,12 +233,7 @@ add_coverage_heatmap <- function(p,
     p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals,
                                  font = font)
     
-  } else if (!is.null(ticktext) && ticktext != FALSE){
-    tickvals = which(x %in% ticktext) - 1
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, 
-                                 tickvals = tickvals,
-                                 font = font)
-  }
+  } 
   
   if (is.character(xlab) && nchar(xlab) > 0){
     p <- p %>% add_x_axis_title(xlab)
@@ -240,9 +248,8 @@ add_coverage_heatmap <- function(p,
     p <- p %>% add_col_summary(groups, showlegend = FALSE, y_layout = list(font = font))
   }
   
-  p$layout$font <- font
   return(p)
-
+  
 }
 
 
@@ -265,219 +272,15 @@ add_coverage_heatmap <- function(p,
 #' @import iHeatmapR
 #' @author Alicia Schep
 multi_coverage_heatmap <- function(mats, 
-                                        x = iHeatmapR:::default_x(mats[[1]]),
-                                        y = iHeatmapR:::default_y(mats[[1]]), 
+                                   x = iHeatmapR:::default_x(mats[[1]]),
+                                   y = iHeatmapR:::default_y(mats[[1]]), 
                                    include = 1000,
                                    include_method = c("signal","first","random"),
-                                        row_order = c("none","hclust","kmeans","groups","signal"),
-                                        k = NULL,
-                                        groups = NULL,
-                                        clust_dist = stats::dist,
-                                        cluster_by = c("first","all"), 
-                                        signal = lapply(mats, rowMeans, na.rm = TRUE),
-                                   plot_signal = TRUE, 
-                                   name = "Coverage",
-                                   signal_name = "Avg. Coverage",
-                                        summary = TRUE,
-                                        source = "HM",
-                                   scale_method = c("localRms", 
-                                                    "localMean", 
-                                                    "localNonZeroMean", 
-                                                    "PercentileMax", 
-                                                    "scalar", 
-                                                    "none"),
-                                   pct = 0.95,
-                                   scale_factor = rep(1, length(mats)), 
-                                   share_z = TRUE,
-                                   ticktext = TRUE,
-                                   start = x[1],
-                                   end = default_end(x),     
-                                   xlab = "Position",
-                                   font = list(size = 8),
-                                        ...){
-  
-  # TO DO: Add argument check
-  
-  row_order = match.arg(row_order)
-  scale_method <- match.arg(scale_method)
-  cluster_by <- match.arg(cluster_by)
-  include_method <- match.arg(include_method)
-  
-  if (length(unique(lapply(mats, nrow))) > 1) stop("All input matrices must be of same length")
-  
-  force(signal)
-  if (length(signal[[1]]) != nrow(mats[[1]])){
-    stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
-  }
-  
-  if (include < nrow(mats[[1]])){
-    if (include_method  == "signal"){
-      tmp_signal <- Reduce("+",lapply(signal, function(z) z / sum(z)))
-      keep <- which(tmp_signal >= quantile(tmp_signal, (length(tmp_signal) - include) / length(tmp_signal)))
-    } else if (include_method == "first"){
-      keep <- 1:include
-    } else if (include_method == "random"){
-      keep <- sample(1:nrow(mats[[1]]), include)
-    }
-    mats <- lapply(mats, function(z) z[keep,])
-    y <- y[keep]
-    signal <- lapply(signal, function(z) z[keep])
-  } else{
-    keep <- NULL
-  }
-  
-  if (scale_method != "none"){
-    mats <- normalize_coverage_matrix(mats, method = scale_method, pct = pct, scalar = scale_factor)
-  } 
-  
-
-  zmax <- max(sapply(mats, max, na.rm = TRUE))
-  zmin <- min(sapply(mats, min, na.rm = TRUE))
-
-  signal_zmax <- max(sapply(signal, max, na.rm = TRUE))
-  signal_zmin <- min(sapply(signal, min, na.rm = TRUE))
-  
-  dendro = NULL
-  
-  if (row_order == "hclust"){
-    if (cluster_by == "first"){
-      dendro = fastcluster::hclust(clust_dist(mats[[1]]))
-    } else{
-      dendro = fastcluster::hclust(clust_dist(do.call(cbind,mats)))
-    }
-    row_order = dendro$order
-    if (!is.null(k)){
-      groups = cutree(dendro, k = k)
-    }
-  } else if (row_order == "kmeans"){
-    stopifnot(!is.null(k))
-    if (cluster_by == "first"){
-      groups = kmeans(mats[[1]], centers = k)$cluster 
-    } else{
-       groups = kmeans(do.call(cbind,mats), centers = k)$cluster     
-    }
-    row_order = order(groups)
-  } else if (row_order == "groups"){
-    row_order = order(groups)
-  } else if (row_order == "signal"){
-    if (cluster_by == "first"){
-      row_order = order(signal[[1]], decreasing = FALSE)
-    } else{
-      tmp_signal <- Reduce("+",lapply(signal, function(z) z / sum(z)))
-      row_order = order(tmp_signal, decreasing = FALSE)
-    }
-  } else{
-    row_order = 1:nrow(mats[[1]])
-  }
-  
-  p <- make_main_hm(mats[[1]], 
-                      x = x, 
-                      y = y, 
-                      row_order = row_order, 
-                      name = name,
-                      zmin = zmin,
-                      zmax = zmax,
-                      ...) 
-  
-  if (isTRUE(ticktext)){
-    if ("0" %in% x){
-      tickvals = c(0, which(x == "0") - 1, ncol(mats[[1]]) - 1)
-      ticktext = c(start, "0",end)
-    } else{
-      tickvals = c(0, ncol(mats[[1]]) - 1)
-      ticktext = c(start, end)
-    }
-    
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
-    
-  } else if (!is.null(ticktext) && ticktext != FALSE){
-    tickvals = which(x %in% ticktext) - 1
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
-  } else{
-    tickvals <- NULL
-  }
-  
-  if (is.character(xlab) && nchar(xlab) > 0){
-    p <- p %>% add_x_axis_title(xlab, font = font)
-  } else{
-    xlab <- NULL
-  }
-
-  if (summary){
-    p <- p %>% add_col_summary(groups, showlegend = FALSE, y_layout = list(font = font))
-    summary_yaxis = paste0("y", p$ny)
-  }  
-  if (plot_signal){
-    p <- p %>% add_row_signal(signal[[1]], 
-                              name = signal_name,
-                              zmin = signal_zmin, 
-                              zmax = signal_zmax,
-                              x_layout = list(font = font))
-  }
-  
-  p <- p %>% add_x_axis_title(names(mats)[1], side = "top", font = font)
-  
-  if (length(mats) > 1){
-    for (i in 2:length(mats)){
-      p <- p %>% add_main_hm(mats[[i]], 
-                               x = x, 
-                               show_colorbar = FALSE,
-                               zmax = zmax,
-                               zmin = zmin,
-                               ...) 
-      
-      if (plot_signal){
-        p <- p %>% add_row_signal(signal[[i]], 
-                                  name = signal_name,
-                                  zmin = signal_zmin, 
-                                  zmax = signal_zmax,
-                                  show_colorbar = FALSE)
-      }
-      if (summary){
-        p <- p %>% add_col_summary(groups, showlegend = FALSE, yaxis = summary_yaxis)
-      }
-      
-      if (!is.null(tickvals)){
-        p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
-      }
-      if (!is.null(xlab)){
-        p <- p %>% add_x_axis_title(xlab, font = font)
-      }
-      p <- p %>% add_x_axis_title(names(mats)[i], side = "top", font = font)
-    }
-  }
-  
-  if (!is.null(groups)){
-    p <- p %>% add_row_groups(groups, side = "left")
-  }
-  if (!is.null(dendro)){
-    p <- p %>% add_row_dendro(dendro, side = "left")
-  }    
-  p$layout$font <- font
-  if (!is.null(keep)) p$keep <- keep
-  return(p)
-}
-
-
-#' add_multi_coverage_heatmap
-#' @param mat coverage matrix
-#' @param x x axis labels
-#' @param y y axis labels
-#' @param groups pre-determined groups for rows
-#' @param signal signal along row
-#' @param name name of colorbar
-#' @param summary make summary plot, boolean
-#' @param source source name in plotly
-#' @param scale scale rows? or none
-#' @param scale_method method to use for scaling
-#' @return iHeatmap object
-#' @export
-#' @import iHeatmapR
-#' @author Alicia Schep
-add_multi_coverage_heatmap <- function(p,
-                                       mats, 
-                                   x = iHeatmapR:::default_x(mats[[1]]),
+                                   row_order = c("none","hclust","kmeans","groups","signal"),
+                                   k = NULL,
                                    groups = NULL,
+                                   clust_dist = stats::dist,
+                                   cluster_by = c("first","all"), 
                                    signal = lapply(mats, rowMeans, na.rm = TRUE),
                                    plot_signal = TRUE, 
                                    name = "Coverage",
@@ -502,7 +305,10 @@ add_multi_coverage_heatmap <- function(p,
   
   # TO DO: Add argument check
   
+  row_order = match.arg(row_order)
   scale_method <- match.arg(scale_method)
+  cluster_by <- match.arg(cluster_by)
+  include_method <- match.arg(include_method)
   
   if (length(unique(lapply(mats, nrow))) > 1) stop("All input matrices must be of same length")
   
@@ -511,42 +317,102 @@ add_multi_coverage_heatmap <- function(p,
     stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
   }
   
-  if (!is.null(p$keep)){
-    mats <- lapply(mats, function(z) z[p$keep,])
-    signal <- lapply(signal, function(z) z[p$keep])
+  if (length(include) > 1){
+    if (is.numeric(include)){
+      keep <- include
+    } else {
+      keep <- which(y %in% include)
+      if (length(keep) == 0) stop("Values for incluce don't match y")
+    }
+  } else if (include < nrow(mats[[1]])){
+    if (include_method  == "signal"){
+      tmp_signal <- Reduce("+",lapply(signal, function(z) z / sum(z)))
+      keep <- which(tmp_signal >= quantile(tmp_signal, (length(tmp_signal) - include) / length(tmp_signal)))
+    } else if (include_method == "first"){
+      keep <- 1:include
+    } else if (include_method == "random"){
+      keep <- sample(1:nrow(mats[[1]]), include)
+    }
+    
+  } else{
+    keep <- 1:nrow(mats[[1]])
   }
   
   if (scale_method != "none"){
     mats <- normalize_coverage_matrix(mats, method = scale_method, pct = pct, scalar = scale_factor)
   } 
   
-  zmax <- max(sapply(mats, max, na.rm = TRUE))
-  zmin <- min(sapply(mats, min, na.rm = TRUE))
   
-  signal_zmax <- max(sapply(signal, max, na.rm = TRUE))
-  signal_zmin <- min(sapply(signal, min, na.rm = TRUE))
-
-  p <- p %>% add_main_hm(mats[[1]], 
-                      x = x, 
-                      name = name,
-                      zmin = zmin,
-                      zmax = zmax,
-                      ...) 
+  dendro = NULL
+  
+  if (row_order == "hclust"){
+    mats_sub <- lapply(mats, function(z) z[keep,])
+    if (cluster_by == "first"){
+      dendro = fastcluster::hclust(clust_dist(mats_sub[[1]]))
+    } else{
+      dendro = fastcluster::hclust(clust_dist(do.call(cbind,mats_sub)))
+    }
+    row_order = keep[dendro$order]
+    if (!is.null(k)){
+      groups = rep(NA, nrow(mats[[1]]))
+      groups[keep] = cutree(dendro, k = k)
+    }
+  } else if (row_order == "kmeans"){
+    mats_sub <- lapply(mats, function(z) z[keep,])
+    stopifnot(!is.null(k))
+    if (cluster_by == "first"){
+      groups = rep(NA, nrow(mats[[1]]))
+      groups[keep] = kmeans(mats_sub[[1]], centers = k)$cluster 
+    } else{
+      groups = rep(NA, nrow(mats[[1]]))
+      groups[keep] = kmeans(do.call(cbind,mats_sub), centers = k)$cluster     
+    }
+    row_order = keep[order(groups[keep])]
+  } else if (row_order == "groups"){
+    groups_sub <- groups[keep]
+    row_order = keep[order(groups_sub)]
+  } else if (row_order == "signal"){
+    signal_sub <- lapply(signal, function(z) z[keep])
+    if (cluster_by == "first"){
+      row_order = keep[order(signal_sub[[1]], decreasing = FALSE)]
+    } else{
+      tmp_signal <- Reduce("+",lapply(signal_sub, function(z) z / sum(z)))
+      row_order = keep[order(tmp_signal, decreasing = FALSE)]
+    }
+  } else{
+    row_order = keep
+  }
+  
+  zmax <- max(sapply(mats, function(x) max(x[row_order,], na.rm = TRUE)))
+  zmin <- min(sapply(mats, function(x) min(x[row_order,], na.rm = TRUE)))
+  
+  signal_zmax <- max(sapply(signal, function(x) max(x[row_order], na.rm = TRUE)))
+  signal_zmin <- min(sapply(signal, function(x) min(x[row_order], na.rm = TRUE)))
+  
+  
+  p <- iheatmap(mats[[1]], 
+                x = x, 
+                y = y, 
+                row_order = row_order, 
+                name = name,
+                zmin = zmin,
+                zmax = zmax,
+                font = font,
+                x_categorical = FALSE,
+                ...) 
   
   if (isTRUE(ticktext)){
-    if ("0" %in% x){
-      tickvals = c(0, which(x == "0") - 1, ncol(mats[[1]]) - 1)
+    if ("0" %in% x || 0 %in% x){
       ticktext = c(start, "0",end)
+      tickvals = as.numeric(c(x[1], 0, x[length(x)]))
     } else{
       tickvals = c(0, ncol(mats[[1]]) - 1)
       ticktext = c(start, end)
+      tickvals = as.numeric(c(x[1], x[length(x)]))
     }
     
     p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
     
-  } else if (!is.null(ticktext) && ticktext != FALSE){
-    tickvals = which(x %in% ticktext) - 1
-    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
   } else{
     tickvals <- NULL
   }
@@ -558,8 +424,163 @@ add_multi_coverage_heatmap <- function(p,
   }
   
   if (summary){
-    p <- p %>% add_col_summary(groups, showlegend = FALSE, y_layout = list(font = font))
-    summary_yaxis <- paste0("y",p$ny)
+    summary_yaxis = paste0("summary", max(p$plots$pid) + 1)
+    p <- p %>% add_col_summary(groups, showlegend = FALSE, y_layout = list(font = font), 
+                               yname = summary_yaxis)
+  }  
+  if (plot_signal){
+    p <- p %>% add_row_signal(signal[[1]], 
+                              name = signal_name,
+                              zmin = signal_zmin, 
+                              zmax = signal_zmax,
+                              x_layout = list(font = font))
+  }
+  
+  p <- p %>% add_x_axis_title(names(mats)[1], side = "top", font = font)
+  
+  if (length(mats) > 1){
+    for (i in 2:length(mats)){
+      p <- p %>% add_iheatmap(mats[[i]], 
+                              x = x, 
+                              show_colorbar = FALSE,
+                              zmax = zmax,
+                              zmin = zmin,
+                              x_categorical = FALSE,
+                              ...) 
+      
+      if (plot_signal){
+        p <- p %>% add_row_signal(signal[[i]], 
+                                  name = signal_name,
+                                  zmin = signal_zmin, 
+                                  zmax = signal_zmax,
+                                  show_colorbar = FALSE)
+      }
+      if (summary){
+        p <- p %>% add_col_summary(groups, showlegend = FALSE, yname = summary_yaxis)
+      }
+      
+      if (!is.null(tickvals)){
+        p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
+      }
+      if (!is.null(xlab)){
+        p <- p %>% add_x_axis_title(xlab, font = font)
+      }
+      p <- p %>% add_x_axis_title(names(mats)[i], side = "top", font = font)
+    }
+  }
+  
+  if (!is.null(groups)){
+    p <- p %>% add_row_groups(groups, side = "left")
+  }
+  if (!is.null(dendro)){
+    p <- p %>% add_row_dendro(dendro, side = "left")
+  }    
+  
+  return(p)
+}
+
+
+
+
+#' add_multi_coverage_heatmap
+#' @param mat coverage matrix
+#' @param x x axis labels
+#' @param y y axis labels
+#' @param groups pre-determined groups for rows
+#' @param signal signal along row
+#' @param name name of colorbar
+#' @param summary make summary plot, boolean
+#' @param source source name in plotly
+#' @param scale scale rows? or none
+#' @param scale_method method to use for scaling
+#' @return iHeatmap object
+#' @export
+#' @import iHeatmapR
+#' @author Alicia Schep
+add_multi_coverage_heatmap <- function(p,
+                                       mats, 
+                                       x = iHeatmapR:::default_x(mats[[1]]),
+                                       groups = NULL,
+                                       signal = lapply(mats, rowMeans, na.rm = TRUE),
+                                       plot_signal = TRUE, 
+                                       name = "Coverage",
+                                       signal_name = "Avg. Coverage",
+                                       summary = TRUE,
+                                       source = "HM",
+                                       scale_method = c("localRms", 
+                                                        "localMean", 
+                                                        "localNonZeroMean", 
+                                                        "PercentileMax", 
+                                                        "scalar", 
+                                                        "none"),
+                                       pct = 0.95,
+                                       scale_factor = rep(1, length(mats)), 
+                                       share_z = TRUE,
+                                       ticktext = TRUE,
+                                       start = x[1],
+                                       end = default_end(x),     
+                                       xlab = "Position",
+                                       font = list(size = 8),
+                                       ...){
+  
+  # TO DO: Add argument check
+  
+  scale_method <- match.arg(scale_method)
+  
+  if (length(unique(lapply(mats, nrow))) > 1) stop("All input matrices must be of same length")
+  
+  force(signal)
+  if (length(signal[[1]]) != nrow(mats[[1]])){
+    stop("Invalid signal input.  Must be vector of length nrow(mat) or TRUE/FALSE")
+  }
+  
+  if (scale_method != "none"){
+    mats <- normalize_coverage_matrix(mats, method = scale_method, pct = pct, scalar = scale_factor)
+  } 
+  
+  ro <- p$yaxes %>% filter(yid == "y") %>% select(row_order) %>% unlist()
+  
+  zmax <- max(sapply(mats, function(x) max(x[ro,], na.rm = TRUE)))
+  zmin <- min(sapply(mats, function(x) min(x[ro,], na.rm = TRUE)))
+  
+  signal_zmax <- max(sapply(signal, function(x) max(x[ro], na.rm = TRUE)))
+  signal_zmin <- min(sapply(signal, function(x) min(x[ro], na.rm = TRUE)))
+  
+  
+  p <- p %>% add_iheatmap(mats[[1]], 
+                          x = x, 
+                          name = name,
+                          zmin = zmin,
+                          zmax = zmax,
+                          x_categorical = FALSE,
+                          ...) 
+  
+  if (isTRUE(ticktext)){
+    if ("0" %in% x || 0 %in% x){
+      ticktext = c(start, "0",end)
+      tickvals = as.numeric(c(x[1], 0, x[length(x)]))
+    } else{
+      tickvals = c(0, ncol(mats[[1]]) - 1)
+      ticktext = c(start, end)
+      tickvals = as.numeric(c(x[1], x[length(x)]))
+    }
+    
+    p <- p %>% add_x_axis_labels(ticktext = ticktext, tickvals = tickvals, font = font)
+    
+  }  else{
+    tickvals <- NULL
+  }
+  
+  if (is.character(xlab) && nchar(xlab) > 0){
+    p <- p %>% add_x_axis_title(xlab, font = font)
+  } else{
+    xlab <- NULL
+  }
+  
+  if (summary){
+    summary_yaxis = paste0("summary", max(p$plots$pid) + 1)
+    p <- p %>% add_col_summary(groups, showlegend = FALSE, y_layout = list(font = font),
+                               yname = summary_yaxis)
   }  
   if (plot_signal){
     p <- p %>% add_row_signal(signal[[1]], 
@@ -574,17 +595,17 @@ add_multi_coverage_heatmap <- function(p,
   if (length(mats) > 1){
     for (i in 2:length(mats)){
       if (share_z){
-        p <- p %>% add_main_hm(mats[[i]], 
-                               x = x, 
-                               show_colorbar = FALSE,
-                               zmax = zmax,
-                               zmin = zmin,
-                               ...) 
+        p <- p %>% add_iheatmap(mats[[i]], 
+                                x = x, 
+                                show_colorbar = FALSE,
+                                zmax = zmax,
+                                zmin = zmin,
+                                ...) 
       } else{
-        p <- p %>% add_main_hm(mats[[i]], 
-                               x = x, 
-                               name = names(mats)[i],
-                               ...) 
+        p <- p %>% add_iheatmap(mats[[i]], 
+                                x = x, 
+                                name = names(mats)[i],
+                                ...) 
       }
       
       
@@ -596,7 +617,7 @@ add_multi_coverage_heatmap <- function(p,
                                   show_colorbar = FALSE)
       }
       if (summary){
-         p <- p %>% add_col_summary(groups, showlegend = FALSE, yaxis = summary_yaxis)
+        p <- p %>% add_col_summary(groups, showlegend = FALSE, yname = summary_yaxis)
       }
       
       if (!is.null(tickvals)){
@@ -609,7 +630,6 @@ add_multi_coverage_heatmap <- function(p,
     }
   }
   
-  p$layout$font <- font
   return(p)
 }
 

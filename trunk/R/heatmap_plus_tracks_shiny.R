@@ -9,8 +9,10 @@ heatmap_click <- function(heatmap, ranges, width = 50000){
   out <- function(){
     s <- event_data("plotly_click", source = HEATMAP_SOURCE)
     if(is.null(s)) return(NULL)
-    if (heatmap$curve_map[[s$curve + 1]]$yaxis != "yaxis") return(NULL)
-    ix <- heatmap$row_order[s$y + 1]
+    yaxis <- heatmap$plots %>% filter(pid == s$curve) %>% select(yid) %>% unlist()
+    if (yaxis != "y") return(NULL)
+    ro <- heatmap$yaxes %>% filter(yid == yaxis) %>% select(row_order) %>% unlist()
+    ix <- ro[s$y + 1]
     return(ranges[ix])
   }
   return(out)
@@ -46,7 +48,7 @@ heatmap_to_tracks_shiny <- function(heatmap,
   server <- function(input, output) {
     
     output$heat <- renderPlotly({
-      heatmap %>% plot_iHeatmap(source = HEATMAP_SOURCE)
+      heatmap %>% as_plotly(source = HEATMAP_SOURCE)
     })
     
     output$tracks <- renderPlot({
@@ -91,7 +93,7 @@ heatmap_to_browserly_shiny <- function(heatmap,
   server <- function(input, output) {
     
     output$heat <- renderPlotly({
-      heatmap %>% plot_iHeatmap(source = HEATMAP_SOURCE)
+      heatmap %>% as_plotly(source = HEATMAP_SOURCE)
     })
     
     output$tracks <- renderPlotly({

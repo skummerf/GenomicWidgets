@@ -8,7 +8,30 @@ aggregate_profile_plot(mats, groups = NULL, colors = "Dark2",
   positions = as.numeric(colnames(mats[[1]])), ylab = "ChIP Signal",
   xlab = "Position", scale_method = c("none", "localRms", "localMean",
   "localNonZeroMean", "PercentileMax", "scalar"), pct = 0.95,
-  scale_factor = 1, showlegend = TRUE)
+  scale_factors = 1, showlegend = TRUE, source = AGGREGATE_SOURCE)
+}
+\arguments{
+\item{mats}{coverage matrices, as created by \code{\link{make_coverage_matrix}}}
+
+\item{groups}{vector of groups to which matrices belong}
+
+\item{colors}{either RColorbrewer pallete name or vector of colors}
+
+\item{positions}{positions corresponding to each column of one of the matrices}
+
+\item{ylab}{axis name for y axis}
+
+\item{xlab}{axis name for x axis}
+
+\item{scale_method}{method to use for scaling, see  \code{\link{normalize_coverage_matrix}}}
+
+\item{pct}{percentile argument if PercentileMax chosen as scale_method}
+
+\item{scale_factors}{scale_factors if "scalar" chosen as scale_method}
+
+\item{showlegend}{show the legend?}
+
+\item{source}{source name, for use in shiny apps}
 }
 \description{
 aggregate_profile_plot
