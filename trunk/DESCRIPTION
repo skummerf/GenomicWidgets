@@ -13,7 +13,7 @@ Imports:
     Gviz,
     plotly,
     fastcluster,
-    iHeatmapR,
+    iheatmapr,
     annotate,
     stringr,
     bamsignals

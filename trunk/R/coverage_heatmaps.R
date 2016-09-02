@@ -28,12 +28,12 @@ get_left_row_groups <- function(p){
 #' @param name name of colorbar
 #' @param summary make summary plot, boolean
 #' @param source source name in plotly
-#' @return iHeatmap object
+#' @return iheatmap object
 #' @export
 #' @author Alicia Schep
 single_coverage_heatmap <- function(mat, 
-                                    x = iHeatmapR:::default_x(mat),
-                                    y = iHeatmapR:::default_y(mat),
+                                    x = iheatmapr:::default_x(mat),
+                                    y = iheatmapr:::default_y(mat),
                                     include = 1000,
                                     include_method = c("signal","first","random"),
                                     row_order = c("none","hclust","kmeans","groups","signal"),
@@ -175,12 +175,12 @@ single_coverage_heatmap <- function(mat,
 #' @param summary make summary plot, boolean
 #' @param scale "rows" or "none"
 #' @param scale_method "normalize", "standardize", "center"
-#' @return iHeatmap object
+#' @return iheatmap object
 #' @export
 #' @author Alicia Schep
 add_coverage_heatmap <- function(p,
                                  mat, 
-                                 x = iHeatmapR:::default_x(mat),                    
+                                 x = iheatmapr:::default_x(mat),                    
                                  groups = p$row_groups,
                                  signal = rowMeans(mat, na.rm = TRUE),
                                  plot_signal = TRUE,
@@ -267,13 +267,13 @@ add_coverage_heatmap <- function(p,
 #' @param scale scale rows? or none
 #' @param scale_method method to use for scaling
 #' @param share_z share colorbar between heatmaps
-#' @return iHeatmap object
+#' @return iheatmap object
 #' @export
-#' @import iHeatmapR
+#' @import iheatmapr
 #' @author Alicia Schep
 multi_coverage_heatmap <- function(mats, 
-                                   x = iHeatmapR:::default_x(mats[[1]]),
-                                   y = iHeatmapR:::default_y(mats[[1]]), 
+                                   x = iheatmapr:::default_x(mats[[1]]),
+                                   y = iheatmapr:::default_y(mats[[1]]), 
                                    include = 1000,
                                    include_method = c("signal","first","random"),
                                    row_order = c("none","hclust","kmeans","groups","signal"),
@@ -493,13 +493,13 @@ multi_coverage_heatmap <- function(mats,
 #' @param source source name in plotly
 #' @param scale scale rows? or none
 #' @param scale_method method to use for scaling
-#' @return iHeatmap object
+#' @return iheatmap object
 #' @export
-#' @import iHeatmapR
+#' @import iheatmapr
 #' @author Alicia Schep
 add_multi_coverage_heatmap <- function(p,
                                        mats, 
-                                       x = iHeatmapR:::default_x(mats[[1]]),
+                                       x = iheatmapr:::default_x(mats[[1]]),
                                        groups = NULL,
                                        signal = lapply(mats, rowMeans, na.rm = TRUE),
                                        plot_signal = TRUE, 

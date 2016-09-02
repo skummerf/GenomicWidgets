@@ -235,7 +235,7 @@ bin_track_mat <- function(track_mat, target_range, tiled_range, scaling_factors)
   out <- sapply(seq_along(tiled_range), function(x){
     s <- wcs[x] + 1
     e <- wcs[x + 1]
-    colMeans(track_mat[s:e,], na.rm = TRUE)
+    colMeans(track_mat[s:e,, drop = FALSE], na.rm = TRUE)
   } )
   out <- t(out / scaling_factors)
   return(out)
@@ -317,6 +317,7 @@ make_coverage_tracks <- function(inputs,
     } else{
       stop("Incorrect format!")
     }
+    if (is.null(dim(tracks))) tracks <- matrix(tracks, nrow = 1)
     colnames(tracks) <- sample_names
     out <- GenomicRanges::tile(target_range, width = binsize)[[1]]
     tracks <- bin_track_mat(tracks, target_range, out, scaling_factors)

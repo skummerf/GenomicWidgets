@@ -21,13 +21,13 @@
 #' @param x_title x axis title (default is NULL)
 #' @param y_title y axis title (default is NULL)
 #' @param ... additional argument to iheatmap
-#' @return iHeatmap object, which can be printed or passed to \code{\link{plot_iHeatmap}} to
+#' @return iheatmap object, which can be printed or passed to \code{\link{plot_iheatmap}} to
 #' generate an interactive graphic
 #' @export
 #' @author Alicia Schep
 genomics_heatmap <- function(mat, 
-                           x = iHeatmapR:::default_x(mat),
-                           y = iHeatmapR:::default_y(mat),   
+                           x = iheatmapr:::default_x(mat),
+                           y = iheatmapr:::default_y(mat),   
                            row_order = c("hclust","none","kmeans","groups"),
                            col_order = c("groups","none","hclust","kmeans"),
                            row_groups = NULL,
@@ -41,9 +41,9 @@ genomics_heatmap <- function(mat,
                            scale = c("rows","cols","none"),
                            scale_method = c("standardize","center","normalize"),
                            colorscale = continuous_colorscale(),
-                           col_groups_palette = iHeatmapR:::DEFAULT_COLORS,
+                           col_groups_palette = iheatmapr:::DEFAULT_COLORS,
                            col_groups_name = "Column<br>Groups",
-                           row_groups_palette = iHeatmapR:::DEFAULT_COLORS,
+                           row_groups_palette = iheatmapr:::DEFAULT_COLORS,
                            row_groups_name = "Row<br>Groups",
                            show_row_groups_colorbar = TRUE,
                            show_col_groups_colorbar = TRUE,
@@ -60,7 +60,7 @@ genomics_heatmap <- function(mat,
   scale = match.arg(scale)
   scale_method = match.arg(scale_method)
   
-  iHeatmapR::simple_heatmap(mat, 
+  iheatmapr::simple_heatmap(mat, 
                             x = x,
                             y = y,                   
                             row_order = row_order,
@@ -113,7 +113,7 @@ genomics_heatmap <- function(mat,
 #' @author Alicia Schep
 add_genomics_heatmap <- function(p,
                                mat, 
-                               x = iHeatmapR:::default_x(mat),
+                               x = iheatmapr:::default_x(mat),
                                col_order = c("groups","none","hclust","kmeans"),
                                col_groups = NULL,
                                col_k = NULL,
@@ -123,7 +123,7 @@ add_genomics_heatmap <- function(p,
                                scale_method = c("standardize","center","normalize"),
                                colorscale = continuous_colorscale(),
                                show_colorbar = TRUE,
-                               col_groups_palette = iHeatmapR:::DEFAULT_COLORS,
+                               col_groups_palette = iheatmapr:::DEFAULT_COLORS,
                                col_groups_name = "Column<br>Groups",
                                show_col_groups_colorbar = TRUE,
                                x_labels = NULL,
@@ -138,7 +138,7 @@ add_genomics_heatmap <- function(p,
   scale = match.arg(scale)
   scale_method = match.arg(scale_method)
   
-  p %>% iHeatmapR::add_simple_heatmap(mat, 
+  p %>% iheatmapr::add_simple_heatmap(mat, 
                                   x = x,
                                   col_order = col_order,
                                   col_groups = col_groups,
