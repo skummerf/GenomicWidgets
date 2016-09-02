@@ -4,12 +4,12 @@
 \alias{add_genomics_heatmap}
 \title{add_genomics_heatmap}
 \usage{
-add_genomics_heatmap(p, mat, x = iHeatmapR:::default_x(mat),
+add_genomics_heatmap(p, mat, x = iheatmapr:::default_x(mat),
   col_order = c("groups", "none", "hclust", "kmeans"), col_groups = NULL,
   col_k = NULL, col_clust_dist = stats::dist, name = "Value",
   scale = c("rows", "cols", "none"), scale_method = c("standardize",
   "center", "normalize"), colorscale = continuous_colorscale(),
-  show_colorbar = TRUE, col_groups_palette = iHeatmapR:::DEFAULT_COLORS,
+  show_colorbar = TRUE, col_groups_palette = iheatmapr:::DEFAULT_COLORS,
   col_groups_name = "Column<br>Groups", show_col_groups_colorbar = TRUE,
   x_labels = NULL, y_labels = NULL, x_title = NULL, y_title = NULL,
   buffer = 0.2, ...)

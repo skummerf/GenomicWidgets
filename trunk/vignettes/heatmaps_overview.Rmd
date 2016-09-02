@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Preparing Inputs
 
 ```{r libraries, message = FALSE, warning=FALSE, error=FALSE, cache = FALSE}
-require(gChipseq)
+#require(gChipseq)
 require(chipVis)
 require(TxDb.Mmusculus.BioMart.igis)
 require(plotly)
@@ -70,7 +70,7 @@ The single_coverage_heatmap function enables the creation of coverage heatmaps f
 If row_order is set to "none", then the matrix is plotted in the order as provided.
 
 ```{r}
-new_single_coverage_heatmap(cvg_mats[[1]], row_order = "none") %>% plot_iHeatmap()
+single_coverage_heatmap(cvg_mats[[1]], row_order = "none") 
 ```
 
 
@@ -79,7 +79,7 @@ new_single_coverage_heatmap(cvg_mats[[1]], row_order = "none") %>% plot_iHeatmap
 If row_order is set to "hclust", then hierarchical clustering is performed.
 
 ```{r}
-new_single_coverage_heatmap(cvg_mats[[1]], row_order = "hclust") %>% plot_iHeatmap()
+single_coverage_heatmap(cvg_mats[[1]], row_order = "hclust")
 ```
 
 
@@ -92,7 +92,7 @@ cor_dist <- function(x){
   as.dist(1 - cor(t(x)))
 }
 
-new_single_coverage_heatmap(cvg_mats[[1]], row_order = "hclust",  clust_dist = cor_dist) %>% plot_iHeatmap()
+single_coverage_heatmap(cvg_mats[[1]], row_order = "hclust",  clust_dist = cor_dist) 
 ```
 
 
@@ -101,7 +101,7 @@ new_single_coverage_heatmap(cvg_mats[[1]], row_order = "hclust",  clust_dist = c
 The hierarchical clustering can be used to determine a set number of clusters by setting a value of k.  The tree will be cut at that number of clusters.
 
 ```{r}
-new_single_coverage_heatmap(cvg_mats[[1]], row_order = "hclust", k = 3) %>% plot_iHeatmap()
+single_coverage_heatmap(cvg_mats[[1]], row_order = "hclust", k = 3) 
 ```
 
 ### row_order = "kmeans"
@@ -109,7 +109,7 @@ new_single_coverage_heatmap(cvg_mats[[1]], row_order = "hclust", k = 3) %>% plot
 If row_order is set to kmeans, kmeans clustering is performed on the rows. k must be specified.
 
 ```{r}
-new_single_coverage_heatmap(cvg_mats[[1]], row_order = "kmeans", k = 3) %>% plot_iHeatmap()
+single_coverage_heatmap(cvg_mats[[1]], row_order = "kmeans", k = 3)
 ```
 
 ### row_order = "signal"
@@ -119,7 +119,7 @@ If row_order is set to signal, then rows are ordered based on the overall level 
 ## No summary
 
 ```{r}
-new_single_coverage_heatmap(cvg_mats[[1]], row_order = "kmeans", k = 3, summary = FALSE) %>% plot_iHeatmap()
+single_coverage_heatmap(cvg_mats[[1]], row_order = "kmeans", k = 3, summary = FALSE) %>% plot_iHeatmap()
 ```
 
 
@@ -134,15 +134,15 @@ peak_cvg_mats1 <- make_coverage_matrix(inputs = bam_files[mRNF2[1]],
                                   up = 2500,
                                   down = 2500)
 
-new_single_coverage_heatmap(peak_cvg_mats1, row_order = "signal", signal = rowSums(peak_cvg_mats1)) %>% 
-  add_dist_to_tss(peaks[[mRNF2[1]]][1:1000],tss) %>% plot_iHeatmap()
+single_coverage_heatmap(peak_cvg_mats1, row_order = "signal", signal = rowSums(peak_cvg_mats1)) %>% 
+  add_dist_to_tss(peaks[[mRNF2[1]]][1:1000],tss)
 
 ```
 
 # Multiple coverage heatmaps 
 
 ```{r multi_coverage}
-multi_coverage_heatmap(cvg_mats[1:3], row_order = "kmeans", k = 3)  %>% plot_iHeatmap()
+multi_coverage_heatmap(cvg_mats[1:3], row_order = "kmeans", k = 3)  
 ```
 
 ## Row ordering based on three heatmaps
@@ -150,7 +150,7 @@ multi_coverage_heatmap(cvg_mats[1:3], row_order = "kmeans", k = 3)  %>% plot_iHe
 By setting the "cluster_by" argument to "all" instead of the default of "first", all matrices are used for clustering -- they are concatenated horizontally prior to clustering.  
 
 ```{r multi_coverage2}
-multi_coverage_heatmap(cvg_mats[1:3], row_order = "kmeans", k = 3, cluster_by = "all")  %>% plot_iHeatmap()
+multi_coverage_heatmap(cvg_mats[1:3], row_order = "kmeans", k = 3, cluster_by = "all")  
 ```
 
 # Aggregate profiles
@@ -178,7 +178,7 @@ e <- e[which(substr(fData(e)$chr,1,3) == "chr"),]
 fData(e)$chr <- sapply(fData(e)$chr, function(x) substr(x, 4, nchar(x)))
 e <- e[which(fData(e)$chr %in% c(1:22,"X")),]
 
-p1 = simple_heatmap(log10(exprs(e)[1:500,] + 1), 
+p1 = genomics_heatmap(log10(exprs(e)[1:500,] + 1), 
                      y = as.character(fData(e)$symbol[1:500]), 
                      x = as.character(pData(e)$TREATMENT_NAME), 
                      row_order = "kmeans", 
@@ -188,7 +188,7 @@ p1 = simple_heatmap(log10(exprs(e)[1:500,] + 1),
                     y_labels = NULL,
                     name = "RNA") 
 
-plot_iHeatmap(p1) %>% layout(margin = list(b = 200))
+as_plotly(p1) %>% layout(margin = list(b = 200))
 
 ```
 
@@ -208,8 +208,8 @@ promoter_counts <- simplify2array(BiocParallel::bplapply(bam_files,
                                                          promoter_ranges[1:500]))
  
 p1 %>% 
-  add_simple_heatmap(promoter_counts, col_order = "hclust", k_col = 4, scale_method = "normalize", name = "ChIP") %>%
-  plot_iHeatmap()  %>% 
+  add_genomics_heatmap(promoter_counts, col_order = "hclust", k_col = 4, scale_method = "normalize", name = "ChIP") %>%
+  as_plotly()  %>% 
   layout(margin = list(b = 200))
 
 ```
@@ -222,14 +222,12 @@ promoter_cvg_mats <- make_coverage_matrix(inputs = bam_files[mRNF2],
                                   ranges = promoter_ranges[1:500],
                                   binsize = 50)
 
-p1 %>% add_coverage_heatmap(promoter_cvg_mats[[1]]) %>%
-  plot_iHeatmap()
+p1 %>% add_coverage_heatmap(promoter_cvg_mats[[1]]) 
 
 ```
 
 ```{r}
-p1 %>% add_coverage_heatmap(promoter_cvg_mats[[1]]) %>% add_coverage_heatmap(promoter_cvg_mats[[2]]) %>%
-  plot_iHeatmap()
+p1 %>% add_coverage_heatmap(promoter_cvg_mats[[1]]) %>% add_coverage_heatmap(promoter_cvg_mats[[2]]) 
 
 ```
 

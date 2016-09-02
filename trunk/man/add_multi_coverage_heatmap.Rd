@@ -4,7 +4,7 @@
 \alias{add_multi_coverage_heatmap}
 \title{add_multi_coverage_heatmap}
 \usage{
-add_multi_coverage_heatmap(p, mats, x = iHeatmapR:::default_x(mats[[1]]),
+add_multi_coverage_heatmap(p, mats, x = iheatmapr:::default_x(mats[[1]]),
   groups = NULL, signal = lapply(mats, rowMeans, na.rm = TRUE),
   plot_signal = TRUE, name = "Coverage", signal_name = "Avg. Coverage",
   summary = TRUE, source = "HM", scale_method = c("localRms", "localMean",
@@ -35,7 +35,7 @@ add_multi_coverage_heatmap(p, mats, x = iHeatmapR:::default_x(mats[[1]]),
 \item{scale}{scale rows? or none}
 }
 \value{
-iHeatmap object
+iheatmap object
 }
 \description{
 add_multi_coverage_heatmap

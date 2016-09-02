@@ -4,7 +4,7 @@
 \alias{add_coverage_heatmap}
 \title{add_coverage_heatmap}
 \usage{
-add_coverage_heatmap(p, mat, x = iHeatmapR:::default_x(mat),
+add_coverage_heatmap(p, mat, x = iheatmapr:::default_x(mat),
   groups = p$row_groups, signal = rowMeans(mat, na.rm = TRUE),
   plot_signal = TRUE, name = "Coverage", signal_name = "Avg. Coverage",
   summary = TRUE, scale_method = c("localRms", "localMean",
@@ -30,7 +30,7 @@ add_coverage_heatmap(p, mat, x = iHeatmapR:::default_x(mat),
 \item{scale}{"rows" or "none"}
 }
 \value{
-iHeatmap object
+iheatmap object
 }
 \description{
 add_coverage_heatmap

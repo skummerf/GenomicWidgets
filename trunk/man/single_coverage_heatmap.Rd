@@ -4,8 +4,8 @@
 \alias{single_coverage_heatmap}
 \title{single_coverage_heatmap}
 \usage{
-single_coverage_heatmap(mat, x = iHeatmapR:::default_x(mat),
-  y = iHeatmapR:::default_y(mat), include = 1000,
+single_coverage_heatmap(mat, x = iheatmapr:::default_x(mat),
+  y = iheatmapr:::default_y(mat), include = 1000,
   include_method = c("signal", "first", "random"), row_order = c("none",
   "hclust", "kmeans", "groups", "signal"), k = NULL, groups = NULL,
   clust_dist = stats::dist, signal = rowMeans(mat, na.rm = TRUE),
@@ -37,7 +37,7 @@ single_coverage_heatmap(mat, x = iHeatmapR:::default_x(mat),
 \item{source}{source name in plotly}
 }
 \value{
-iHeatmap object
+iheatmap object
 }
 \description{
 single_coverage_heatmap

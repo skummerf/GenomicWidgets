@@ -76,6 +76,7 @@ rna_hm <- genomics_heatmap(v$E[sig,], col_groups = treat_groups,
             x = pData(T47D_eset)$title, y = fData(T47D_eset)$symbol[sig],
             name = "RNA-seq",cbg = colorbar_grid(x_spacing = 0.3, nrow = 2)) 
 
+rna_hm
 # rna_hm %>% plot_iHeatmap() %>% layout(margin = list(b = 250)) %>% export(file = "/gne/research/workspace/schepa/Carroll_Data/Figures/rna_hm.pdf")
 
 ```

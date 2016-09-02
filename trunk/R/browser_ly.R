@@ -29,6 +29,7 @@ make_browserly_function <- function(cvg_files,
                                 type = type)
     return(b_plot)
   }
+  class(plot_browserly) <- c(class("plot_browserly"), "browserly")
   return(plot_browserly)
 }
 

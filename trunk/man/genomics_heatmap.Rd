@@ -4,17 +4,17 @@
 \alias{genomics_heatmap}
 \title{genomics_heatmap}
 \usage{
-genomics_heatmap(mat, x = iHeatmapR:::default_x(mat),
-  y = iHeatmapR:::default_y(mat), row_order = c("hclust", "none", "kmeans",
+genomics_heatmap(mat, x = iheatmapr:::default_x(mat),
+  y = iheatmapr:::default_y(mat), row_order = c("hclust", "none", "kmeans",
   "groups"), col_order = c("groups", "none", "hclust", "kmeans"),
   row_groups = NULL, col_groups = NULL, row_k = NULL, col_k = NULL,
   row_clust_dist = stats::dist, col_clust_dist = stats::dist,
   name = "Value", source = "HM", scale = c("rows", "cols", "none"),
   scale_method = c("standardize", "center", "normalize"),
   colorscale = continuous_colorscale(),
-  col_groups_palette = iHeatmapR:::DEFAULT_COLORS,
+  col_groups_palette = iheatmapr:::DEFAULT_COLORS,
   col_groups_name = "Column<br>Groups",
-  row_groups_palette = iHeatmapR:::DEFAULT_COLORS,
+  row_groups_palette = iheatmapr:::DEFAULT_COLORS,
   row_groups_name = "Row<br>Groups", show_row_groups_colorbar = TRUE,
   show_col_groups_colorbar = TRUE, x_labels = NULL, y_labels = NULL,
   x_title = NULL, y_title = NULL, colorbar_grid = setup_colorbar_grid(),
@@ -62,7 +62,7 @@ genomics_heatmap(mat, x = iHeatmapR:::default_x(mat),
 \item{...}{additional argument to iheatmap}
 }
 \value{
-iHeatmap object, which can be printed or passed to \code{\link{plot_iHeatmap}} to
+iheatmap object, which can be printed or passed to \code{\link{plot_iheatmap}} to
 generate an interactive graphic
 }
 \description{

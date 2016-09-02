@@ -4,8 +4,8 @@
 \alias{multi_coverage_heatmap}
 \title{multi_coverage_heatmap}
 \usage{
-multi_coverage_heatmap(mats, x = iHeatmapR:::default_x(mats[[1]]),
-  y = iHeatmapR:::default_y(mats[[1]]), include = 1000,
+multi_coverage_heatmap(mats, x = iheatmapr:::default_x(mats[[1]]),
+  y = iheatmapr:::default_y(mats[[1]]), include = 1000,
   include_method = c("signal", "first", "random"), row_order = c("none",
   "hclust", "kmeans", "groups", "signal"), k = NULL, groups = NULL,
   clust_dist = stats::dist, cluster_by = c("first", "all"),
@@ -45,7 +45,7 @@ multi_coverage_heatmap(mats, x = iHeatmapR:::default_x(mats[[1]]),
 \item{scale}{scale rows? or none}
 }
 \value{
-iHeatmap object
+iheatmap object
 }
 \description{
 multi_coverage_heatmap
