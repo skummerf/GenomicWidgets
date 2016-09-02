@@ -22,11 +22,11 @@ make_browserly_function <- function(cvg_files,
                                       target_range = target_range, 
                                       sample_names = names(cvg_files), 
                                       scaling_factors = cvg_scaling)
-    b_plot <- plot_browserly_tracks(target_range = target_range, 
-                                    tx_data = tx_data,
-                                    cvg = cvg_gr,
-                                    hm_thresh = hm_thresh,
-                                    type = type)
+    b_plot <- plot_single_locus(target_range = target_range, 
+                                tx_data = tx_data,
+                                cvg = cvg_gr,
+                                hm_thresh = hm_thresh,
+                                type = type)
     return(b_plot)
   }
   return(plot_browserly)
@@ -51,6 +51,7 @@ plot_single_locus <- function(target_range,
                               cvg,
                               hm_thresh = 4,
                               stacking = 'dense',
+                              sync_y = TRUE,
                               type = NULL,
                               ...){
   # Make GeneRegion plot
@@ -60,21 +61,20 @@ plot_single_locus <- function(target_range,
   tx_info <- set_tx_level(tx_info, stacking = stacking)
   
   # Make "invisible" transcript plot
-  tx_track <- browserly_tx_track(tx_info = tx_info, track_name = 'main_annotation')
+  tx_track <- browserly_tx_track(tx_info = tx_info, track_name = 'Annotation')
   
   # Make supblots
   # Decide the type of datatrack to plot if not provided
   if(is.null(type)){
-    if(ncol(mcols(cvg)) > hm_thresh) {
-      type = 'heatmap'
-      cvg_L = GRangesList(cvg)
-      names(cvg_L) <- 'Heatmap'
-    } else {
-      type <- "scatter"
-      # Convert the GRanges object to a GRanges List
-      cvg_L <- sapply(names(mcols(cvg)), function(x) {cvg[, x]})
-    }
+    type <- ifelse(ncol(mcols(cvg)) > hm_thresh, 'heatmap', 'scatter')
   }
+  # Convert the GRanges object to a GRanges List
+  if(type == 'heatmap') {
+    cvg_L = GRangesList(cvg)
+    names(cvg_L) <- 'Heatmap'
+  } else {
+    cvg_L <- sapply(names(mcols(cvg)), function(x) {cvg[, x]})
+    }
   
   # Make the subplots
   cvg_tracks <- make_subplots(grl = cvg_L, type = type, ...)
@@ -85,53 +85,84 @@ plot_single_locus <- function(target_range,
   sp <- subplot(plots, nrows=length(plots), shareX = TRUE, heights=track_heights)
   sp_info <- get_subplot_ax_info(sp)
   
-  # Modify layouts
-  trace_names <- sapply(sp$x$data, function(x){x$name})
-  trace_axes <- lapply(sp$x$data, function(x) {gsub("y", "yaxis", x$yaxis)})
-  names(trace_axes) <- trace_names                                                                                                     
-  grt_ax <- "yaxis"
+  # Get the axis on which annotations are made
+  grt_ax <- get_annotation_axis(ax_info = sp_info)
   
-  letterwidth <- 9
-  maxlabellength <- max(sapply(colnames(mcols(cvg)), nchar))
-  if(type == 'heatmap'){
-    left_margin = max(letterwidth*maxlabellength, 60)
-    margin = list(l=left_margin)
-  } else {
-    margin =  list()
-  }
+  # Add the annotation shapes
   sp <- add_tx_shapes(sp, tx_info, target_range, grt_ax)
-  sp <- modify_y(sp, trace_axes, grt_ax, type)
-  sp <- sp %>% layout(xaxis=list(range=c(start(target_range), end(target_range))),
-                      margin=margin)
+  
+  # Adjust the layout parameters
+  sp <- modify_y(sp, sp_info, grt_ax, type, sync_y = sync_y)
+  
+  # Force the x axis range to match
+  sp$x$layout$xaxis$range <- c(start(target_range), end(target_range))
   return(sp)
   
 }
 
-modify_y <- function(plotly_obj, trace_axes, grt_ax, type){
-  # Modify transcript axis
-  plotly_obj$x$layout[[grt_ax]][['ticks']] <- ""
-  plotly_obj$x$layout[[grt_ax]][['showticklabels']] <- FALSE
-  plotly_obj$x$layout[[grt_ax]][['title']] <- "Transcripts"
-  plotly_obj$x$layout[[grt_ax]][['showgrid']] <- FALSE
+modify_y <- function(plotly_obj, 
+                     ax_info, 
+                     grt_ax, 
+                     type,
+                     sync_y = TRUE,
+                     title_rotation = 0){
   
-  data_axes <- trace_axes[trace_axes!=grt_ax]
+  # Get the data traces and their axes
+  plot_axes <- filter(ax_info, is_trace == FALSE)
   
-  # Scale the data for the histograms
-  if(type!='heatmap'){
-    score_max <- max(unlist(lapply(plotly_obj$x$data, function(x) 
-      {if(class(x$y)=='numeric') return(x$y)})))
-  }
-  for(sample in names(data_axes)){
-    ax <- data_axes[[sample]]
-    if(type!='heatmap'){
-      plotly_obj$x$layout[[ax]][['range']] <- c(0, score_max)
-      plotly_obj$x$layout[[ax]][['title']] <- sample
-      
-      # plotly_obj$x$layout[[ax]][['titlefont']]2 <- list(size=10)
+  # Get the max y value
+  score_max <- max(unlist(filter(ax_info, is_trace == TRUE, yaxis != grt_ax)$ymax))
+  
+  # Get the largest title and pad with y axis labels
+  label_padding <- nchar(round(score_max))+1
+  max_title <- calc_title_margin(plot_axes$subplot_name)
+  
+  title_list <- list()
+  # Adjust the plot parameters for each subplot
+  for(idx in 1:nrow(plot_axes)){
+    # Get the row as a named list
+    cur_row <- lapply(slice(plot_axes, idx), function(x) {unlist(x)})
+    ax <- cur_row$yaxis
+    if(ax != grt_ax){
+      if(cur_row$type!='heatmap'){
+        if(sync_y) plotly_obj$x$layout[[ax]][['range']] <- c(0, score_max)
+      } else {
+        # Get tick labels to update margin size
+        hm_idx <- unlist(filter(ax_info, yaxis == ax, is_trace == TRUE)$data_idx)
+        # Use the index of the current heatmap to pull the y values from the plotly data structure
+        # which correspond to the tick names
+        max_title <- max(max_title, calc_title_margin(plotly_obj$x$data[[hm_idx]]$y))
+        plotly_obj$x$layout[[ax]]['showline'] <- TRUE
+        plotly_obj$x$layout[[ax]]['mirror'] <- TRUE
+        plotly_obj$x$layout[[ax]]['ticks'] <- ""
+      }
     } else {
-      plotly_obj$x$layout[[ax]]['ticks'] <- ""
+      # Modify transcript axis
+      plotly_obj$x$layout[[ax]][['ticks']] <- ""
+      plotly_obj$x$layout[[ax]][['showticklabels']] <- FALSE
+      plotly_obj$x$layout[[ax]][['showgrid']] <- FALSE
+    }
+    
+    # Set the title for the axis
+    if(cur_row$type!='heatmap'){
+      title_list[[idx]] <- list(text = cur_row$subplot_name, 
+                                showarrow=FALSE, 
+                                textangle=title_rotation,
+                                x = cur_row$x0-(label_padding/100),
+                                y = (cur_row$y0+cur_row$y1)/2,
+                                xref = 'paper',
+                                yref = 'paper',
+                                borderpad = 0,
+                                xanchor = 'right'
+      )
     }
   }
+  # Set the margin and pad for the size of the y axes labels
+  plotly_obj$x$layout$margin$l <- max_title
+  
+  # Add the titles
+  plotly_obj$x$layout$annotations <- title_list
+  
   return(plotly_obj)
 }
 
@@ -207,7 +238,7 @@ browserly_cvg_track <- function(cvg,
   
   # Initialize the plot object that will contain the traces
   p <- plot_ly(type=type, source = track_name,
-               name = paste0('main_', track_name))
+               name = track_name)
   if(type == 'scatter'){
     for(name in rownames(track_data)){
       p <- p %>% add_trace(x = colnames(track_data), 
@@ -236,6 +267,7 @@ browserly_cvg_track <- function(cvg,
 # Helper functions - not exported
 # =============================================================================
 # =============================================================================
+
 #' browserly_tx_track
 #' Make the invisible points for an annotation track.
 #' 
@@ -306,19 +338,76 @@ make_subplots <- function(grl,
 #'
 #' @examples
 get_subplot_ax_info <- function(plotly_obj){
-  sp_ax_info <- sapply(plotly_obj$x$data, function(x){
-    # The string "main_" was added to the main plotly objects
-    # during creation in the fuction browserly_cvg_track
+  sp_ax_info <- sapply(seq_along(plotly_obj$x$data), function(idx){
+    # Get the plot info
+    # If there is x, y, or z data then it is a trace
+    x <- plotly_obj$x$data[[idx]]
+    is_trace <- (is.numeric(x$x) | is.numeric(x$y) | is.numeric(x$z))
     data_info <- list(subplot_name = x$name,
+                      data_idx = idx,
                       xid = x$xaxis,
                       yid = x$yaxis,
                       xaxis = gsub("x", "xaxis", x$xaxis),
                       yaxis = gsub("y", "yaxis", x$yaxis),
-                      main_plot = grepl('main_', x$name))
+                      ymax = ifelse(is.numeric(x$y), max(x$y), 0),
+                      type = x$type,
+                      is_trace = is_trace)
     return(data_info)
   })
+  
+  # Get the domains for the axes
+  domain_info <- apply(sp_ax_info, 2, function(x, plotly_obj) {
+    # Comine the domains
+    cbind(plotly_obj$x$layout[[x$yaxis]]$domain,
+          plotly_obj$x$layout[[x$xaxis]]$domain)
+    }, plotly_obj)
+  rownames(domain_info) <- c('y0', 'y1', 'x0', 'x1')
+  sp_ax_info <- rbind(sp_ax_info, domain_info)
   sp_ax_info <- data.frame(t(sp_ax_info))
   return(sp_ax_info)
+}
+
+
+#' calc_title_margin
+#' Calculate how many pixels of space the titles need. Assumes the titles are horizontal
+#'
+#' @param titles vector
+#' @param letter_width int: number of pixels each letter requires
+#' @param padding int: number of character to pad to the maximium title found
+#'
+#' @return
+#'
+#' @examples
+calc_title_margin <- function(titles,
+                              padding = 0,
+                              letter_width = 9){
+  # Calculate how big the left margin should be
+  max_label_length <- max(sapply(titles, nchar)) + padding
+  left_margin = max(letter_width*max_label_length, 60)
+  return(left_margin)
+}
+
+
+#' get_annotation_axis
+#'
+#' @param ax_info data.frame like: contains info for different subplot axes in plotly object
+#' @param annotation_str str: the string used to find the annotation axis
+#'
+#' @return str: the annotation axis reference in the form "yaxis#"
+#'
+#' @examples
+get_annotation_axis <- function(ax_info,
+                                annotation_str = 'Annotation'){
+  ann_info <- filter(ax_info, subplot_name == annotation_str)$yaxis
+  if(length(ann_info) == 0){
+    stop("No annotation track found in axes information")
+  }
+  ann_ax <- ann_info[[1]]
+  if(length(ann_info) > 1){
+    warning(paste0('Multiple possible annotation axes were found.',
+                   'Using the first one encountered: ', ann_ax))
+  }
+  return(ann_ax)
 }
 
 #' set_tx_level
