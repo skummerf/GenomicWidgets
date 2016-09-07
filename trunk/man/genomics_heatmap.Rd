@@ -59,11 +59,14 @@ genomics_heatmap(mat, x = iheatmapr:::default_x(mat),
 
 \item{y_title}{y axis title (default is NULL)}
 
-\item{...}{additional argument to iheatmap}
+\item{colorbar_grid}{colorbar grid parameters, to be set by \code{\link[iheatmapr]{setup_colorbar_grid}}}
+
+\item{font}{list of font attributes}
+
+\item{...}{additional argument to \code{\link[iheatmapr]{simple_heatmap}}}
 }
 \value{
-iheatmap object, which can be printed or passed to \code{\link{plot_iheatmap}} to
-generate an interactive graphic
+iheatmap object, which can be printed to generate an interactive graphic
 }
 \description{
 genomics_heatmap

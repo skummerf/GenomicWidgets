@@ -1,24 +1,26 @@
 ---
 title: "browser_ly_testing"
 author: "Justin Finkle"
-date: "7/27/2016"
-output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-library(TxDb.Hsapiens.BioMart.igis)
+library(TxDb.Hsapiens.BioMart.igis3.0)
 library(plotly)
 library(org.Hs.eg.db)
 library(chipVis)
 ```
 
 
-```{r}
+```{r Load data, echo=FALSE}
 fi <- readRDS("/gne/research/workspace/schepa/Carroll_Data/chip_file_info.Rds")
-org <- "human"
-genome <- "GRCh38"
-
 
 T47D = list(
   ER_ab = which(fi$source_name == "T47D_ER_Full_Media_3hr"),
@@ -36,16 +38,30 @@ T47D = list(
 )
 ```
 
-```{r}
-tx_data <- load_tx_data(TxDb.Hsapiens.BioMart.igis)
-symbol_table <- match_tx_to_gene(TxDb.Hsapiens.BioMart.igis, 'org.Hs.eg')
+# Load the annotation reference data
+We pre-load the annotation information from the TxDB into an easily searched list. This saves time when repeated calls are made to find the genomic ranges and features that are used in plotting coverage information. 
+The variable `tx_data` contains several lists that a indexed by transcript
+feature (e.g. intron, utr5). It also keeps track of the seqlevelstyle used
+in the database.
+
+**Note:** We also use the annotation helper function `match_tx_to_gene` to zip together OrgDB and TxDB objects by entrez id. This allows genes to be searched by gene symbol, which is often more human friendly.
+```{r Load Annotation reference}
+txdb <- TxDb.Hsapiens.BioMart.igis
+tx_data <- load_tx_data(txdb)
+print(names(tx_data))
+
+symbol_table <- match_tx_to_gene(txdb, 'org.Hs.eg')
+print(head(symbol_table))
 ```
 
-```{r}
+
+# Read coverage information
+Users are expected to provide their own data for plotting. Data should be provided as a GRanges object, where the metadata columns (mcols) contain the coverage values in each range.
+```{r Read Coverage Files, echo=FALSE}
 # This happens to be the gene region of AGGF1 and ZBED3
 view_range <- get_view_range(chr = 5, start=76320000, end=76400000)
 
-# Get the coverage
+# Specify coverage files
 input <- fi[2, 'Sample.Control']
 input_idx <- which(fi$Sample.Name==input)
 idx <- sapply(T47D[c(1,2,4,5)], function(x){x[[1]]})
@@ -62,8 +78,21 @@ cvg <- make_coverage_tracks(fi[idx, "File.bw"],
                             target_range = view_range, 
                             sample_names = shortened_names, 
                             scaling_factors = sf)
+print(head(cvg))
 ```
 
+# Plot single locus
+## Input Data
+### View Range
+Browserly needs to know the range to plot. This is used to pull the correct annotation information
+```{r view_range}
+view_range
+```
+
+
+```{r Demo_stacking}
+plot_single_locus(view_range, tx_data, cvg, stacking='squish', type="scatter")
+```
 
 ```{r Demo_hm}
 plot_single_locus(view_range, tx_data, cvg)
@@ -71,10 +100,6 @@ plot_single_locus(view_range, tx_data, cvg)
 
 ```{r Demo_line}
 plot_single_locus(view_range, tx_data, cvg, type = "scatter")
-```
-
-```{r Demo_stacking}
-plot_single_locus(view_range, tx_data, cvg, stacking='squish', type="scatter")
 ```
 
 # Plotting multiple genes for several conditions

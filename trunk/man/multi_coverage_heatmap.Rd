@@ -11,16 +11,21 @@ multi_coverage_heatmap(mats, x = iheatmapr:::default_x(mats[[1]]),
   clust_dist = stats::dist, cluster_by = c("first", "all"),
   signal = lapply(mats, rowMeans, na.rm = TRUE), plot_signal = TRUE,
   name = "Coverage", signal_name = "Avg. Coverage", summary = TRUE,
-  source = "HM", scale_method = c("localRms", "localMean",
-  "localNonZeroMean", "PercentileMax", "scalar", "none"), pct = 0.95,
-  scale_factor = rep(1, length(mats)), share_z = TRUE, ticktext = TRUE,
-  start = x[1], end = default_end(x), xlab = "Position",
-  font = list(size = 8), ...)
+  scale_method = c("localRms", "localMean", "localNonZeroMean",
+  "PercentileMax", "scalar", "none"), pct = 0.95, scale_factor = rep(1,
+  length(mats)), show_xlabels = TRUE, start = x[1], end = default_end(x),
+  xlab = "Position", font = list(size = 8), ...)
 }
 \arguments{
+\item{mats}{list of coverage matrices}
+
 \item{x}{x axis labels}
 
 \item{y}{y axis labels}
+
+\item{include}{how many rows to include in plot}
+
+\item{include_method}{how to choose which rows to include in plot}
 
 \item{row_order}{row order method}
 
@@ -28,27 +33,39 @@ multi_coverage_heatmap(mats, x = iheatmapr:::default_x(mats[[1]]),
 
 \item{groups}{pre-determined groups for rows}
 
+\item{clust_dist}{distance function to use for clustering}
+
+\item{cluster_by}{cluster using only first matrix or all matrices concatenated?}
+
 \item{signal}{signal along row}
+
+\item{plot_signal}{add an annotation heatmap showing the average signal? default is TRUE}
 
 \item{name}{name of colorbar}
 
-\item{summary}{make summary plot, boolean}
+\item{summary}{make summary plot, boolean, default is TRUE}
 
-\item{source}{source name in plotly}
+\item{scale_method}{how to scale matrix before displaying in heatmap}
 
-\item{scale_method}{method to use for scaling}
+\item{pct}{percentile to use if scale_method is "PercentileMax"}
 
-\item{share_z}{share colorbar between heatmaps}
+\item{scale_factor}{scale_factor to use if scale_method is "scalar"}
 
-\item{mat}{coverage matrix}
+\item{show_xlabels}{show xlabels?  default is TRUE}
 
-\item{scale}{scale rows? or none}
+\item{start}{label for start of x range}
+
+\item{end}{label for end of x range}
+
+\item{xlab}{x axis label}
+
+\item{font}{list of font attributes}
 }
 \value{
 iheatmap object
 }
 \description{
-multi_coverage_heatmap
+makes multiple coverage heatmaps sharing the same scale
 }
 \author{
 Alicia Schep

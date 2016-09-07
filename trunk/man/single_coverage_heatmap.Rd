@@ -10,10 +10,10 @@ single_coverage_heatmap(mat, x = iheatmapr:::default_x(mat),
   "hclust", "kmeans", "groups", "signal"), k = NULL, groups = NULL,
   clust_dist = stats::dist, signal = rowMeans(mat, na.rm = TRUE),
   plot_signal = TRUE, name = "Coverage", signal_name = "Avg. Coverage",
-  summary = TRUE, source = "HM", scale_method = c("localRms", "localMean",
+  summary = TRUE, scale_method = c("localRms", "localMean",
   "localNonZeroMean", "PercentileMax", "scalar", "none"), pct = 0.95,
-  scale_factor = 1, ticktext = TRUE, start = x[1], end = default_end(x),
-  xlab = "Position", font = list(size = 8), ...)
+  scale_factor = 1, show_xlabels = TRUE, start = x[1],
+  end = default_end(x), xlab = "Position", font = list(size = 8), ...)
 }
 \arguments{
 \item{mat}{coverage matrix}
@@ -22,19 +22,41 @@ single_coverage_heatmap(mat, x = iheatmapr:::default_x(mat),
 
 \item{y}{y axis labels}
 
+\item{include}{how many rows to include in plot}
+
+\item{include_method}{how to choose which rows to include in plot}
+
 \item{row_order}{row order method}
 
 \item{k}{k to use for kmeans clustering or cutting heirarchical clustering}
 
 \item{groups}{pre-determined groups for rows}
 
+\item{clust_dist}{distance function to use for clustering}
+
 \item{signal}{signal along row}
+
+\item{plot_signal}{add an annotation heatmap showing the average signal? default is TRUE}
 
 \item{name}{name of colorbar}
 
-\item{summary}{make summary plot, boolean}
+\item{summary}{make summary plot, boolean, default is TRUE}
 
-\item{source}{source name in plotly}
+\item{scale_method}{how to scale matrix before displaying in heatmap}
+
+\item{pct}{percentile to use if scale_method is "PercentileMax"}
+
+\item{scale_factor}{scale_factor to use if scale_method is "scalar"}
+
+\item{show_xlabels}{show xlabels?  default is TRUE}
+
+\item{start}{label for start of x range}
+
+\item{end}{label for end of x range}
+
+\item{xlab}{x axis label}
+
+\item{font}{list of font attributes}
 }
 \value{
 iheatmap object
