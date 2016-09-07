@@ -49,6 +49,7 @@ get_centered_gene_info <- function(gene,
   if(gene_strand == '-'){
     gene_cvg <- invert_ranges(gene_cvg)
     gene_tx <- invert_ranges(gene_tx)
+    strand(gene_tx) <- "*"
   }
   
   return(list(gene_cvg = gene_cvg, gene_tx = gene_tx))
@@ -59,6 +60,31 @@ get_centered_gene_info <- function(gene,
 # Helper functions - not exported
 # =============================================================================
 # =============================================================================
+
+#' Title
+#'
+#' @param plotly_obj 
+#' @param ax_info 
+#' @param heights 
+#'
+#' @return
+#'
+#' @examples
+adjust_y_domains <- function(plotly_obj, 
+                             ax_info, 
+                             heights){
+  # Axes are plotted from bottom to top, so yaxis is the lowermost plot
+  yaxes <- sort(unlist(unique(ax_info$yaxis)), decreasing = TRUE)
+  tops <- cumsum(heights)
+  bases <- tops - heights
+  # Check that heights sum to less than 1
+  # Check same number of yaxes and heights
+  for(y_idx in seq_along(yaxes)){
+    yax <- yaxes[[y_idx]]
+    plotly_obj$x$layout[[yax]]$domain <- c(bases[[y_idx]], tops[[y_idx]])
+  }
+  return(plotly_obj)
+}
 
 #' invert_ranges
 #' Flip the range over a reference value
@@ -106,7 +132,8 @@ browserly_tx_track <- function(tx_info,
                type='scatter',
                name = track_name) %>% 
     add_markers(x = ~midpoint, 
-                y=~stepping, 
+                y=~stepping,
+                color = ~feature,
                 showlegend=FALSE,
                 text=~text, 
                 marker = list(color = markercolor),
@@ -200,9 +227,13 @@ modify_y <- function(plotly_obj,
         # Use the index of the current heatmap to pull the y values from the plotly data structure
         # which correspond to the tick names
         max_title <- max(max_title, calc_title_margin(plotly_obj$x$data[[hm_idx]]$y))
-        plotly_obj$x$layout[[ax]]['showline'] <- TRUE
-        plotly_obj$x$layout[[ax]]['mirror'] <- TRUE
         plotly_obj$x$layout[[ax]]['ticks'] <- ""
+        
+        # Add a box around the heatmap
+        box <- list(list(type = 'rect', x0 = cur_row$x0, x1 = cur_row$x1,
+                    y0 = cur_row$y0, y1 = cur_row$y1,
+                    xref= 'paper', yref='paper', line = list(width=1)))
+        plotly_obj$x$layout$shapes <- append(plotly_obj$x$layout$shapes, box)
       }
     } else {
       # Modify transcript axis
@@ -216,20 +247,19 @@ modify_y <- function(plotly_obj,
       title_list[[idx]] <- list(text = cur_row$subplot_name, 
                                 showarrow=FALSE, 
                                 textangle=title_rotation,
-                                x = cur_row$x0-(label_padding/100),
+                                x = cur_row$x0-(label_padding/50),
                                 y = (cur_row$y0+cur_row$y1)/2,
                                 xref = 'paper',
                                 yref = 'paper',
                                 borderpad = 0,
                                 xanchor = 'right'
-      )
-      # Set the margin and pad for the size of the y axes labels
-      plotly_obj$x$layout$margin$l <- max_title
-      
-      # Add the titles
-      plotly_obj$x$layout$annotations <- title_list
-    }
+      )}
   }
+  # Set the margin and pad for the size of the y axes labels
+  plotly_obj$x$layout$margin$l <- max_title + label_padding
+  
+  # Add the titles
+  plotly_obj$x$layout$annotations <- title_list
   
   return(plotly_obj)
 }
@@ -343,13 +373,15 @@ crop_introns <- function(introns, target_range){
   return(introns)
 }
 
-make_rect <- function(df, height, yref){
+make_rect <- function(df, height, yref,
+                      fillcolor = 'lightslateblue'){
+  fillcolor <- rgb(t(col2rgb(fillcolor)), maxColorValue = 255)
   yref <- gsub("yaxis", "y", yref)
   if(nrow(df)>0){
     rect_list <- vector("list", nrow(df))
     for(e in 1:nrow(df)){
       row <- df[e, ]
-      rect_list[[e]] <- list(type = "rect", fillcolor = "blue", opacity = 1, line=list(width=0),
+      rect_list[[e]] <- list(type = "rect", fillcolor = fillcolor, opacity = 1, line=list(width=0),
                              x0 = row$start, x1 = row$end, xref = "x",
                              y0 = row$stepping-height, y1 = row$stepping+height, yref = yref)
     }
