@@ -130,7 +130,8 @@ browserly_tx_track <- function(tx_info,
   # Plot the annotation features
   p <- plot_ly(tx_df, 
                type='scatter',
-               name = track_name) %>% 
+               name = track_name,
+               mode = 'markers') %>% 
     add_markers(x = ~midpoint, 
                 y=~stepping,
                 color = ~feature,

@@ -276,11 +276,11 @@ browserly_cvg_track <- function(cvg,
   
   if(type == 'scatter'){
     # Initialize the plot object that will contain the traces
-    p <- plot_ly(source = track_name,
-                 type = 'scatter',
+    p <- plot_ly(type = 'scatter',
                  name = track_name,
                  showlegend = showlegend,
-                 colors = colors)
+                 colors = colors,
+                 mode = mode)
     for(name in rownames(track_data)){
       p <- p %>% add_trace(x = x_data, 
                            y = track_data[name, ],
@@ -295,8 +295,7 @@ browserly_cvg_track <- function(cvg,
   }
   else  if(type == 'heatmap'){
     # A heatmap is only a single trace
-    p <- plot_ly(source = track_name,
-                 type = 'heatmap',
+    p <- plot_ly(type = 'heatmap',
                  z = track_data,
                  y = rownames(track_data),
                  x=x_data,
