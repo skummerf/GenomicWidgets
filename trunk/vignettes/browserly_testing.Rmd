@@ -10,6 +10,9 @@ output:
       smooth_scroll: false
 ---
 
+# Intro
+The browserly module is designed to easly create track view visualizations of positional genomic data such as ChIP-seq, ATAC-seq, or DNase hypersesitivey assays. High-level functions are provided to easly make visualizations that the user can use to compare results between samples, conditions, and even genomic loci.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(TxDb.Hsapiens.BioMart.igis3.0)
@@ -88,8 +91,8 @@ print(head(symbol_table))
 ### Coverage information.
 Users are expected to provide their own data for plotting. Data should be provided as a GRanges object, where the metadata columns (mcols) contain the coverage values in each range.
 
-The utility function `make_coverage_tracks` is provided
-```{r Read Coverage Files, echo=FALSE}
+The utility function `make_coverage_tracks` is provided for convenience, and has a few helpful features. It takes a list of coverage files (e.g. bigwig, bam) and the `view_range` to be displayed. Optionally, the user can provide corresponding names for the samples (e.g. treatment condition, antibody), and a scaling factor for the coverage data (e.g. library size).
+```{r prep info for coverage, echo=FALSE}
 # Specify coverage files
 input <- fi[2, 'Sample.Control']
 input_idx <- which(fi$Sample.Name==input)
@@ -102,40 +105,67 @@ shortened_names <- names(idx)
 sf <- get_scaling_factor(fi[idx,])/1000000
 sf <- sf[2,]
 
+```
+
+```{r Get coverage}
 # Get the coverage
 cvg <- make_coverage_tracks(fi[idx, "File.bw"], 
                             target_range = view_range, 
                             sample_names = shortened_names, 
                             scaling_factors = sf)
-print(head(cvg))
+head(cvg)
 ```
 
-
+## Standard plot
+A common representation of coverage is a trackview. Browserly makes it simple to 
+create an interactive trackview that looks similar to other packages, such as Gviz.
 ```{r Demo_stacking}
 plot_single_locus(view_range, tx_data, cvg, stacking='squish', type="scatter")
 ```
 
+By default, browserly densely stacks all overlapping transcripts to save visual space. Future versions may allow for the display of "canonical" transcripts. All y axes default to being on the same scale, but this can also be disabled.
+```{r Demo_line}
+plot_single_locus(view_range, tx_data, cvg, type = "scatter", sync_y = FALSE)
+```
+
+## Heatmap of coverage
+Browserly automatcially determines the type of plot for showing coverage. When many
+samples are displayed, browserly defaults to using a heatmap. This saves vertical space, without losing information.
 ```{r Demo_hm}
 plot_single_locus(view_range, tx_data, cvg)
 ```
 
-```{r Demo_line}
-plot_single_locus(view_range, tx_data, cvg, type = "scatter")
-```
+## Additional plotly arguments
+All plotly arguments that can be passed to a trace can also be passed through `plot_single_locus`. The outcome of these arguments is not guaranteed. Please see the [plotly documentation](https://plot.ly/r/reference/) for more information.
 
-# Plotting multiple genes for several conditions
-```{r}
+
+# Mesoscale view
+Browserly also provides functionality for displaying multiple genomic loci. This may be useful when the user wants to compare coverage for several genes under many different conditions. For example, prior knowledge may indicate that a set of genes shows signifcant differential expression, which may be attributable to changes in transcription factor binding between treatments.
+
+## Data preparation
+```{r echo=FALSE}
 # set the gene list
 genes <- c('RNF2', 'E2F1', 'GREB1', 'BAP1')
-
-# Select the indices of the chip-seq experiments
-# c_idx stands for conditions index
 
 # Set how far upstream and downstream  you want to view from the TSS
 extension <- 50000
 conditions <- names(idx)
 cvg_files <- fi[idx, "File.bw"]
+```
 
+The user specifies the genes of interest, as well as the coverage files for the samples that will be displayed.
+```{r}
+genes
+cvg_files
+```
+
+The browserly plotting function requires two additional arguments:
+
+1. A GRangesList of coverage data. Each item in the list will be on a separate subplot
+2. A GRangesList of the annotation data corresponding to the coverage region in item 1. These will be displayed on separate subplots, paired with the appropriate coverage.
+
+Here we prepare the gene regions to be compared by centering around each gene's TSS. This provides a uniform comparison between genes.
+```{r center data}
 centered_genes <- lapply(genes, function(gene){
   gene_data <- get_centered_gene_info(gene = gene,
                                       extension = extension,
@@ -146,6 +176,7 @@ centered_genes <- lapply(genes, function(gene){
                                       symbol_table = symbol_table)
   return(gene_data)
 })
+
 cvg_list <- GRangesList(lapply(centered_genes, function(x) {x$gene_cvg}))
 names(cvg_list) <- genes
 tx_list <- GRangesList(lapply(centered_genes, function(x) {x$gene_tx}))
@@ -153,6 +184,7 @@ names(tx_list) <- genes
 
 ```
 
+Next we plot the gene coverage for each gene under the specified conditions. By default, the subplots are not on the same scaled. This can be changed using the same `sync_y` argument as in the single locus view.
 ```{r}
 plot_multiple_genes(genes = genes,
                     centered_cvg = cvg_list,
