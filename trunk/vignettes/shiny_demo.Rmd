@@ -27,7 +27,7 @@ library(TxDb.Hsapiens.BioMart.igis3.0)
 library(org.Hs.eg.db)
 library(plotly)
 library(dplyr)
-library(iHeatmapR)
+library(iheatmapr)
 BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
 ```
 
@@ -286,10 +286,6 @@ range_cvg <- make_coverage_tracks(fi$File.bw[idx],
 bw_files <- fi$File.bw[unlist(T47D)]
 names(bw_files) <- sample_names
 
-link_function <- heatmap_click(rna_chip_collapsed_hm, tss_ranges[sig])
-
-track_function <- make_browserly_function(bw_files, tx_data)
-
 ```
 
 ### Setting up the heatmap, link function, and track function
@@ -303,20 +299,24 @@ rna_chip_heatmap <- genomics_heatmap(expression_matrix, ...) %>%
     add_genomics_heatmap(p300_chip_diff, ...) %>%
     add_row_signal(p300_chip_untreated, ...) 
 
-link_function <- heatmap_click(rna_chip_heatmap, tss_ranges)
 
-track_function <- make_browserly_function(bigwig_files, transcript_data)
 ```
 
 ### Calling function to make shiny app
 ```{r, eval = FALSE, echo = TRUE}
-heatmap_to_browserly_shiny(rna_chip_heatmap,
-                           track_function,
-                           link_function)
+heatmap_to_browserly_shiny(heatmap = rna_chip_heatmap,
+                           track_function = track_function,
+                           link = link_function)
 
 ```
 
 ```{r, cache = FALSE, echo = FALSE}
+
+link_function <- heatmap_click(rna_chip_collapsed_hm, tss_ranges[sig])
+
+track_function <- make_browserly_function(cvg_files = bw_files, 
+                                          tx_data = tx_data)
+
 heatmap_to_browserly_shiny(rna_chip_collapsed_hm,
                            track_function,
                            link_function)

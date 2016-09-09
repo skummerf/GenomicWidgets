@@ -30,6 +30,7 @@ make_browserly_function <- function(cvg_files,
                                     ...){
   plot_browserly <- function(target_range){
     snps_in_range <- get_snps_in_range(snps, target_range)
+    print('Getting coverage...')
     cvg_gr <- make_coverage_tracks(inputs = cvg_files,
                                       target_range = target_range, 
                                       sample_names = sample_names, 
@@ -224,7 +225,7 @@ plot_single_locus <- function(target_range,
     }
   
   # Add snps to annotation track
-  if(!is.null(snps)){
+  if(!is.null(snps) & length(snps) > 0){
     annotation_track <- add_snp_to_annotation_track(tx_track[[1]], snps)
   } else {
     annotation_track <- tx_track
