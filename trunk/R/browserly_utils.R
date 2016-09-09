@@ -63,6 +63,24 @@ get_centered_gene_info <- function(gene,
 
 #' Title
 #'
+#' @param snp_gr 
+#' @param target_range 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_snps_in_range <- function(snp_gr, target_range){
+  snp_hits <- findOverlaps(snp_gr, target_range, type='within')
+  snp_locs <- snp_gr[queryHits(snp_hits)]
+  if(length(snp_locs)==0){
+    return(NULL)
+  }
+  return(snp_locs)
+}
+
+#' Title
+#'
 #' @param plotly_obj 
 #' @param ax_info 
 #' @param heights 
@@ -72,9 +90,10 @@ get_centered_gene_info <- function(gene,
 #' @examples
 adjust_y_domains <- function(plotly_obj, 
                              ax_info, 
-                             heights){
-  # Axes are plotted from bottom to top, so yaxis is the lowermost plot
-  yaxes <- sort(unlist(unique(ax_info$yaxis)), decreasing = TRUE)
+                             heights,
+                             sort_decrease = TRUE){
+  # The sort order may change depending on external factors, such as expression data
+  yaxes <- sort(unlist(unique(ax_info$yaxis)), decreasing = sort_decrease)
   tops <- cumsum(heights)
   bases <- tops - heights
   # Check that heights sum to less than 1
@@ -106,6 +125,48 @@ invert_ranges <- function(gr,
   
   return(GRanges(tmp_df))
 }
+
+#' browserly_snp_track
+#' Make a snp track
+#' 
+#' Currently this is only a helper function, but it could be made to stand alone
+#'
+#' @param tx_info GRanges: mcols describe the annotation features
+#'
+#' @return plotly_object
+#'
+#' @examples
+browserly_snp_track <- function(tx_track,
+                                snp_info, 
+                                # track_name,
+                                group_col = 'CONTEXT'){
+  # Make GRanges into df
+  snp_df <- biovizBase::mold(snp_info) %>% group_by(.dots = c(group_col))
+  snp_df['text'] <- paste0('SNP ID: ', names(snp_info), "<br>",
+                           'Disease: ', snp_df$DISEASE.TRAIT, "<br>",
+                           'Risk Allele (freq): ', sapply(snp_df$STRONGEST.SNP.RISK.ALLELE, function(x){substr(x, nchar(x), nchar(x))}), 
+                           " (",snp_df$RISK.ALLELE.FREQUENCY, ")")
+  snp_types <- unique(snp_df[[group_col]])
+  snp_df['level'] <- sapply(snp_df[[group_col]], function(x){-which(x==snp_types)})
+  # snp_df['level'] <- 1
+  
+  # Plot the annotation features
+  # p <- plot_ly(snp_df, 
+  #              type='scatter',
+  #              name = track_name,
+  #              mode = 'markers') %>% 
+  p <- tx_track %>% add_markers(x = snp_df[['midpoint']],
+                                y = snp_df[['level']],
+                                color = snp_df[[group_col]],
+                                showlegend=FALSE,
+                                text=snp_df[['text']],
+                                hoverinfo='x+text')
+  # Build the plot so it can be referenced. Return as list for subploting
+  p <- list(plotly_build(p))
+  return(p)
+}
+
+
 
 #' browserly_tx_track
 #' Make the invisible points for an annotation track.
@@ -218,7 +279,7 @@ modify_y <- function(plotly_obj,
     # Get the row as a named list
     cur_row <- lapply(slice(plot_axes, idx), function(x) {unlist(x)})
     ax <- cur_row$yaxis
-    if(!cur_row$is_annotation){
+    if(!cur_row$is_annotation & !cur_row$is_snp){
       if(cur_row$type!='heatmap'){
         if(sync_y) plotly_obj$x$layout[[ax]][['range']] <- c(0, score_max)
         if(native_title) plotly_obj $x$layout[[ax]][['title']] <- cur_row$subplot_name
@@ -241,6 +302,7 @@ modify_y <- function(plotly_obj,
       plotly_obj$x$layout[[ax]][['ticks']] <- ""
       plotly_obj$x$layout[[ax]][['showticklabels']] <- FALSE
       plotly_obj$x$layout[[ax]][['showgrid']] <- FALSE
+      plotly_obj$x$layout[[ax]][['zeroline']] <- FALSE
     }
     
     # Set the title for the axis if necessary
@@ -248,7 +310,7 @@ modify_y <- function(plotly_obj,
       title_list[[idx]] <- list(text = cur_row$subplot_name, 
                                 showarrow=FALSE, 
                                 textangle=title_rotation,
-                                x = cur_row$x0-(label_padding/50),
+                                x = cur_row$x0-(label_padding/100),
                                 y = (cur_row$y0+cur_row$y1)/2,
                                 xref = 'paper',
                                 yref = 'paper',
@@ -257,7 +319,7 @@ modify_y <- function(plotly_obj,
       )}
   }
   # Set the margin and pad for the size of the y axes labels
-  plotly_obj$x$layout$margin$l <- max_title + label_padding
+  plotly_obj$x$layout$margin$l <- max_title + 2*label_padding
   
   # Add the titles
   plotly_obj$x$layout$annotations <- title_list
@@ -289,7 +351,8 @@ get_subplot_ax_info <- function(plotly_obj){
                       ymax = ifelse(is.numeric(x$y), max(x$y), 0),
                       type = x$type,
                       is_trace = is_trace,
-                      is_annotation = grepl('Annotation', x$name))
+                      is_annotation = grepl('Annotation', x$name),
+                      is_snp = grepl('SNP', x$name))
     return(data_info)
   })
   

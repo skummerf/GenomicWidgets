@@ -5,7 +5,8 @@
 \title{Title}
 \usage{
 plot_single_locus(target_range, tx_data, cvg, hm_thresh = 4,
-  stacking = "dense", sync_y = TRUE, type = NULL, xlabel = NULL, ...)
+  stacking = "dense", sync_y = TRUE, type = NULL, xlabel = NULL,
+  snps = NULL, ...)
 }
 \arguments{
 \item{target_range}{}

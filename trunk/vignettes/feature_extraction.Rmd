@@ -14,7 +14,7 @@ library(TxDb.Hsapiens.BioMart.igis3.0)
 library(org.Hs.eg.db)
 library(dplyr)
 library(plotly)
-library(iHeatmapR)
+library(iheatmapr)
 ```
 
 ```{r Match transcripts with symbol, echo = FALSE}

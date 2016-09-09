@@ -58,6 +58,7 @@ plot_multiple_genes <- function(genes,
                                 mode = 'lines',
                                 sync_y = FALSE,
                                 xlabel = 'TSS',
+                                gene_exprs = matrix(),
                                 ...){
   # Make transcript tracks
   tx_tracks <- lapply(genes, function(gene){
@@ -79,6 +80,30 @@ plot_multiple_genes <- function(genes,
   plot_order <- order(rep(seq_along(genes), 2))
   plots <- c(cvg_tracks, tx_tracks)[plot_order]
   sp <- subplot(plots, shareX = TRUE, nrows=length(plots))
+  
+  # Add expression data if it exists
+  if(!all(is.na(gene_exprs))){
+    melted_exprs <- melt(gene_exprs)
+    plots <- lapply(genes, function(x){
+      cur_exprs <- filter(melted_exprs, Var1 == x)
+      showlegend <- if(x == genes[[1]]) TRUE else FALSE
+      p <- plot_ly(cur_exprs, y=~value, type = 'box', color=~Var2,
+                   boxpoints = "all", jitter = 0.3, pointpos=0,
+                   showlegend = showlegend, name = x)
+      
+      p <- p %>% layout(xaxis = list(showticklabels = FALSE))
+      return(p)
+    })
+    exp_sp <- subplot(plots, nrows=length(genes_entrez))
+    sp <- subplot(sp, exp_sp, nrows=1)
+    
+    # For some reason the yaxis order changes when subplots are made recursively
+    # To compensate, change the sort order
+    no_exprs <- FALSE
+  } else {
+    no_exprs <- TRUE
+  }
+  
   sp_info <- get_subplot_ax_info(sp)
   
   display_range <- c(min(min(start(centered_cvg))), max(max(end(centered_cvg))))
@@ -99,8 +124,9 @@ plot_multiple_genes <- function(genes,
   # Adjust the layout parameters
   heights <- rep(c((0.25/length(genes)), (0.75/length(genes))), length(genes))
   sp <- adjust_y_domains(plotly_obj = sp,
-                         ax_info = sp_info,
-                         heights = heights)
+                         ax_info = filter(sp_info, type!='box'),
+                         heights = heights,
+                         sort_decrease = no_exprs)
   sp <- modify_y(plotly_obj = sp, 
                  ax_info = sp_info, 
                  grt_ax = grt_ax, 
@@ -141,6 +167,7 @@ plot_single_locus <- function(target_range,
                               sync_y = TRUE,
                               type = NULL,
                               xlabel = NULL,
+                              snps = NULL,
                               ...){
   # Make GeneRegion plot
   tx_info <- get_tx_annotation(range=target_range, tx_data = tx_data)
@@ -164,15 +191,22 @@ plot_single_locus <- function(target_range,
     cvg_L <- sapply(names(mcols(cvg)), function(x) {cvg[, x]})
     }
   
+  # Add snps to annotation track
+  if(!is.null(snps)){
+    annotation_track <- browserly_snp_track(tx_track[[1]], snps)
+  } else {
+    annotation_track <- tx_track
+  }
+  
   # Make the subplots
   cvg_tracks <- make_subplots(grl = cvg_L, 
                               type = type, 
                               legend = 'none',
                               ...)
-  plots <- c(tx_track, cvg_tracks)
+  plots <- c(annotation_track, cvg_tracks)
   
   # Set the track heights and plot them
-  track_heights <- c(0.2, rep(0.8/length(cvg_tracks), length(cvg_tracks)))
+  track_heights <- c(0.3, rep(0.7/length(cvg_tracks), length(cvg_tracks)))
   sp <- subplot(plots, nrows=length(plots), shareX = TRUE, heights=track_heights)
   sp_info <- get_subplot_ax_info(sp)
   
@@ -184,6 +218,17 @@ plot_single_locus <- function(target_range,
                       tx_info = tx_info,
                       target_range = target_range, 
                       grt_ax = grt_ax)
+  
+  # # Adjust the snp track domain
+  # if(!is.null(snp_track)){
+  #   snp_ax <- get_annotation_axis(ax_info = sp_info,
+  #                                 annotation_str = 'SNP')
+  #   sp$x$layout[[snp_ax]]$domain <- c(sp$x$layout[[snp_ax]]$domain[1]+0.05, 
+  #                                     sp$x$layout[[grt_ax]]$domain[1]+0.05)
+  # }
+  # 
+  # # Update axes parameters
+  # sp_info <- get_subplot_ax_info(sp)
   
   # Adjust the layout parameters
   sp <- modify_y(sp, sp_info, grt_ax, type, sync_y = sync_y)

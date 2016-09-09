@@ -19,6 +19,7 @@ library(TxDb.Hsapiens.BioMart.igis3.0)
 library(plotly)
 library(org.Hs.eg.db)
 library(chipVis)
+library(reshape2)
 ```
 
 ```{r Load data, echo=FALSE}
@@ -135,6 +136,18 @@ samples are displayed, browserly defaults to using a heatmap. This saves vertica
 plot_single_locus(view_range, tx_data, cvg)
 ```
 
+## SNP information
+SNPs can be added from external sources, provided as GRanges. Here we use SNP information from the [GWAS catalog](https://www.ebi.ac.uk/gwas/).
+```{r SNP data}
+snps <- readRDS("/gne/research/workspace/finklej/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
+snps_in_range <- get_snps_in_range(snp_gr = snps, target_range = view_range)
+```
+
+```{r SNP track}
+plot_single_locus(view_range, tx_data, cvg, type='scatter', snps = snps_in_range,
+                  stacking = 'squish', sync_y = FALSE)
+```
+
 ## Additional plotly arguments
 All plotly arguments that can be passed to a trace can also be passed through `plot_single_locus`. The outcome of these arguments is not guaranteed. Please see the [plotly documentation](https://plot.ly/r/reference/) for more information.
 
@@ -184,9 +197,34 @@ names(tx_list) <- genes
 
 ```
 
+## Multi gene plot
 Next we plot the gene coverage for each gene under the specified conditions. By default, the subplots are not on the same scaled. This can be changed using the same `sync_y` argument as in the single locus view.
 ```{r}
 plot_multiple_genes(genes = genes,
                     centered_cvg = cvg_list,
                     centered_tx = tx_list)
+```
+
+## Adding expression data
+
+```{r Expression Data, echo= FALSE}
+rpkmEset <- readRDS("/gne/research/workspace/schepa/Carroll_Data/GSE68358.rpkmEset.with_fdata.Rds")
+T47D_eset <- rpkmEset[,grep("T47D",pData(rpkmEset)$celltype)]
+treat_groups = stringr::str_trim(sapply(stringr::str_split(pData(T47D_eset)$treatment,":"), 
+                     function(x) x[[2]])) %>% gsub("+","_",., fixed= TRUE) %>% 
+ gsub("_3hr","",.)
+genes_entrez <- fData(T47D_eset)$entrez[fData(T47D_eset)$symbol %in% genes]
+exprs_idx <- match(genes_entrez, rownames(exprs(T47D_eset)))
+gene_exprs <- exprs(T47D_eset)[exprs_idx,]
+colnames(gene_exprs) <- treat_groups
+rownames(gene_exprs) <- genes
+```
+
+Gene expression can be added to the plots if a named matrix is passed. The rows correspond to the genes to be plotted, and the columns are labelled by treatment condition. Columns with the same names are grouped together in box plots.
+```{r}
+print(gene_exprs)
+plot_multiple_genes(genes = genes,
+                    centered_cvg = cvg_list,
+                    centered_tx = tx_list,
+                    gene_exprs = gene_exprs)
 ```
