@@ -1,10 +1,8 @@
 ---
 title: "browserly_testing"
 author: "Justin Finkle"
-date: '`r format(Sys.time(), ''%d %B, %Y'')`'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     toc: yes
     toc_float:
@@ -149,6 +147,26 @@ snps_in_range <- get_snps_in_range(snp_gr = snps, target_range = view_range)
 plot_single_locus(view_range, tx_data, cvg, type='scatter', snps = snps_in_range,
                   stacking = 'squish', sync_y = FALSE)
 ```
+
+## Function abstraction
+If the same files and annotation data will be used multiple times, but the view range will change, it is often more convenient to have a wrapper function around `plot_single_locus`. In this example we abstract the function call so that only the target range is provided to the new function. This simplification is particularly useful when using browserly in a Shiny application.
+```{r Function abstraction}
+trackview_function <- make_browserly_function(cvg_files = fi[idx, "File.bw"],
+                                              tx_data = tx_data, 
+                                              sample_names = shortened_names, 
+                                              cvg_scaling = sf,
+                                              stacking = 'squish',
+                                              snps = snps)
+```
+
+Now we can plot new regions very easily.
+```{r Function plot}
+# Let's switch genes and plot NRIP1
+new_view <- extend_grange(get_view_range(chr = 21, start =  14961235, end = 15065936), 20000)
+trackview_function(new_view)
+```
+
+
 
 ## Additional plotly arguments
 All plotly arguments that can be passed to a trace can also be passed through `plot_single_locus`. The outcome of these arguments is not guaranteed. Please see the [plotly documentation](https://plot.ly/r/reference/) for more information.

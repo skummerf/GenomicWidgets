@@ -2,28 +2,36 @@
 % Please edit documentation in R/browserly.R
 \name{plot_single_locus}
 \alias{plot_single_locus}
-\title{Title}
+\title{plot_single_locus
+Plot coverage at a single region. This is the common trackview used}
 \usage{
 plot_single_locus(target_range, tx_data, cvg, hm_thresh = 4,
-  stacking = "dense", sync_y = TRUE, type = NULL, xlabel = NULL,
-  snps = NULL, ...)
+  stacking = c("dense", "squish"), type = NULL, sync_y = TRUE,
+  xlabel = NULL, snps = NULL, ...)
 }
 \arguments{
-\item{target_range}{}
+\item{target_range}{GRanges: range to be displayed}
 
-\item{tx_data}{}
+\item{tx_data}{list: annotation information}
 
-\item{hm_thresh}{}
+\item{cvg}{GRanges: coverage data. Metadata columns should contain coverage scores}
 
-\item{stacking}{}
+\item{hm_thresh}{integer: threshold above which coverage is plotted as a heatmap}
 
-\item{sync_y}{}
+\item{stacking}{character: how to plot the annotations.}
 
-\item{type}{}
+\item{type}{character: the plot type. will override hm_thresh}
 
-\item{...}{}
+\item{sync_y}{logical: plots subplots on same y scale if TRUE}
+
+\item{xlabel}{character: title for x axis}
+
+\item{snps}{GRanges: SNPs to display}
+
+\item{...}{additional plotly arguments}
 }
 \description{
-Title
+plot_single_locus
+Plot coverage at a single region. This is the common trackview used
 }
 

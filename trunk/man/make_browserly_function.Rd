@@ -2,25 +2,39 @@
 % Please edit documentation in R/browserly.R
 \name{make_browserly_function}
 \alias{make_browserly_function}
-\title{Title}
+\title{make_browserly_function
+Abstract browserly plotting to a function that takes a single argument. This is
+particularly useful when using the function in a shiny app}
 \usage{
 make_browserly_function(cvg_files, tx_data, sample_names = names(cvg_files),
-  hm_thresh = 4, type = NULL, cvg_scaling = rep(1, length(cvg_files)))
+  cvg_scaling = rep(1, length(cvg_files)), hm_thresh = 4, type = NULL,
+  stacking = c("dense", "squish"), sync_y = TRUE, xlabel = NULL,
+  snps = GRanges(), ...)
 }
 \arguments{
 \item{cvg_files}{}
 
 \item{tx_data}{}
 
-\item{hm_thresh}{}
-
-\item{type}{}
+\item{sample_names}{}
 
 \item{cvg_scaling}{}
 
-\item{genome}{}
+\item{type}{}
+
+\item{stacking}{}
+
+\item{sync_y}{}
+
+\item{xlabel}{}
+
+\item{snps}{}
+
+\item{...}{}
 }
 \description{
-Title
+make_browserly_function
+Abstract browserly plotting to a function that takes a single argument. This is
+particularly useful when using the function in a shiny app
 }
 

@@ -1,11 +1,17 @@
-#' Title
+#' make_browserly_function
+#' Abstract browserly plotting to a function that takes a single argument. This is
+#' particularly useful when using the function in a shiny app
 #'
 #' @param cvg_files 
-#' @param genome 
 #' @param tx_data 
-#' @param hm_thresh 
 #' @param type 
 #' @param cvg_scaling 
+#' @param sample_names 
+#' @param stacking 
+#' @param sync_y 
+#' @param xlabel 
+#' @param snps 
+#' @param ... 
 #'
 #' @return
 #' @export
@@ -14,34 +20,51 @@
 make_browserly_function <- function(cvg_files, 
                                     tx_data,
                                     sample_names = names(cvg_files),
+                                    cvg_scaling = rep(1, length(cvg_files)),
                                     hm_thresh = 4,
                                     type = NULL,
-                                    cvg_scaling = rep(1, length(cvg_files))){
+                                    stacking = c('dense', 'squish'),
+                                    sync_y = TRUE,
+                                    xlabel = NULL,
+                                    snps = GRanges(),
+                                    ...){
   plot_browserly <- function(target_range){
+    snps_in_range <- get_snps_in_range(snps, target_range)
     cvg_gr <- make_coverage_tracks(inputs = cvg_files,
                                       target_range = target_range, 
-                                      sample_names = names(cvg_files), 
+                                      sample_names = sample_names, 
                                       scaling_factors = cvg_scaling)
     b_plot <- plot_single_locus(target_range = target_range, 
                                 tx_data = tx_data,
                                 cvg = cvg_gr,
                                 hm_thresh = hm_thresh,
-                                type = type)
+                                type = type,
+                                stacking = stacking,
+                                sync_y = sync_y,
+                                xlabel = xlabel,
+                                snps = snps_in_range,
+                                ...)
     return(b_plot)
   }
-  class(plot_browserly) <- c(class("plot_browserly"), "browserly")
+  class(plot_browserly) <- c(class(plot_browserly), "browserly")
   return(plot_browserly)
 }
 
 
-#' Title
+#' plot_multiple_genes
+#' Plot several genes as separate tracks, each with multiple traces
 #'
-#' @param target_range 
-#' @param tx_data 
-#' @param cvg_L 
-#' @param hm_thresh 
-#' @param stacking 
-#' @param sync_y 
+#' @param genes character: vector of gene names to be plotted
+#' @param centered_cvg list: of GRanges coverage objects that are lined up at the TSS. See `get_centered_gene_info` for more detailes
+#' @param centered_tx list: of GRanges annotation objects that are lined up at the TSS. See `get_centered_gene_info` for more detailes
+#' @param hm_thresh integer: threshold above which coverage is plotted as a heatmap
+#' @param stacking character: how to plot the annotations.
+#' @param type character: the plot type. will override hm_thresh
+#' @param fill character: fill for plotly traces
+#' @param mode character: drawing mode for trace
+#' @param sync_y logical: plots subplots on same y scale if TRUE
+#' @param xlabel character: title for x axis
+#' @param gene_exprs  matrix: gene expression values to be plotted. rownames correspond to genes. columns are different samples and can have duplicate names. colnames are used for putting values in the correct boxplot
 #' @param ... 
 #'
 #' @return
@@ -69,6 +92,7 @@ plot_multiple_genes <- function(genes,
     return(tx_track[[1]])
   })
   
+  # Make subplots
   cvg_tracks <- make_subplots(plot_data = cvg_list, 
                               type = type, 
                               fill = fill, 
@@ -94,6 +118,8 @@ plot_multiple_genes <- function(genes,
       p <- p %>% layout(xaxis = list(showticklabels = FALSE))
       return(p)
     })
+    
+    # Make expression subplot and combine with existing subplot.
     exp_sp <- subplot(plots, nrows=length(genes_entrez))
     sp <- subplot(sp, exp_sp, nrows=1)
     
@@ -104,6 +130,7 @@ plot_multiple_genes <- function(genes,
     no_exprs <- TRUE
   }
   
+  # Get axes information that is used in modifying layouts
   sp_info <- get_subplot_ax_info(sp)
   
   display_range <- c(min(min(start(centered_cvg))), max(max(end(centered_cvg))))
@@ -144,16 +171,19 @@ plot_multiple_genes <- function(genes,
   return(sp)
 }
 
-#' Title
+#' plot_single_locus
+#' Plot coverage at a single region. This is the common trackview used
 #'
-#' @param tx_data 
-#' @param cvg
-#' @param hm_thresh 
-#' @param type 
-#' @param target_range 
-#' @param stacking 
-#' @param sync_y 
-#' @param ... 
+#' @param target_range GRanges: range to be displayed
+#' @param tx_data list: annotation information
+#' @param cvg GRanges: coverage data. Metadata columns should contain coverage scores
+#' @param hm_thresh integer: threshold above which coverage is plotted as a heatmap
+#' @param stacking character: how to plot the annotations.
+#' @param type character: the plot type. will override hm_thresh
+#' @param sync_y logical: plots subplots on same y scale if TRUE
+#' @param xlabel character: title for x axis
+#' @param snps GRanges: SNPs to display
+#' @param ... additional plotly arguments
 #'
 #' @return
 #' @export
@@ -163,12 +193,14 @@ plot_single_locus <- function(target_range,
                               tx_data, 
                               cvg,
                               hm_thresh = 4,
-                              stacking = 'dense',
-                              sync_y = TRUE,
+                              stacking = c('dense', 'squish'),
                               type = NULL,
+                              sync_y = TRUE,
                               xlabel = NULL,
                               snps = NULL,
                               ...){
+  stacking <- match.arg(stacking)
+  
   # Make GeneRegion plot
   tx_info <- get_tx_annotation(range=target_range, tx_data = tx_data)
   
