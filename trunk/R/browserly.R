@@ -63,13 +63,13 @@ plot_multiple_genes <- function(genes,
   # Make transcript tracks
   tx_tracks <- lapply(genes, function(gene){
     tx_info <- centered_tx[[gene]]
-    tx_info <- set_tx_level(tx_info, stacking = stacking)
-    tx_track <- browserly_tx_track(tx_info = tx_info, 
+    tx_info <- add_tx_stepping(tx_info, stacking = stacking)
+    tx_track <- browserly_annotation_track(tx_info = tx_info, 
                                    track_name = paste0(gene,'_Annotation'))
     return(tx_track[[1]])
   })
   
-  cvg_tracks <- make_subplots(grl = cvg_list, 
+  cvg_tracks <- make_subplots(plot_data = cvg_list, 
                               type = type, 
                               fill = fill, 
                               mode = mode,
@@ -111,14 +111,14 @@ plot_multiple_genes <- function(genes,
   for(gene in genes){
     # Get the axis on which annotations are made
     tx_info <- tx_list[[gene]]
-    tx_info <- set_tx_level(tx_info, stacking = 'dense')
-    grt_ax <- filter(sp_info, grepl(gene, subplot_name), 
+    tx_info <- add_tx_stepping(tx_info, stacking = 'dense')
+    ann_ax <- filter(sp_info, grepl(gene, subplot_name), 
                      is_annotation == TRUE)$yaxis[[1]]
     # Add the annotation shapes
     sp <- add_tx_shapes(plotly_obj = sp, 
                         tx_info = tx_info, 
                         target_range = range(tx_info), 
-                        grt_ax = grt_ax)
+                        ann_ax = ann_ax)
     
   }
   # Adjust the layout parameters
@@ -129,7 +129,7 @@ plot_multiple_genes <- function(genes,
                          sort_decrease = no_exprs)
   sp <- modify_y(plotly_obj = sp, 
                  ax_info = sp_info, 
-                 grt_ax = grt_ax, 
+                 ann_ax = ann_ax, 
                  type = type, 
                  sync_y = sync_y, 
                  native_title = TRUE)
@@ -173,10 +173,10 @@ plot_single_locus <- function(target_range,
   tx_info <- get_tx_annotation(range=target_range, tx_data = tx_data)
   
   # Prepare tx info for plotting
-  tx_info <- set_tx_level(tx_info, stacking = stacking)
+  tx_info <- add_tx_stepping(tx_info, stacking = stacking)
   
   # Make "invisible" transcript plot
-  tx_track <- browserly_tx_track(tx_info = tx_info, track_name = 'Annotation')
+  tx_track <- browserly_annotation_track(tx_info = tx_info, track_name = 'Annotation')
   
   # Make supblots
   # Decide the type of datatrack to plot if not provided
@@ -193,13 +193,13 @@ plot_single_locus <- function(target_range,
   
   # Add snps to annotation track
   if(!is.null(snps)){
-    annotation_track <- browserly_snp_track(tx_track[[1]], snps)
+    annotation_track <- add_snp_to_annotation_track(tx_track[[1]], snps)
   } else {
     annotation_track <- tx_track
   }
   
   # Make the subplots
-  cvg_tracks <- make_subplots(grl = cvg_L, 
+  cvg_tracks <- make_subplots(plot_data = cvg_L, 
                               type = type, 
                               legend = 'none',
                               ...)
@@ -211,27 +211,16 @@ plot_single_locus <- function(target_range,
   sp_info <- get_subplot_ax_info(sp)
   
   # Get the axis on which annotations are made
-  grt_ax <- get_annotation_axis(ax_info = sp_info)
+  ann_ax <- get_annotation_axis(ax_info = sp_info)
   
   # Add the annotation shapes
   sp <- add_tx_shapes(plotly_obj = sp, 
                       tx_info = tx_info,
                       target_range = target_range, 
-                      grt_ax = grt_ax)
-  
-  # # Adjust the snp track domain
-  # if(!is.null(snp_track)){
-  #   snp_ax <- get_annotation_axis(ax_info = sp_info,
-  #                                 annotation_str = 'SNP')
-  #   sp$x$layout[[snp_ax]]$domain <- c(sp$x$layout[[snp_ax]]$domain[1]+0.05, 
-  #                                     sp$x$layout[[grt_ax]]$domain[1]+0.05)
-  # }
-  # 
-  # # Update axes parameters
-  # sp_info <- get_subplot_ax_info(sp)
+                      ann_ax = ann_ax)
   
   # Adjust the layout parameters
-  sp <- modify_y(sp, sp_info, grt_ax, type, sync_y = sync_y)
+  sp <- modify_y(sp, sp_info, ann_ax, type, sync_y = sync_y)
   
   # Final layout touch up
   sp$x$layout$margin <- list(l = sp$x$layout$margin$l,
@@ -244,44 +233,6 @@ plot_single_locus <- function(target_range,
   return(sp)
   
 }
-
-#' Title
-#'
-#' @param plotly_obj 
-#' @param tx_info 
-#' @param target_range 
-#' @param grt_ax 
-#'
-#' @return
-#' @export
-#'
-#' @examples
-add_tx_shapes <- function(plotly_obj, 
-                          tx_info,
-                          grt_ax,
-                          target_range,
-                          y_scaling=0){
-  # Add annotations
-  tx_info <- biovizBase::mold(tx_info)
-  cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ], height = 0.4, grt_ax)
-  utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], height=0.25, grt_ax)
-  ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ], height=0.25, grt_ax)
-  
-  # Crop arrows to view range
-  cropped_introns <- crop_introns(tx_info[tx_info$feature == 'intron', ], target_range)
-  intron_arrow <- make_arrows2(cropped_introns, grt_ax, 
-                               arrowlen = width(target_range) * 0.01)
-  # Compile new shapes
-  tx_shapes <- c(cds_rect, utr_rect, ncRNA_rect, intron_arrow)
-  
-  # Add shapes to list if it already exists
-  if(!is.null(plotly_obj$x$layout$shapes)){
-    tx_shapes <- c(plotly_obj$x$layout$shapes, tx_shapes)
-  }
-  plotly_obj$x$layout$shapes <- tx_shapes
-  return(plotly_obj)
-}
-
 
 
 #' browserly_cvg_track

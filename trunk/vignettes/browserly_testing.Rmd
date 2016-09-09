@@ -1,13 +1,15 @@
 ---
-title: "browser_ly_testing"
+title: "browserly_testing"
 author: "Justin Finkle"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: 
+date: '`r format(Sys.time(), ''%d %B, %Y'')`'
+output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
-    toc_float: 
-      collapsed: false
-      smooth_scroll: false
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: no
 ---
 
 # Intro
@@ -183,7 +185,7 @@ centered_genes <- lapply(genes, function(gene){
   gene_data <- get_centered_gene_info(gene = gene,
                                       extension = extension,
                                       cvg_files = cvg_files,
-                                      conditions = conditions,
+                                      sample_names = conditions,
                                       scaling_factor = sf,
                                       tx_data = tx_data,
                                       symbol_table = symbol_table)

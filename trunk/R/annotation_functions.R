@@ -85,6 +85,9 @@ get_tx_features <- function(tx_names, tx_data){
   nc_tx <- setdiff(exon_tx, coding_tx)
   parts$feature[parts$transcript %in% nc_tx & parts$feature=='exon'] <-'ncRNA'
   
+  # Remove the now redudant exons
+  parts <- parts[parts$feature != 'exon']
+  
   return(parts)
 }
 

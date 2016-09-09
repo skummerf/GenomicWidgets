@@ -12,7 +12,7 @@ get_annotation_axis(ax_info, annotation_str = "Annotation")
 \item{annotation_str}{str: the string used to find the annotation axis}
 }
 \value{
-str: the annotation axis reference in the form "yaxis#"
+str: the annotation axis reference in the form "yaxis[2-9]"
 }
 \description{
 get_annotation_axis

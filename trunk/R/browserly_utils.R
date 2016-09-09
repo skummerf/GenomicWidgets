@@ -1,20 +1,32 @@
-#' Title
-#'
-#' @param gene 
-#' @param cvg_files 
-#' @param conditions 
-#' @param scaling_factor 
-#' @param tx_data 
-#' @param symbol_table 
+# =============================================================================
+# =============================================================================
+# Exported functions
+# =============================================================================
+# =============================================================================
+
+
+#' get_centered_gene_info
+#' Center coverage and annotation around TSS
+#' NOTES: 1. Can be generalized to pass target ranges instead of gene list
+#'        2. Can be generalized to center around any feature
+#'        3. Probably should only pass annotations relevant to the genes
+#'        
+#' @param gene character: gene symbol to be centered
+#' @param extension integer: upstream (and downstream) region around center to be viewed
+#' @param cvg_files characters: paths to coverage files of interest
+#' @param sample_names characters: names for the cvg_files to be displayed
+#' @param scaling_factor numeric: scaling factor for coverage, e.g. library size
+#' @param tx_data list: annotation information
+#' @param symbol_table data.frame: annotation information linking gene symbols with txdb information
 #'
 #' @return
 #' @export
 #'
 #' @examples
 get_centered_gene_info <- function(gene,
-                                   extension,
+                                   extension = 50000,
                                    cvg_files,
-                                   conditions,
+                                   sample_names,
                                    scaling_factor,
                                    tx_data,
                                    symbol_table){
@@ -27,13 +39,14 @@ get_centered_gene_info <- function(gene,
                      symbol_table$start[x])
   gene_chr <- as.character(symbol_table$chr[x])
   gene_strand <- as.character(symbol_table$strand[x])
-  gene_range <- get_view_range(chr = gene_chr,
-                               start = gene_tss - extension,
-                               end = gene_tss + extension,
-                               strand = gene_strand)
+  gene_range <- extend_grange(gr = get_view_range(chr = gene_chr,
+                               start = gene_tss,
+                               end = gene_tss,
+                               strand = gene_strand),
+                              extend = extension)
   gene_cvg <- make_coverage_tracks(cvg_files,
                                    target_range = gene_range,
-                                   sample_names = conditions,
+                                   sample_names = sample_names,
                                    scaling_factors = scaling_factor)
   gene_tx <- get_tx_annotation(range=gene_range, tx_data = tx_data)
   
@@ -47,12 +60,31 @@ get_centered_gene_info <- function(gene,
   
   # If the reference gene is on the - strand, the info needs to be flipped
   if(gene_strand == '-'){
-    gene_cvg <- invert_ranges(gene_cvg)
-    gene_tx <- invert_ranges(gene_tx)
+    gene_cvg <- reflect_ranges(gene_cvg)
+    gene_tx <- reflect_ranges(gene_tx)
     strand(gene_tx) <- "*"
   }
   
   return(list(gene_cvg = gene_cvg, gene_tx = gene_tx))
+}
+
+#' get_snps_in_range
+#' Get the SNPs that fall in a particluar range
+#'
+#' @param snp_gr GRanges: contains SNP information, e.g. from GWAS catalog. See load_snp_data for more info
+#' @param target_range GRanges: the range in which to look for SNPs
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_snps_in_range <- function(snp_gr = GRanges(), 
+                              target_range = GRanges()){
+  
+  snp_hits <- findOverlaps(snp_gr, target_range, type='within')
+  snp_locs <- snp_gr[queryHits(snp_hits)]
+  
+  return(snp_locs)
 }
 
 # =============================================================================
@@ -61,31 +93,15 @@ get_centered_gene_info <- function(gene,
 # =============================================================================
 # =============================================================================
 
-#' Title
+#' adjust_y_domains
+#' Meant to adjust yaxes domains, primarily for mesocale views. Adjusts domains
+#' to properly view annotations with each subplot
 #'
-#' @param snp_gr 
-#' @param target_range 
+#' @param plotly_obj plotly: built plotly object to be modified
+#' @param ax_info data.frame: contains relevant axes information. created using get_subplot_ax_info
+#' @param heights numeric: heights of each track, including annotation tracks
 #'
-#' @return
-#' @export
-#'
-#' @examples
-get_snps_in_range <- function(snp_gr, target_range){
-  snp_hits <- findOverlaps(snp_gr, target_range, type='within')
-  snp_locs <- snp_gr[queryHits(snp_hits)]
-  if(length(snp_locs)==0){
-    return(NULL)
-  }
-  return(snp_locs)
-}
-
-#' Title
-#'
-#' @param plotly_obj 
-#' @param ax_info 
-#' @param heights 
-#'
-#' @return
+#' @return plotly_obj
 #'
 #' @examples
 adjust_y_domains <- function(plotly_obj, 
@@ -96,8 +112,10 @@ adjust_y_domains <- function(plotly_obj,
   yaxes <- sort(unlist(unique(ax_info$yaxis)), decreasing = sort_decrease)
   tops <- cumsum(heights)
   bases <- tops - heights
-  # Check that heights sum to less than 1
-  # Check same number of yaxes and heights
+  
+  # Check that heights sum to less than 1 and there are the same number of axes and heights
+  stopifnot(sum(heights) <= 1, length(yaxes) == length(heights))
+  
   for(y_idx in seq_along(yaxes)){
     yax <- yaxes[[y_idx]]
     plotly_obj$x$layout[[yax]]$domain <- c(bases[[y_idx]], tops[[y_idx]])
@@ -105,19 +123,21 @@ adjust_y_domains <- function(plotly_obj,
   return(plotly_obj)
 }
 
-#' invert_ranges
+#' reflect_ranges
 #' Flip the range over a reference value
 #' 
-#' @param gr 
-#' @param reference 
+#' @param gr GRanges: data to be flipped
+#' @param reference integer: position around which values in the gr are reflected
 #'
 #' @return
 #'
 #' @examples
-invert_ranges <- function(gr,
+reflect_ranges <- function(gr,
                           reference = 0){
   # Convert to a dataframe so GRanges doesn't complain about widths during transformation
   old_start <- start(gr)
+  
+  # Remove names so there isn't a conflict when coercing to a data.frame
   names(gr) <- NULL
   tmp_df <- as.data.frame(gr)
   tmp_df$start <- reference - tmp_df$end
@@ -126,41 +146,44 @@ invert_ranges <- function(gr,
   return(GRanges(tmp_df))
 }
 
-#' browserly_snp_track
-#' Make a snp track
-#' 
-#' Currently this is only a helper function, but it could be made to stand alone
+#' add_snp_to_annotation_track
+#' Add SNP information to an annotation track.
+#' NOTE: SNPS could be made as a separate track. However, additional subplots compress
+#' the vertical space, and when there is insufficient room the hoverinfo goes away.
 #'
-#' @param tx_info GRanges: mcols describe the annotation features
+#' @param ann_track plotly: annotation track
+#' @param snp_info GRanges: contains SNP information. Currently supports GRanges made from GWAS catalog
+#' @param group_col character: the column in snp_info for grouping traces. Default is "CONTEXT" which corresponds to the type of mutation in the GWAS catalog, e.g. 'missense'
 #'
 #' @return plotly_object
 #'
 #' @examples
-browserly_snp_track <- function(tx_track,
-                                snp_info, 
-                                # track_name,
-                                group_col = 'CONTEXT'){
-  # Make GRanges into df
+add_snp_to_annotation_track <- function(ann_track,
+                                        snp_info, 
+                                        group_col = 'CONTEXT'){
+  # Make GRanges into df and group into traces.
   snp_df <- biovizBase::mold(snp_info) %>% group_by(.dots = c(group_col))
+  
+  # Make the hoverinfo text
   snp_df['text'] <- paste0('SNP ID: ', names(snp_info), "<br>",
                            'Disease: ', snp_df$DISEASE.TRAIT, "<br>",
                            'Risk Allele (freq): ', sapply(snp_df$STRONGEST.SNP.RISK.ALLELE, function(x){substr(x, nchar(x), nchar(x))}), 
                            " (",snp_df$RISK.ALLELE.FREQUENCY, ")")
-  snp_types <- unique(snp_df[[group_col]])
-  snp_df['level'] <- sapply(snp_df[[group_col]], function(x){-which(x==snp_types)})
-  # snp_df['level'] <- 1
   
-  # Plot the annotation features
-  # p <- plot_ly(snp_df, 
-  #              type='scatter',
-  #              name = track_name,
-  #              mode = 'markers') %>% 
-  p <- tx_track %>% add_markers(x = snp_df[['midpoint']],
+  # Set the level of the snps. Each type of SNP gets a different stepping.
+  # These are forced to be negative so they appear below annotations
+  snp_types <- unique(snp_df[[group_col]])
+  snp_df['level'] <- vapply(snp_df[[group_col]], 
+                            function(x){-which(x==snp_types)}, 
+                            FUN.VALUE = 0L)
+
+  p <- ann_track %>% add_markers(x = snp_df[['midpoint']],
                                 y = snp_df[['level']],
                                 color = snp_df[[group_col]],
                                 showlegend=FALSE,
                                 text=snp_df[['text']],
                                 hoverinfo='x+text')
+  
   # Build the plot so it can be referenced. Return as list for subploting
   p <- list(plotly_build(p))
   return(p)
@@ -168,23 +191,27 @@ browserly_snp_track <- function(tx_track,
 
 
 
-#' browserly_tx_track
+#' browserly_annotation_track
 #' Make the invisible points for an annotation track.
 #' 
 #' Currently this is only a helper function, but it could be made to stand alone
 #'
 #' @param tx_info GRanges: mcols describe the annotation features
+#' @param track_name character: name for the track. May be used for referencing axes and adjusting domains
+#' @param opacity numeric: value between 0 and 1. Sets the opacity of the points used for hoverinfo. Should almost always be 0.
+#' @param markercolor character: color to use for markers. Default is 'grey'. If set to NULL, different colors will be used for each class of anntoation feature, e.g. intron, cds, utr3
 #'
 #' @return plotly_object
 #'
 #' @examples
-browserly_tx_track <- function(tx_info, 
-                               track_name,
-                               add_shapes = FALSE,
-                               target_range = NULL,
-                               opacity = 0,
-                               markercolor = 'grey'){
-  # Make GRanges into df
+browserly_annotation_track <- function(tx_info, 
+                                       track_name = 'Annotation',
+                                       opacity = 0,
+                                       markercolor = 'grey'){
+  # Convert the marker color to a plotly usable color
+  markercolor <- make_plotly_color(markercolor)
+  
+  # Make GRanges into df and group by annotation feature
   tx_df <- biovizBase::mold(tx_info) %>% group_by(feature)
   tx_df['text'] <- paste0('Tx ID: ', tx_df$transcript)
   
@@ -201,8 +228,7 @@ browserly_tx_track <- function(tx_info,
                 marker = list(color = markercolor),
                 hoverinfo='x+name+text',
                 opacity = opacity)
-  target_range <- if(is.null(target_range)) reduce(range(tx_info), 
-                                                   ignore.strand=TRUE)
+  
   # Build the plot so it can be referenced. Return as list for subploting
   p <- list(plotly_build(p))
   return(p)
@@ -210,54 +236,59 @@ browserly_tx_track <- function(tx_info,
 
 #' make_subplots
 #' Make subplots of coverage tracks
+#' 
 #'
-#' @param grl GRangesList: a named list. Each GRanges object in the list will be plotted on a separate axis
+#' @param plot_data list: a named list. Each list item will be plotted on a separate axis, and is expected to be a GRanges object, whose metadata columns will be plotted.
 #' @param type str: type of plot to use
+#' @param legend str: which subplots to include with legends. 'first' (default), only shows the legend for the first subplot.
 #' @param ... additional parameters to pass to browserly_cvg_track
 #'
 #' @return
 #'
 #' @examples
-make_subplots <- function(grl,
+make_subplots <- function(plot_data,
                           type,
                           legend = c('first', 'all', 'none'),
                           ...){
   legend = match.arg(legend)
   
   # Make the subplots
-  plot_list <- lapply(names(grl), function(x, grl, type, ...){
-    if(x == names(grl)[[1]] & legend == 'first'){
+  plot_list <- lapply(names(plot_data), function(x, plot_data, type, ...){
+    if(x == names(plot_data)[[1]] & legend == 'first'){
       showlegend = TRUE
     } else if(legend == 'all'){
       showlegend = TRUE
     } else {
       showlegend = FALSE
     }
-    browserly_cvg_track(cvg = grl[[x]],
+    browserly_cvg_track(cvg = plot_data[[x]],
                         track_name = x,
                         type = type,
                         showlegend = showlegend,
                         ...)
-  }, grl, type, ...)
+  }, plot_data, type, ...)
   return(plot_list)
 }
 
 #' modify_y
-#' Modify y axes features such as titles, range, etc
+#' Modify y axes features such as titles, range, etc. This is a HIGHLY specific
+#' function for making trackviews look nice.
 #'
-#' @param plotly_obj 
-#' @param ax_info 
-#' @param grt_ax 
-#' @param type 
-#' @param sync_y 
-#' @param title_rotation 
+#' @param plotly_obj plotly: object to modify
+#' @param ax_info data.frame: contains axes information so plot can be adjusted. See get_subplot_ax_info for more information
+#' @param ann_ax character: the annotation axis of the form "yaxis[2-9]". These have different formatting requirements
+#' @param type character: different types of plots are treated differently
+#' @param sync_y logical: put all y-axes on same scale
+#' @param native_title logical: use plotly titles. If FALSE, annotations are added to each subplot. Useful if titles are long to prevent title overlap. Margins are automatically adjusted
+#' @param title_rotation numeric: angle of plot titles. Only used if native_title is FALSE
+
 #'
 #' @return
 #'
 #' @examples
 modify_y <- function(plotly_obj, 
                      ax_info, 
-                     grt_ax, 
+                     ann_ax, 
                      type,
                      sync_y = TRUE,
                      native_title = FALSE,
@@ -267,7 +298,7 @@ modify_y <- function(plotly_obj,
   plot_axes <- filter(ax_info, is_trace == FALSE | type == 'heatmap')
   
   # Get the max y value
-  score_max <- max(unlist(filter(ax_info, is_trace == TRUE, yaxis != grt_ax)$ymax))
+  score_max <- max(unlist(filter(ax_info, is_trace == TRUE, yaxis != ann_ax)$ymax))
   
   # Get the largest title and pad with y axis labels
   label_padding <- nchar(round(score_max))+3 # Give a charater buffer in case of zooming
@@ -383,7 +414,7 @@ calc_title_margin <- function(titles,
                               padding = 0,
                               letter_width = 9){
   # Calculate how big the left margin should be
-  max_label_length <- max(sapply(titles, nchar)) + padding
+  max_label_length <- max(vapply(titles, nchar, FUN.VALUE = 0L)) + padding
   left_margin = max(letter_width*max_label_length, 60)
   return(left_margin)
 }
@@ -394,7 +425,7 @@ calc_title_margin <- function(titles,
 #' @param ax_info data.frame like: contains info for different subplot axes in plotly object
 #' @param annotation_str str: the string used to find the annotation axis
 #'
-#' @return str: the annotation axis reference in the form "yaxis#"
+#' @return str: the annotation axis reference in the form "yaxis[2-9]"
 #'
 #' @examples
 get_annotation_axis <- function(ax_info,
@@ -406,7 +437,7 @@ get_annotation_axis <- function(ax_info,
   return(unlist(ann_info))
 }
 
-#' set_tx_level
+#' add_tx_stepping
 #' Set the level that that transcripts will be displayed on
 #'
 #' @param tx_gr GRanges: contains transcript information 
@@ -415,7 +446,7 @@ get_annotation_axis <- function(ax_info,
 #' @return
 #'
 #' @examples
-set_tx_level <- function(tx_gr, 
+add_tx_stepping <- function(tx_gr, 
                          stacking = c('dense', 'squish')){
   stacking <- match.arg(stacking)
   if(length(tx_gr)){
@@ -430,16 +461,84 @@ set_tx_level <- function(tx_gr,
   }
 }
 
-crop_introns <- function(introns, target_range){
-  introns$start <- pmax(introns$start, start(target_range))
-  introns$end <- pmin(introns$end, end(target_range))
-  introns$midpoint <- pmin(pmax(introns$midpoint, start(target_range)), end(target_range))
-  return(introns)
+#' make_plotly_color
+#' Convert R colors to plotly compatible rgb values
+#'
+#' @param color_str 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_plotly_color <- function(color_str){
+  # Plotly accepts some string colors, but it is safer to use rgb(0,0,0) values
+  p_color <- rgb(t(col2rgb(color_str)), maxColorValue = 255)
+  return(p_color)
 }
 
-make_rect <- function(df, height, yref,
+# =============================================================================
+# =============================================================================
+# Annotation track shapes
+# =============================================================================
+# =============================================================================
+#' add_tx_shapes
+#' Add annotation shapes to a specific axis
+#'
+#'
+#' @param plotly_obj plotly: object to be modified
+#' @param tx_info GRanges: contains annotation information. Must have metadata column with name 'feature' to make shapes
+#' @param ann_ax character: axis to add shapes to, of the form 'yaxis[2-9]'
+#' @param target_range GRanges: range to display. Used to draw shapes properly
+#'
+#' @return
+#' @export
+#'
+#' @examples
+add_tx_shapes <- function(plotly_obj, 
+                          tx_info,
+                          ann_ax,
+                          target_range){
+  # Add annotations
+  tx_info <- biovizBase::mold(tx_info)
+  cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ],
+                        height = 0.4, 
+                        ann_ax)
+  utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], 
+                        height=0.25, 
+                        ann_ax)
+  ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ],
+                          height=0.25, 
+                          ann_ax)
+  intron_arrow <- make_arrows(tx_info[tx_info$feature == 'intron', ], ann_ax, 
+                              arrowlen = width(target_range) * 0.01)
+  # Compile new shapes
+  tx_shapes <- c(cds_rect, utr_rect, ncRNA_rect, intron_arrow)
+  
+  # Add shapes to list if it already exists
+  if(!is.null(plotly_obj$x$layout$shapes)){
+    tx_shapes <- c(plotly_obj$x$layout$shapes, tx_shapes)
+  }
+  plotly_obj$x$layout$shapes <- tx_shapes
+  return(plotly_obj)
+}
+
+#' make_rect
+#' Make the rectangle objects. These are used to display annotation features such
+#' as cds, and utr.
+#'
+#' @param df data.frame: data used to draw the shapes. Required columns include "start", "end", and "stepping"
+#' @param height numeric: the height of the rectangles
+#' @param yref character: axis on which to draw the rectangles, in the form of "yaxis[2-9]" or "y[2-9]"
+#' @param fillcolor character: color of the rectangle
+#'
+#' @return
+#'
+#' @examples
+make_rect <- function(df, 
+                      height, 
+                      yref,
                       fillcolor = 'lightslateblue'){
-  fillcolor <- rgb(t(col2rgb(fillcolor)), maxColorValue = 255)
+  fillcolor <- make_plotly_color(fillcolor)
   yref <- gsub("yaxis", "y", yref)
   if(nrow(df)>0){
     rect_list <- vector("list", nrow(df))
@@ -455,54 +554,39 @@ make_rect <- function(df, height, yref,
   return(rect_list)
 }
 
-make_arrows <- function(df, yref){
-  yref <- gsub("yaxis", "y", yref)
-  if(nrow(df)>0){
-    arrow_list <- vector("list", nrow(df))
-    for(i in 1:nrow(df)){
-      row <- df[i, ]
-      xstart <- ifelse(row$strand =="-", row$start, row$end)
-      xend <- ifelse(row$strand =="-", row$end, row$start)
-      arrow_list[[i]] <- list(x = xstart, y=row$stepping, xref = "x", yref = yref,
-                              showarrow = TRUE, ax = xend, ay=row$stepping,
-                              axref='x', ayref= yref, arrowwidth = 1, text="")
-      
-    }
-  } else {
-    arrow_list <- NULL
-  }
-  return(arrow_list)
-}
-
-arrow_helper <- function(arrow_start, strand, arrowlen, arrowheight, y, yref){
-  arrow_end <- ifelse(strand =="-", arrow_start + arrowlen, arrow_start - arrowlen)
-  list(list(x0 = arrow_start, x1=arrow_end, 
-            y0 = y, y1 = y - arrowheight, 
-            xref = "x", yref = yref,
-            type = "line",
-            line = list(width = 0.5)),
-       list(x0 = arrow_start, x1=arrow_end, 
-            y0 = y, y1 = y + arrowheight, 
-            xref = "x", yref = yref,
-            type = "line",
-            line = list(width = 0.5)))
-}
-
-make_arrows2 <- function(df, yref, arrowlen = 500, arrowheight = 0.15, arrowgap = 1500){
+#' make_arrows
+#' Draw arrows for introns
+#'
+#' @param df data.frame: data used to draw the shapes. Required columns include "start", "end", "strand", "midpoint", and "stepping"
+#' @param yref character: axis on which to draw the rectangles, in the form of "yaxis[2-9]" or "y[2-9]"
+#' @param arrowlen numeric: how long the arrow should be, in x coordinates
+#' @param arrowheight numeric: how tall the arrow should be, in yref coordinates
+#' @param arrowgap  numeric: gap between arrows on long introns
+#'
+#' @return
+#'
+#' @examples
+make_arrows <- function(df, 
+                        yref, 
+                        arrowlen = 500, 
+                        arrowheight = 0.15, 
+                        arrowgap = 1500){
+  # Set the y ref
   yref <- gsub("yaxis", "y", yref)
   if(nrow(df)>0){
     line_list <- vector("list", nrow(df))
     arrow_list <- vector("list", nrow(df))
     for(i in 1:nrow(df)){
       row <- df[i, ]
-      xstart <- 
-        xend <- ifelse(row$strand =="-", row$end, row$start)
+      
+      # Make the intron line
       line_list[[i]] <- list(x0 = row$start, y0=row$stepping, 
                              x1 = row$end, y1 = row$stepping, 
                              xref = "x", yref = yref,
                              type = "line",
                              line = list(width = 0.5, 
                                          dash = ifelse(row$strand == "-", "dot","solid")))
+      # Add arrows to the lines
       if (row$end - row$start > 2 * arrowlen){
         if (row$strand == "-"){
           arrow_pos <- row$midpoint - arrowlen * 0.5
@@ -523,11 +607,75 @@ make_arrows2 <- function(df, yref, arrowlen = 500, arrowheight = 0.15, arrowgap 
   }
   return(out)
 }
+
+#' arrow_helper
+#' Draw lines that make arrows on the intron shapes
+#'
+#' @param arrow_start 
+#' @param strand 
+#' @param arrowlen 
+#' @param arrowheight 
+#' @param y 
+#' @param yref 
+#'
+#' @return
+#'
+#' @examples
+arrow_helper <- function(arrow_start, 
+                         strand, arrowlen, 
+                         arrowheight, 
+                         y, 
+                         yref){
+  arrow_end <- ifelse(strand =="-", arrow_start + arrowlen, arrow_start - arrowlen)
+  list(list(x0 = arrow_start, x1=arrow_end, 
+            y0 = y, y1 = y - arrowheight, 
+            xref = "x", yref = yref,
+            type = "line",
+            line = list(width = 0.5)),
+       list(x0 = arrow_start, x1=arrow_end, 
+            y0 = y, y1 = y + arrowheight, 
+            xref = "x", yref = yref,
+            type = "line",
+            line = list(width = 0.5)))
+}
+
+
+
 # =============================================================================
 # =============================================================================
 # Deprecated Functions
 # =============================================================================
 # =============================================================================
+
+# Draw arrows as annotations. This has unexpected behavior, and drawing as shapes is preferred.
+old_make_arrows <- function(df, yref){
+  yref <- gsub("yaxis", "y", yref)
+  if(nrow(df)>0){
+    arrow_list <- vector("list", nrow(df))
+    for(i in 1:nrow(df)){
+      row <- df[i, ]
+      xstart <- ifelse(row$strand =="-", row$start, row$end)
+      xend <- ifelse(row$strand =="-", row$end, row$start)
+      arrow_list[[i]] <- list(x = xstart, y=row$stepping, xref = "x", yref = yref,
+                              showarrow = TRUE, ax = xend, ay=row$stepping,
+                              axref='x', ayref= yref, arrowwidth = 1, text="")
+      
+    }
+  } else {
+    arrow_list <- NULL
+  }
+  return(arrow_list)
+}
+
+
+# Crop introns so shape only falls within view range. Not needed now that intron
+# arrows are drawn as shapes, not annotations
+crop_introns <- function(introns, target_range){
+  introns$start <- pmax(introns$start, start(target_range))
+  introns$end <- pmin(introns$end, end(target_range))
+  introns$midpoint <- pmin(pmax(introns$midpoint, start(target_range)), end(target_range))
+  return(introns)
+}
 
 coverage_heatmap <- function(cvg){
   hm_vals <- apply(t(as.matrix((mcols(cvg)))), 2, rev)
