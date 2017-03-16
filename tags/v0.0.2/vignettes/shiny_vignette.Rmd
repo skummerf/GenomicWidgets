@@ -1,0 +1,76 @@
+---
+title: "chipVis shiny Apps"
+runtime: shiny
+output: html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Preparing Inputs
+
+```{r}
+require(gChipseq)
+require(chipVis)
+require(iHeatmapR)
+require(TxDb.Mmusculus.BioMart.igis)
+
+BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
+
+file.sample <- "~/workspace/BAP1_Data/BAP1_june_2016_samples.txt"
+file.pair <- "~/workspace/BAP1_Data/BAP1_june_2016_pairs.txt"
+
+samples <- read.table(file.sample,as.is=TRUE,header=TRUE)
+samples_exp <- expandSampleTable(samples)
+
+pairs <- read.table(file.pair,as.is=TRUE,header=TRUE)
+pairs_exp <- expandPairedTable(pairs)
+
+tss <- tssFromTxdb(txdb = TxDb.Mmusculus.BioMart.igis)
+unique_tss <- unique(tss) #Remove same positions
+
+peaks <- lapply( pairs_exp$File.macs, readMacsPeaks, fc=5, minTags=10, fdr=0.1)
+peaks <- peaks[!sapply(peaks, is.null)]
+
+merged_peaks <- reduce(do.call(c, peaks))
+
+tss_in_peaks <- subsetByOverlaps(unique_tss, merged_peaks, maxgap = 1000)
+
+bam_files <- samples_exp$File.bam
+names(bam_files) <- samples$Genotype
+
+cvg_files <- samples_exp$File.bw
+names(cvg_files) <- samples$Genotype
+
+mRNF2 <- grep("mRNF2", samples$Genotype)
+
+cvg_mats <- make_coverage_matrix(inputs = bam_files[mRNF2],
+                                  ranges = tss_in_peaks,
+                                  binsize = 50,
+                                  up = 2500,
+                                  down = 2500)
+
+scale_factors <- get_scaling_factor(file_info = samples_exp)
+
+```
+
+
+# Single coverage heatmap linked to trackviews
+
+```{r}
+
+```
+
+# Multiple coverage heatmaps linked to trackviews
+
+```{r}
+
+```
+
+
+
+
