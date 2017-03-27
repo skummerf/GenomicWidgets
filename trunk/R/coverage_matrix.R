@@ -160,8 +160,6 @@ bin_mat <- function(mat, binsize){
 }
 
 
-
-
 coverage_mat_from_bigwig <- function(bigwig_file, ranges, binsize, coln){
   stopifnot(sum(width(ranges) == width(ranges[1])) == length(ranges)) #check for equal widths
   tmp = rtracklayer::import.bw(bigwig_file, selection = ranges, as = "NumericList")
@@ -335,7 +333,7 @@ make_coverage_tracks <- function(inputs,
   return(out)
 }
 
-#' @subset_coverage
+#' subset_coverage
 #' 
 #' @export
 #' @author Alicia Schep
