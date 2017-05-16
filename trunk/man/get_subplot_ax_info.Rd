@@ -19,4 +19,6 @@ get_subplot_ax_info
 Get the axes information in a plotly object. This is meant to be
 called on an object created by the subplot function
 }
-
+\author{
+Justin Finkle
+}

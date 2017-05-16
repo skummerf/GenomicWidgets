@@ -19,4 +19,3 @@ Make TSS Track
 \author{
 Justin Finkle
 }
-

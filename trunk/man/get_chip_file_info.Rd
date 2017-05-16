@@ -22,4 +22,3 @@ Make data.frame that specfies where necessary files are from NGS pipeline
 \author{
 Justin Finkle
 }
-

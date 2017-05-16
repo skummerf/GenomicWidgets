@@ -34,4 +34,3 @@ plot_single_locus(target_range, tx_data, cvg, hm_thresh = 4,
 plot_single_locus
 Plot coverage at a single region. This is the common trackview used
 }
-

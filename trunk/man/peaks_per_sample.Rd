@@ -14,4 +14,3 @@ peaks_per_sample(peak_list, gr)
 \description{
 Title
 }
-

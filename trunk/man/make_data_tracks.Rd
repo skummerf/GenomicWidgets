@@ -40,4 +40,3 @@ Builds Gviz DataTrack objects for plotting based on coverage
 \author{
 Justin Finkle
 }
-

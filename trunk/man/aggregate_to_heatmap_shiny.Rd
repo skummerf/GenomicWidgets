@@ -10,4 +10,3 @@ aggregate_to_heatmap_shiny(aggregate_plot, heatmaps,
 \description{
 aggregate_to_heatmap_shiny
 }
-

@@ -22,4 +22,3 @@ dcolorscale
 \author{
 Alicia Schep
 }
-

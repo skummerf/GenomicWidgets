@@ -37,4 +37,3 @@ make_browserly_function
 Abstract browserly plotting to a function that takes a single argument. This is
 particularly useful when using the function in a shiny app
 }
-

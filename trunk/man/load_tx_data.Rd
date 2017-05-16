@@ -12,4 +12,3 @@ load_tx_data(db_object)
 \description{
 Load Transcript Data
 }
-

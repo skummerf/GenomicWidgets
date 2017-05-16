@@ -33,4 +33,3 @@ Read peaks from MACS output, both v1.4 and v2. Column names in v1 and v2 will be
 \author{
 Suchit Jhunjhunwala, Jinfeng Liu
 }
-

@@ -21,4 +21,3 @@ Expand sample table with paths to useful files
 \author{
 Suchit Jhunjhunwala
 }
-

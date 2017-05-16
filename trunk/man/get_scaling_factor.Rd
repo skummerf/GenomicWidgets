@@ -16,4 +16,3 @@ Get Scaling Factor
 Get the scaling factor for samples provided. This is assumed to be the number
 of uniquely mapped reads
 }
-

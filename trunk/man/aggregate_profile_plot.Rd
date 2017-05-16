@@ -39,4 +39,3 @@ aggregate_profile_plot
 \author{
 Alicia Schep
 }
-

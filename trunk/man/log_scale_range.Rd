@@ -15,4 +15,3 @@ log_scale_range(center, chromosome, n = 10, extension = 1e+06,
 \description{
 Title
 }
-

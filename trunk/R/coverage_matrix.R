@@ -21,6 +21,7 @@ make_coverage_matrix <- function(inputs,
                                  ...){
   
   format = match.arg(format)
+  
   if (up > 0 || down > 0){
     ranges <- resize(ranges, fix = "center", width = 1)
     ranges <- promoters(ranges, upstream = up, downstream = down)
@@ -30,6 +31,10 @@ make_coverage_matrix <- function(inputs,
   if (binsize > 1 && width(ranges[1]) %% binsize != 0){
     ranges <- resize(ranges, fix = "center", width = (width(ranges[1]) %/% binsize +1)*binsize)
   }
+  
+  rn <- paste(seqnames(ranges), 
+              paste(end(ranges),start(ranges), sep="-"), 
+              sep=":")
   
   if (up > 0 || down > 0){
     coln <- seq(-up,down - binsize,binsize)
@@ -60,8 +65,10 @@ make_coverage_matrix <- function(inputs,
     # bw input
     if (length(inputs) == 1){
       out <- coverage_mat_from_bigwig(inputs, ranges, binsize, coln)
+      rownames(out) <- rn
     } else{
       out <- lapply(inputs, coverage_mat_from_bigwig, ranges, binsize, coln)
+      out <- lapply(out, function(x) {rownames(x) = rn; x})
     }
   } else if (format == "bam"){
     # bam input
@@ -69,13 +76,14 @@ make_coverage_matrix <- function(inputs,
     #
     if (length(inputs) == 1){
       out <- coverage_mat_from_bam(inputs, ranges, binsize, coln)
+      rownames(out) <- rn
     } else{
       out <- lapply(inputs, coverage_mat_from_bam, ranges, binsize, coln)
+      out <- lapply(out, function(x) {rownames(x) = rn; x})
     }
   } else {
     stop("Format not recognized")
   }
-  
   return(out)
 }
 
@@ -184,9 +192,10 @@ coverage_mat_from_bigwig <- function(bigwig_file, ranges, binsize, coln){
 
 ### This does not do read extension -- to do that you would need to use bamProfile and then smooth with
 ### flat window.  
+#' @importFrom bamsignals bamCoverage alignSignals
 coverage_mat_from_bam <- function(bam_file, ranges, binsize, coln){
   stopifnot(sum(width(ranges) == width(ranges[1])) == length(ranges)) #check for equal widths
-  tmp_mat <- bamsignals::bamCoverage(bam_file, ranges, verbose = FALSE) %>% bamsignals::alignSignals() %>% t()
+  tmp_mat <- t(alignSignals(bamCoverage(bam_file, ranges, verbose = FALSE)))
   #tmp_mat <- t(bamsignals::alignSignals(cvg))
   if (binsize == 1){
     colnames(tmp_mat) = coln

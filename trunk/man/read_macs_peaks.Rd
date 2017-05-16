@@ -16,4 +16,3 @@ read_macs_peaks(sample_list, file_info)
 \description{
 Title
 }
-

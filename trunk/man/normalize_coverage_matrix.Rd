@@ -26,4 +26,3 @@ Normalization choices are "localRms", "localMean",
 \author{
 Alicia Schep
 }
-

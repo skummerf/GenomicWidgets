@@ -3,7 +3,8 @@
 \name{calc_title_margin}
 \alias{calc_title_margin}
 \title{calc_title_margin
-Calculate how many pixels of space the titles need. Assumes the titles are horizontal}
+Calculate how many pixels of space the titles need. Assumes the titles are 
+horizontal}
 \usage{
 calc_title_margin(titles, padding = 0, letter_width = 9)
 }
@@ -19,6 +20,9 @@ calc_title_margin(titles, padding = 0, letter_width = 9)
 }
 \description{
 calc_title_margin
-Calculate how many pixels of space the titles need. Assumes the titles are horizontal
+Calculate how many pixels of space the titles need. Assumes the titles are 
+horizontal
 }
-
+\author{
+Justin Finkle
+}

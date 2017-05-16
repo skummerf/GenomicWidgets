@@ -18,4 +18,3 @@ make_lines(symbol_range, scaled_range, hm_vals, base)
 \description{
 Title
 }
-

@@ -9,4 +9,3 @@ heatmap_click(heatmap, ranges, width = 50000)
 \description{
 heatmap_click
 }
-

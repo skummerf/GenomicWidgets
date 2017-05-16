@@ -50,4 +50,3 @@ add_genomics_heatmap
 \author{
 Alicia Schep
 }
-

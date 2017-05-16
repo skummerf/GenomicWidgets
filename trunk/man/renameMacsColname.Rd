@@ -18,4 +18,3 @@ rename MACS output column names
 \author{
 Jinfeng Liu
 }
-

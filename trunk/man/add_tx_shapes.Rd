@@ -20,4 +20,6 @@ add_tx_shapes(plotly_obj, tx_info, ann_ax, target_range)
 add_tx_shapes
 Add annotation shapes to a specific axis
 }
-
+\author{
+Justin Finkle
+}

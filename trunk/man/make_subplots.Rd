@@ -8,11 +8,14 @@ Make subplots of coverage tracks}
 make_subplots(plot_data, type, legend = c("first", "all", "none"), ...)
 }
 \arguments{
-\item{plot_data}{list: a named list. Each list item will be plotted on a separate axis, and is expected to be a GRanges object, whose metadata columns will be plotted.}
+\item{plot_data}{list: a named list. Each list item will be plotted on a 
+separate axis, and is expected to be a GRanges object, whose metadata columns
+ will be plotted.}
 
 \item{type}{str: type of plot to use}
 
-\item{legend}{str: which subplots to include with legends. 'first' (default), only shows the legend for the first subplot.}
+\item{legend}{str: which subplots to include with legends. 'first' (default), 
+only shows the legend for the first subplot.}
 
 \item{...}{additional parameters to pass to browserly_cvg_track}
 }
@@ -23,4 +26,6 @@ make_subplots(plot_data, type, legend = c("first", "all", "none"), ...)
 make_subplots
 Make subplots of coverage tracks
 }
-
+\author{
+Justin Finkle
+}

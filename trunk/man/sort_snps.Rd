@@ -17,4 +17,3 @@ Title
 \author{
 Justin Finkle
 }
-

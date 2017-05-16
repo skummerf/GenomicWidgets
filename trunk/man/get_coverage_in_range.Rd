@@ -22,4 +22,3 @@ cvg_list GRangesList: coverage for each file supplied
 \description{
 Get Coverage in Range
 }
-

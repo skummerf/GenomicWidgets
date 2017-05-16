@@ -18,4 +18,3 @@ Make a GRange that cover the exon list
 \author{
 Justin Finkle
 }
-

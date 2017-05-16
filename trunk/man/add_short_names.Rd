@@ -14,4 +14,3 @@ add_short_names(file_info, name_vector)
 \description{
 Title
 }
-

@@ -7,7 +7,8 @@
 get_annotation_axis(ax_info, annotation_str = "Annotation")
 }
 \arguments{
-\item{ax_info}{data.frame like: contains info for different subplot axes in plotly object}
+\item{ax_info}{data.frame like: contains info for different subplot axes in 
+plotly object}
 
 \item{annotation_str}{str: the string used to find the annotation axis}
 }
@@ -17,4 +18,6 @@ str: the annotation axis reference in the form "yaxis[2-9]"
 \description{
 get_annotation_axis
 }
-
+\author{
+Justin Finkle
+}

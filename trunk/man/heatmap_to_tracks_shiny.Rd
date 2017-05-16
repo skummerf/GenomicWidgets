@@ -10,4 +10,3 @@ heatmap_to_tracks_shiny(heatmap, track_function, link,
 \description{
 heatmap_to_tracks_shiny
 }
-

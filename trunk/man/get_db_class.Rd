@@ -12,4 +12,3 @@ get_db_class(db_object)
 \description{
 Get DB Object
 }
-

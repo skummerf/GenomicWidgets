@@ -11,4 +11,3 @@ aggregate_to_heatmap_to_tracks_shiny(aggregate_plot, heatmaps, track_function,
 \description{
 heatmap_to_browserly_shiny
 }
-

@@ -12,15 +12,18 @@
 #'        3. Probably should only pass annotations relevant to the genes
 #'        
 #' @param gene character: gene symbol to be centered
-#' @param extension integer: upstream (and downstream) region around center to be viewed
+#' @param extension integer: upstream (and downstream) region around center to 
+#' be viewed
 #' @param cvg_files characters: paths to coverage files of interest
 #' @param sample_names characters: names for the cvg_files to be displayed
 #' @param scaling_factor numeric: scaling factor for coverage, e.g. library size
 #' @param tx_data list: annotation information
-#' @param symbol_table data.frame: annotation information linking gene symbols with txdb information
+#' @param symbol_table data.frame: annotation information linking gene symbols 
+#' with txdb information
 #'
 #' @return
 #' @export
+#' @author Justin Finkle
 #'
 #' @examples
 get_centered_gene_info <- function(gene,
@@ -71,12 +74,14 @@ get_centered_gene_info <- function(gene,
 #' get_snps_in_range
 #' Get the SNPs that fall in a particluar range
 #'
-#' @param snp_gr GRanges: contains SNP information, e.g. from GWAS catalog. See load_snp_data for more info
+#' @param snp_gr GRanges: contains SNP information, e.g. from GWAS catalog. See 
+#' load_snp_data for more info
 #' @param target_range GRanges: the range in which to look for SNPs
 #'
 #' @return
 #' @export
 #'
+#' @author Justin Finkle
 #' @examples
 get_snps_in_range <- function(snp_gr = GRanges(), 
                               target_range = GRanges()){
@@ -98,22 +103,26 @@ get_snps_in_range <- function(snp_gr = GRanges(),
 #' to properly view annotations with each subplot
 #'
 #' @param plotly_obj plotly: built plotly object to be modified
-#' @param ax_info data.frame: contains relevant axes information. created using get_subplot_ax_info
+#' @param ax_info data.frame: contains relevant axes information. created using 
+#' get_subplot_ax_info
 #' @param heights numeric: heights of each track, including annotation tracks
 #'
 #' @return plotly_obj
 #'
+#' @author Justin Finkle
 #' @examples
 adjust_y_domains <- function(plotly_obj, 
                              ax_info, 
                              heights,
                              sort_decrease = TRUE){
-  # The sort order may change depending on external factors, such as expression data
+  # The sort order may change depending on external factors, such as expression 
+  # data
   yaxes <- sort(unlist(unique(ax_info$yaxis)), decreasing = sort_decrease)
   tops <- cumsum(heights)
   bases <- tops - heights
   
-  # Check that heights sum to less than 1 and there are the same number of axes and heights
+  # Check that heights sum to less than 1 and there are the same number of axes 
+  # and heights
   stopifnot(sum(heights) <= 1, length(yaxes) == length(heights))
   
   for(y_idx in seq_along(yaxes)){
@@ -131,10 +140,12 @@ adjust_y_domains <- function(plotly_obj,
 #'
 #' @return
 #'
+#' @author Justin Finkle
 #' @examples
 reflect_ranges <- function(gr,
                           reference = 0){
-  # Convert to a dataframe so GRanges doesn't complain about widths during transformation
+  # Convert to a dataframe so GRanges doesn't complain about widths during 
+  # transformation
   old_start <- start(gr)
   
   # Remove names so there isn't a conflict when coercing to a data.frame
@@ -148,15 +159,21 @@ reflect_ranges <- function(gr,
 
 #' add_snp_to_annotation_track
 #' Add SNP information to an annotation track.
-#' NOTE: SNPS could be made as a separate track. However, additional subplots compress
-#' the vertical space, and when there is insufficient room the hoverinfo goes away.
+#' NOTE: SNPS could be made as a separate track. However, additional subplots 
+#' compress
+#' the vertical space, and when there is insufficient room the hoverinfo goes 
+#' away.
 #'
 #' @param ann_track plotly: annotation track
-#' @param snp_info GRanges: contains SNP information. Currently supports GRanges made from GWAS catalog
-#' @param group_col character: the column in snp_info for grouping traces. Default is "CONTEXT" which corresponds to the type of mutation in the GWAS catalog, e.g. 'missense'
+#' @param snp_info GRanges: contains SNP information. Currently supports GRanges
+#'  made from GWAS catalog
+#' @param group_col character: the column in snp_info for grouping traces. 
+#' Default is "CONTEXT" which corresponds to the type of mutation in the GWAS 
+#' catalog, e.g. 'missense'
 #'
 #' @return plotly_object
 #'
+#' @author Justin Finkle
 #' @examples
 add_snp_to_annotation_track <- function(ann_track,
                                         snp_info, 
@@ -167,7 +184,9 @@ add_snp_to_annotation_track <- function(ann_track,
   # Make the hoverinfo text
   snp_df['text'] <- paste0('SNP ID: ', names(snp_info), "<br>",
                            'Disease: ', snp_df$DISEASE.TRAIT, "<br>",
-                           'Risk Allele (freq): ', sapply(snp_df$STRONGEST.SNP.RISK.ALLELE, function(x){substr(x, nchar(x), nchar(x))}), 
+                           'Risk Allele (freq): ', 
+                           sapply(snp_df$STRONGEST.SNP.RISK.ALLELE, 
+                                  function(x){substr(x, nchar(x), nchar(x))}), 
                            " (",snp_df$RISK.ALLELE.FREQUENCY, ")")
   
   # Set the level of the snps. Each type of SNP gets a different stepping.
@@ -197,12 +216,17 @@ add_snp_to_annotation_track <- function(ann_track,
 #' Currently this is only a helper function, but it could be made to stand alone
 #'
 #' @param tx_info GRanges: mcols describe the annotation features
-#' @param track_name character: name for the track. May be used for referencing axes and adjusting domains
-#' @param opacity numeric: value between 0 and 1. Sets the opacity of the points used for hoverinfo. Should almost always be 0.
-#' @param markercolor character: color to use for markers. Default is 'grey'. If set to NULL, different colors will be used for each class of anntoation feature, e.g. intron, cds, utr3
+#' @param track_name character: name for the track. May be used for referencing 
+#' axes and adjusting domains
+#' @param opacity numeric: value between 0 and 1. Sets the opacity of the points 
+#' used for hoverinfo. Should almost always be 0.
+#' @param markercolor character: color to use for markers. Default is 'grey'. If 
+#' set to NULL, different colors will be used for each class of annotation 
+#' feature, e.g. intron, cds, utr3
 #'
 #' @return plotly_object
 #'
+#' @author Justin Finkle
 #' @examples
 browserly_annotation_track <- function(tx_info, 
                                        track_name = 'Annotation',
@@ -211,23 +235,31 @@ browserly_annotation_track <- function(tx_info,
   # Convert the marker color to a plotly usable color
   markercolor <- make_plotly_color(markercolor)
   
-  # Make GRanges into df and group by annotation feature
-  tx_df <- biovizBase::mold(tx_info) %>% group_by(feature)
-  tx_df['text'] <- paste0('Tx ID: ', tx_df$transcript)
-  
-  # Plot the annotation features
-  p <- plot_ly(tx_df, 
+  if (length(tx_info) > 0){
+    # Make GRanges into df and group by annotation feature
+    tx_df <- biovizBase::mold(tx_info) %>% group_by(feature)
+    tx_df['text'] <- paste0('Tx ID: ', tx_df$transcript)
+   
+    # Plot the annotation features
+    p <- plot_ly(tx_df, 
                type='scatter',
                name = track_name,
                mode = 'markers') %>% 
-    add_markers(x = ~midpoint, 
+      add_markers(x = ~midpoint, 
                 y=~stepping,
                 color = ~feature,
-                showlegend=FALSE,
-                text=~text, 
+                colors = brewer.pal.helper(length(unique(tx_df$feature)), 
+                                           "Set2"),
+                showlegend = FALSE,
+                text = ~text, 
                 marker = list(color = markercolor),
-                hoverinfo='x+name+text',
+                hoverinfo = 'x+name+text',
                 opacity = opacity)
+  } else{
+    p <- plot_ly(type='scatter',
+                 name = track_name,
+                 mode = 'markers')
+  }
   
   # Build the plot so it can be referenced. Return as list for subploting
   p <- list(plotly_build(p))
@@ -238,13 +270,17 @@ browserly_annotation_track <- function(tx_info,
 #' Make subplots of coverage tracks
 #' 
 #'
-#' @param plot_data list: a named list. Each list item will be plotted on a separate axis, and is expected to be a GRanges object, whose metadata columns will be plotted.
+#' @param plot_data list: a named list. Each list item will be plotted on a 
+#' separate axis, and is expected to be a GRanges object, whose metadata columns
+#'  will be plotted.
 #' @param type str: type of plot to use
-#' @param legend str: which subplots to include with legends. 'first' (default), only shows the legend for the first subplot.
+#' @param legend str: which subplots to include with legends. 'first' (default), 
+#' only shows the legend for the first subplot.
 #' @param ... additional parameters to pass to browserly_cvg_track
 #'
 #' @return
 #'
+#' @author Justin Finkle
 #' @examples
 make_subplots <- function(plot_data,
                           type,
@@ -275,16 +311,21 @@ make_subplots <- function(plot_data,
 #' function for making trackviews look nice.
 #'
 #' @param plotly_obj plotly: object to modify
-#' @param ax_info data.frame: contains axes information so plot can be adjusted. See get_subplot_ax_info for more information
-#' @param ann_ax character: the annotation axis of the form "yaxis[2-9]". These have different formatting requirements
+#' @param ax_info data.frame: contains axes information so plot can be adjusted. 
+#' See get_subplot_ax_info for more information
+#' @param ann_ax character: the annotation axis of the form "yaxis[2-9]". 
+#' These have different formatting requirements
 #' @param type character: different types of plots are treated differently
 #' @param sync_y logical: put all y-axes on same scale
-#' @param native_title logical: use plotly titles. If FALSE, annotations are added to each subplot. Useful if titles are long to prevent title overlap. Margins are automatically adjusted
-#' @param title_rotation numeric: angle of plot titles. Only used if native_title is FALSE
-
+#' @param native_title logical: use plotly titles. If FALSE, annotations are 
+#' added to each subplot. Useful if titles are long to prevent title overlap.
+#'  Margins are automatically adjusted
+#' @param title_rotation numeric: angle of plot titles. Only used if 
+#' native_title is FALSE
 #'
 #' @return
 #'
+#' @author Justin Finkle
 #' @examples
 modify_y <- function(plotly_obj, 
                      ax_info, 
@@ -298,28 +339,33 @@ modify_y <- function(plotly_obj,
   plot_axes <- filter(ax_info, is_trace == FALSE | type == 'heatmap')
   
   # Get the max y value
-  score_max <- max(unlist(filter(ax_info, is_trace == TRUE, yaxis != ann_ax)$ymax))
+  score_max <- max(unlist(filter(ax_info, is_trace == TRUE, 
+                                 yaxis != ann_ax)$ymax))
   
   # Get the largest title and pad with y axis labels
-  label_padding <- nchar(round(score_max))+3 # Give a charater buffer in case of zooming
+  # Give a charater buffer in case of zooming
+  label_padding <- nchar(round(score_max))+3 
   max_title <- calc_title_margin(plot_axes$subplot_name)
   
   title_list <- list()
   # Adjust the plot parameters for each subplot
   for(idx in 1:nrow(plot_axes)){
     # Get the row as a named list
-    cur_row <- lapply(slice(plot_axes, idx), function(x) {unlist(x)})
+    cur_row <- lapply(dplyr::slice(plot_axes, idx), function(x) {unlist(x)})
     ax <- cur_row$yaxis
     if(!cur_row$is_annotation & !cur_row$is_snp){
       if(cur_row$type!='heatmap'){
         if(sync_y) plotly_obj$x$layout[[ax]][['range']] <- c(0, score_max)
-        if(native_title) plotly_obj $x$layout[[ax]][['title']] <- cur_row$subplot_name
+        if(native_title) plotly_obj$x$layout[[ax]][['title']] <- 
+            cur_row$subplot_name
       } else {
         # Get tick labels to update margin size
-        hm_idx <- unlist(filter(ax_info, yaxis == ax, is_trace == TRUE)$data_idx)
-        # Use the index of the current heatmap to pull the y values from the plotly data structure
-        # which correspond to the tick names
-        max_title <- max(max_title, calc_title_margin(plotly_obj$x$data[[hm_idx]]$y))
+        hm_idx <- unlist(filter(ax_info, yaxis == ax, 
+                                is_trace == TRUE)$data_idx)
+        # Use the index of the current heatmap to pull the y values from the 
+        # plotly data structure which correspond to the tick names
+        max_title <- max(max_title, 
+                         calc_title_margin(plotly_obj$x$data[[hm_idx]]$y))
         plotly_obj$x$layout[[ax]]['ticks'] <- ""
         
         # Add a box around the heatmap
@@ -366,6 +412,7 @@ modify_y <- function(plotly_obj,
 #'
 #' @return
 #'
+#' @author Justin Finkle
 #' @examples
 get_subplot_ax_info <- function(plotly_obj){
   sp_ax_info <- sapply(seq_along(plotly_obj$x$data), function(idx){
@@ -401,7 +448,8 @@ get_subplot_ax_info <- function(plotly_obj){
 
 
 #' calc_title_margin
-#' Calculate how many pixels of space the titles need. Assumes the titles are horizontal
+#' Calculate how many pixels of space the titles need. Assumes the titles are 
+#' horizontal
 #'
 #' @param titles vector
 #' @param letter_width int: number of pixels each letter requires
@@ -409,6 +457,7 @@ get_subplot_ax_info <- function(plotly_obj){
 #'
 #' @return
 #'
+#' @author Justin Finkle
 #' @examples
 calc_title_margin <- function(titles,
                               padding = 0,
@@ -422,11 +471,13 @@ calc_title_margin <- function(titles,
 
 #' get_annotation_axis
 #'
-#' @param ax_info data.frame like: contains info for different subplot axes in plotly object
+#' @param ax_info data.frame like: contains info for different subplot axes in 
+#' plotly object
 #' @param annotation_str str: the string used to find the annotation axis
 #'
 #' @return str: the annotation axis reference in the form "yaxis[2-9]"
 #'
+#' @author Justin Finkle
 #' @examples
 get_annotation_axis <- function(ax_info,
                                 annotation_str = 'Annotation'){
@@ -445,6 +496,7 @@ get_annotation_axis <- function(ax_info,
 #'
 #' @return
 #'
+#' @author Justin Finkle
 #' @examples
 add_tx_stepping <- function(tx_gr, 
                          stacking = c('dense', 'squish')){
@@ -469,6 +521,7 @@ add_tx_stepping <- function(tx_gr,
 #' @return
 #' @export
 #'
+#' @author Justin Finkle
 #' @examples
 make_plotly_color <- function(color_str){
   # Plotly accepts some string colors, but it is safer to use rgb(0,0,0) values
@@ -493,32 +546,37 @@ make_plotly_color <- function(color_str){
 #' @return
 #' @export
 #'
+#' @author Justin Finkle
 #' @examples
 add_tx_shapes <- function(plotly_obj, 
                           tx_info,
                           ann_ax,
                           target_range){
-  # Add annotations
-  tx_info <- biovizBase::mold(tx_info)
-  cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ],
-                        height = 0.4, 
-                        ann_ax)
-  utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], 
-                        height=0.25, 
-                        ann_ax)
-  ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ],
+  
+  if (length(tx_info) > 0){
+    
+    # Add annotations
+    tx_info <- biovizBase::mold(tx_info)
+    cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ],
+                          height = 0.4, 
+                          ann_ax)
+    utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ], 
                           height=0.25, 
                           ann_ax)
-  intron_arrow <- make_arrows(tx_info[tx_info$feature == 'intron', ], ann_ax, 
-                              arrowlen = width(target_range) * 0.01)
-  # Compile new shapes
-  tx_shapes <- c(cds_rect, utr_rect, ncRNA_rect, intron_arrow)
-  
-  # Add shapes to list if it already exists
-  if(!is.null(plotly_obj$x$layout$shapes)){
-    tx_shapes <- c(plotly_obj$x$layout$shapes, tx_shapes)
+    ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ],
+                            height=0.25, 
+                            ann_ax)
+    intron_arrow <- make_arrows(tx_info[tx_info$feature == 'intron', ], ann_ax, 
+                                arrowlen = width(target_range) * 0.01)
+    # Compile new shapes
+    tx_shapes <- c(cds_rect, utr_rect, ncRNA_rect, intron_arrow)
+    
+    # Add shapes to list if it already exists
+    if(!is.null(plotly_obj$x$layout$shapes)){
+      tx_shapes <- c(plotly_obj$x$layout$shapes, tx_shapes)
+    }
+    plotly_obj$x$layout$shapes <- tx_shapes
   }
-  plotly_obj$x$layout$shapes <- tx_shapes
   return(plotly_obj)
 }
 
@@ -526,13 +584,16 @@ add_tx_shapes <- function(plotly_obj,
 #' Make the rectangle objects. These are used to display annotation features such
 #' as cds, and utr.
 #'
-#' @param df data.frame: data used to draw the shapes. Required columns include "start", "end", and "stepping"
+#' @param df data.frame: data used to draw the shapes. Required columns include 
+#' "start", "end", and "stepping"
 #' @param height numeric: the height of the rectangles
-#' @param yref character: axis on which to draw the rectangles, in the form of "yaxis[2-9]" or "y[2-9]"
+#' @param yref character: axis on which to draw the rectangles, in the form of 
+#' "yaxis[2-9]" or "y[2-9]"
 #' @param fillcolor character: color of the rectangle
 #'
 #' @return
 #'
+#' @author Justin Finkle
 #' @examples
 make_rect <- function(df, 
                       height, 
@@ -544,9 +605,11 @@ make_rect <- function(df,
     rect_list <- vector("list", nrow(df))
     for(e in 1:nrow(df)){
       row <- df[e, ]
-      rect_list[[e]] <- list(type = "rect", fillcolor = fillcolor, opacity = 1, line=list(width=0),
+      rect_list[[e]] <- list(type = "rect", fillcolor = fillcolor, opacity = 1, 
+                             line=list(width=0),
                              x0 = row$start, x1 = row$end, xref = "x",
-                             y0 = row$stepping-height, y1 = row$stepping+height, yref = yref)
+                             y0 = row$stepping-height, y1 = row$stepping+height, 
+                             yref = yref)
     }
   } else {
     rect_list <- NULL
@@ -557,8 +620,10 @@ make_rect <- function(df,
 #' make_arrows
 #' Draw arrows for introns
 #'
-#' @param df data.frame: data used to draw the shapes. Required columns include "start", "end", "strand", "midpoint", and "stepping"
-#' @param yref character: axis on which to draw the rectangles, in the form of "yaxis[2-9]" or "y[2-9]"
+#' @param df data.frame: data used to draw the shapes. Required columns include 
+#' "start", "end", "strand", "midpoint", and "stepping"
+#' @param yref character: axis on which to draw the rectangles, in the form of 
+#' "yaxis[2-9]" or "y[2-9]"
 #' @param arrowlen numeric: how long the arrow should be, in x coordinates
 #' @param arrowheight numeric: how tall the arrow should be, in yref coordinates
 #' @param arrowgap  numeric: gap between arrows on long introns
@@ -585,7 +650,8 @@ make_arrows <- function(df,
                              xref = "x", yref = yref,
                              type = "line",
                              line = list(width = 0.5, 
-                                         dash = ifelse(row$strand == "-", "dot","solid")))
+                                         dash = ifelse(row$strand == "-", 
+                                                       "dot","solid")))
       # Add arrows to the lines
       if (row$end - row$start > 2 * arrowlen){
         if (row$strand == "-"){
@@ -626,7 +692,8 @@ arrow_helper <- function(arrow_start,
                          arrowheight, 
                          y, 
                          yref){
-  arrow_end <- ifelse(strand =="-", arrow_start + arrowlen, arrow_start - arrowlen)
+  arrow_end <- ifelse(strand =="-", arrow_start + arrowlen, 
+                      arrow_start - arrowlen)
   list(list(x0 = arrow_start, x1=arrow_end, 
             y0 = y, y1 = y - arrowheight, 
             xref = "x", yref = yref,
@@ -647,7 +714,8 @@ arrow_helper <- function(arrow_start,
 # =============================================================================
 # =============================================================================
 
-# Draw arrows as annotations. This has unexpected behavior, and drawing as shapes is preferred.
+# Draw arrows as annotations. This has unexpected behavior, and drawing as 
+# shapes is preferred.
 old_make_arrows <- function(df, yref){
   yref <- gsub("yaxis", "y", yref)
   if(nrow(df)>0){
@@ -656,7 +724,8 @@ old_make_arrows <- function(df, yref){
       row <- df[i, ]
       xstart <- ifelse(row$strand =="-", row$start, row$end)
       xend <- ifelse(row$strand =="-", row$end, row$start)
-      arrow_list[[i]] <- list(x = xstart, y=row$stepping, xref = "x", yref = yref,
+      arrow_list[[i]] <- list(x = xstart, y=row$stepping, xref = "x", 
+                              yref = yref,
                               showarrow = TRUE, ax = xend, ay=row$stepping,
                               axref='x', ayref= yref, arrowwidth = 1, text="")
       
@@ -673,15 +742,18 @@ old_make_arrows <- function(df, yref){
 crop_introns <- function(introns, target_range){
   introns$start <- pmax(introns$start, start(target_range))
   introns$end <- pmin(introns$end, end(target_range))
-  introns$midpoint <- pmin(pmax(introns$midpoint, start(target_range)), end(target_range))
+  introns$midpoint <- pmin(pmax(introns$midpoint, 
+                                start(target_range)), end(target_range))
   return(introns)
 }
 
 coverage_heatmap <- function(cvg){
   hm_vals <- apply(t(as.matrix((mcols(cvg)))), 2, rev)
   midpoint <- get_midpoint(cvg)
-  p <- plot_ly(z=hm_vals, y=rev(colnames(mcols(cvg))), x=midpoint, type='heatmap',
-               hoverinfo='x+z', colorscale = continuous_colorscale("Purples")(hm_vals))
+  p <- plot_ly(z=hm_vals, y=rev(colnames(mcols(cvg))), x=midpoint, 
+               type='heatmap',
+               hoverinfo='x+z', 
+               colorscale = continuous_colorscale("Purples")(hm_vals))
   return(p)
 }
 
@@ -695,9 +767,11 @@ collapse_tx <- function(gr){
   
   # Add metadata to RNA to keep track of transcripts and features
   overlaps <- findOverlaps(rna, dense_rna)
-  mcols(dense_rna)$feature <- splitAsList(mcols(rna)$feature[queryHits(overlaps)],
-                                          factor(subjectHits(overlaps)))
-  mcols(dense_rna)$transcript <- splitAsList(mcols(rna)$transcript[queryHits(overlaps)],
-                                             factor(subjectHits(overlaps)))
+  mcols(dense_rna)$feature <- 
+    splitAsList(mcols(rna)$feature[queryHits(overlaps)],
+                factor(subjectHits(overlaps)))
+  mcols(dense_rna)$transcript <- 
+    splitAsList(mcols(rna)$transcript[queryHits(overlaps)],
+                factor(subjectHits(overlaps)))
   return(c(dense_introns, dense_rna))
 }

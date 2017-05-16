@@ -61,7 +61,7 @@ genomics_heatmap <- function(mat,
   scale = match.arg(scale)
   scale_method = match.arg(scale_method)
   
-  iheatmapr::simple_heatmap(mat, 
+  iheatmapr::iheatmap(mat, 
                             x = x,
                             y = y,                   
                             row_order = row_order,
@@ -159,3 +159,9 @@ add_genomics_heatmap <- function(p,
                                   ...)
   
 }
+
+
+
+
+
+

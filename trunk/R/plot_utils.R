@@ -7,6 +7,19 @@ no_axis = list(title = "",
                showgrid = FALSE,
                ticks = "")
 
+
+brewer.pal.helper <- function(n, name){
+  if (n < 3){
+    return(RColorBrewer::brewer.pal(3,name)[seq_len(n)])
+  } else if (n > RColorBrewer::brewer.pal.info[name, "maxcolors"]){
+    return(rep(RColorBrewer::brewer.pal(RColorBrewer::brewer.pal.info[name, "maxcolors"],name),
+               length.out = n))
+  } else {
+    return(RColorBrewer::brewer.pal(n,name))
+  }
+}
+
+
 # makes a discrete color scale for plotly
 # palette should be an RColorBrewer palette name
 # x is number of colors desired

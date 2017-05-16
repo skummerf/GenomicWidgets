@@ -25,4 +25,3 @@ get_view_range(db_object, symbol = NULL, keytype = c("SYMBOL", "TXNAME"),
 \description{
 Title
 }
-

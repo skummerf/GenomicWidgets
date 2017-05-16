@@ -23,4 +23,3 @@ compute_regulatory_potential
 \author{
 Alicia Schep
 }
-

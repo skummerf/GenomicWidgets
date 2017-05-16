@@ -17,4 +17,3 @@ snp.gr GRanges:
 \description{
 Function to load SNP information from GWAS catalog v1.0
 }
-

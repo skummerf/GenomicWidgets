@@ -25,4 +25,3 @@ plotly object
 browserly_cvg_track
 Make an interactive coverage track plot that can stand alone or be used as a subplot
 }
-

@@ -29,7 +29,7 @@ transcriptsByOverlaps <- function(x, ranges, maxgap = 0L, minoverlap = 1L,
                    minoverlap = minoverlap, type = match.arg(type))
 }
 
-#' Title
+#' get_tx_annotation
 #'
 #' @param db_object 
 #' @param range 
@@ -38,7 +38,7 @@ transcriptsByOverlaps <- function(x, ranges, maxgap = 0L, minoverlap = 1L,
 #'
 #' @return
 #' @export
-#'
+#' @import GenomeInfoDb GenomicRanges
 #' @examples
 get_tx_annotation <- function(range, tx_data, no_introns=FALSE){
   in_style <- seqlevelsStyle(range)[[1]]
@@ -101,17 +101,18 @@ get_tx_features <- function(tx_names, tx_data){
 #' @export
 #'
 #' @examples
-match_tx_to_gene <- function(txdb, org_db, str_regex = "(?<=:)(.*)" ){
+match_tx_to_gene <- function(txdb, org_db, str_regex = "[[:digit:]]+" ){
   tr <- transcriptsBy(txdb, by = "gene") %>% unlist()
   tr$entrez <- stringr::str_extract(names(tr), str_regex)
   tr$symbol <- toupper(annotate::getSYMBOL(tr$entrez, data=org_db))
-  names(tr) = NULL
-  trdf <- as.data.frame(tr)
+  names(tr) <- NULL
+  trdf <- group_by(as.data.frame(tr), entrez)
   
-  truniq <- trdf %>% group_by(entrez) %>% dplyr::summarize(chr = first(seqnames),
-                                                           start = min(start),
-                                                           end = max(end),
-                                                           strand = first(strand),
-                                                           symbol = first(symbol))
+  truniq <- dplyr::summarize(trdf,
+                             chr = first(seqnames),
+                             start = min(start),
+                             end = max(end),
+                             strand = first(strand),
+                             symbol = first(symbol))
   return(truniq)
 }

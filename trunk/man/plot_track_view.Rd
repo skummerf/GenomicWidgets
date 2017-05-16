@@ -63,4 +63,3 @@ plot genomic coverage along the gene
 \author{
 Justin Finkle
 }
-

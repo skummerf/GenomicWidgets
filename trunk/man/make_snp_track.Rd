@@ -19,4 +19,3 @@ Make SNP Track
 \author{
 Justin Finkle
 }
-

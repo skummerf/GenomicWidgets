@@ -14,4 +14,3 @@ avg_peak_in_range(gr, peaks_gr)
 \description{
 Title
 }
-

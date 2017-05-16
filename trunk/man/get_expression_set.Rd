@@ -17,4 +17,3 @@ Can also provide the project name to retrieve from ExpressionPlot}
 Get expression set object. Either load from rds or supply expression plot 
 project that can be retrieved
 }
-

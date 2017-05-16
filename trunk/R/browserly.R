@@ -16,6 +16,7 @@
 #' @return
 #' @export
 #'
+#' @author Justin Finkle
 #' @examples
 make_browserly_function <- function(cvg_files, 
                                     tx_data,

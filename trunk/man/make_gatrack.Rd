@@ -14,4 +14,3 @@ make_gatrack(kwargs = list())
 \description{
 Make GenomeAxisTrack
 }
-

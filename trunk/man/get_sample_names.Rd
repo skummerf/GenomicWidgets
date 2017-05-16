@@ -12,4 +12,3 @@ get_sample_names(file_info)
 \description{
 Title
 }
-

@@ -54,4 +54,3 @@ make_track_function(cvg_files, genome, tx_data, binsize = 250,
 \description{
 Title
 }
-

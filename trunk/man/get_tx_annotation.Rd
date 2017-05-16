@@ -2,7 +2,7 @@
 % Please edit documentation in R/annotation_functions.R
 \name{get_tx_annotation}
 \alias{get_tx_annotation}
-\title{Title}
+\title{get_tx_annotation}
 \usage{
 get_tx_annotation(range, tx_data, no_introns = FALSE)
 }
@@ -16,6 +16,5 @@ get_tx_annotation(range, tx_data, no_introns = FALSE)
 \item{db_object}{}
 }
 \description{
-Title
+get_tx_annotation
 }
-

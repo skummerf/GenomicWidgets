@@ -20,4 +20,3 @@ extend the GRange object in either direction
 \author{
 Justin Finkle
 }
-

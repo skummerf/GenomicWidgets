@@ -4,7 +4,7 @@
 \alias{match_tx_to_gene}
 \title{Title}
 \usage{
-match_tx_to_gene(txdb, org_db, str_regex = "(?<=:)(.*)")
+match_tx_to_gene(txdb, org_db, str_regex = "[[:digit:]]+")
 }
 \arguments{
 \item{txdb}{}
@@ -16,4 +16,3 @@ match_tx_to_gene(txdb, org_db, str_regex = "(?<=:)(.*)")
 \description{
 Title
 }
-
