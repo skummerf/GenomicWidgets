@@ -1,0 +1,250 @@
+---
+title: "browserly_testing"
+author: "Justin Finkle"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: no
+---
+
+# Intro
+The browserly module is designed to easly create track view visualizations of positional genomic data such as ChIP-seq, ATAC-seq, or DNase hypersesitivey assays. High-level functions are provided to easly make visualizations that the user can use to compare results between samples, conditions, and even genomic loci.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(TxDb.Hsapiens.BioMart.igis3.0)
+library(plotly)
+library(org.Hs.eg.db)
+library(chipVis)
+library(reshape2)
+```
+
+```{r Load data, echo=FALSE}
+# This is information specific to the project that has been preprocessed
+
+# fi is the file_info object (a dataframe), that has file locations
+fi <- readRDS("/gne/research/workspace/schepa/Carroll_Data/chip_file_info.Rds")
+
+T47D = list(
+  ER_ab = which(fi$source_name == "T47D_ER_Full_Media_3hr"),
+  ER_ab_Pr_treat = which(fi$source_name == "T47D_ER_Progesterone_3hr"),
+  ER_ab_R5020_treat = which(fi$source_name == "T47D_ER_R5020_3hr"),
+  
+  PR_ab  = which(fi$source_name == "T47D_PR_Full_Media_3hr"),
+  PR_ab_Pr_treat = which(fi$source_name == "T47D_PR_Progesterone_3hr"),
+  PR_ab_R5020_treat = which(fi$source_name == "T47D_PR_R5020_3hr"),
+  
+  p300_ab  = which(fi$source_name == "T47D_p300_Full_Media_3hr"),
+  p300_ab_Pr_treat  = which(fi$source_name == "T47D_p300_Progesterone_3hr"),
+  p300_ab_R5020_treat = which(fi$source_name == "T47D_p300_R5020_3hr")
+  
+)
+```
+
+# Plot single locus
+## Input Data
+A trackview requires three components to display properly.
+
+1. The view range: a GRanges object describing the region to be displayed
+2. Annotation data: a list containing annotation features that will be rendered
+3. Coverage data: a GRanges object that contains the coverage to be displayed
+
+### View Range
+Browserly needs to know the range to plot. This is used to pull the correct annotation information. The function `get_view_range` makes the appropriate object for use with browserly. If passed an OrganismDbi object, `get_view_range` can also be used to get the range by gene symbol. Here we'll use the region for the gene GREB1, because it is a good responder to ER and PR.
+```{r view_range}
+view_range <- get_view_range(chr = 2, start=11482341, end=11642788)
+view_range
+```
+
+The range can also be extended if desired. This is a particularly useful function when creating uniformly sized views around disparate regions. For example, the TSS of many genes can be made as 1bp GRanges and extended to be of equal length.
+
+The range can be extended symmetrically on both sides
+```{r extend range symmetric}
+extend_grange(view_range, 50000)
+```
+
+or asymmetrically by passing a vector
+```{r extend range asymmetric}
+extend_grange(view_range, c(1000, 5000))
+```
+
+### Annotation data
+We pre-load the annotation information from the TxDB into an easily searched list. This saves time when repeated calls are made to find the genomic ranges and features that are used in plotting coverage information. 
+The variable `tx_data` contains several lists that a indexed by transcript
+feature (e.g. intron, utr5). It also keeps track of the seqlevelstyle used
+in the database.
+
+```{r Load Annotation reference}
+txdb <- TxDb.Hsapiens.BioMart.igis
+tx_data <- load_tx_data(txdb)
+print(names(tx_data))
+```
+
+**Note:** We also use the annotation helper function `match_tx_to_gene` to zip together OrgDB and TxDB objects by entrez id. This allows genes to be searched by gene symbol, which is often more human friendly.
+``` {r match transcripts to genes}
+symbol_table <- match_tx_to_gene(txdb, 'org.Hs.eg')
+print(head(symbol_table))
+```
+
+### Coverage information.
+Users are expected to provide their own data for plotting. Data should be provided as a GRanges object, where the metadata columns (mcols) contain the coverage values in each range.
+
+The utility function `make_coverage_tracks` is provided for convenience, and has a few helpful features. It takes a list of coverage files (e.g. bigwig, bam) and the `view_range` to be displayed. Optionally, the user can provide corresponding names for the samples (e.g. treatment condition, antibody), and a scaling factor for the coverage data (e.g. library size).
+```{r prep info for coverage, echo=FALSE}
+# Specify coverage files
+input <- fi[2, 'Sample.Control']
+input_idx <- which(fi$Sample.Name==input)
+idx <- sapply(T47D[c(1,2,4,5)], function(x){x[[1]]})
+idx <- c(1, idx)
+names(idx)[[1]] <- "ER_input"
+shortened_names <- names(idx)
+
+# Get scaling factor
+sf <- get_scaling_factor(fi[idx,])/1000000
+sf <- sf[2,]
+
+```
+
+```{r Get coverage}
+# Get the coverage
+cvg <- make_coverage_tracks(fi[idx, "File.bw"], 
+                            target_range = view_range, 
+                            sample_names = shortened_names, 
+                            scaling_factors = sf)
+head(cvg)
+```
+
+## Standard plot
+A common representation of coverage is a trackview. Browserly makes it simple to 
+create an interactive trackview that looks similar to other packages, such as Gviz.
+```{r Demo_stacking}
+plot_single_locus(view_range, tx_data, cvg, stacking='squish', type="scatter")
+```
+
+By default, browserly densely stacks all overlapping transcripts to save visual space. Future versions may allow for the display of "canonical" transcripts. All y axes default to being on the same scale, but this can also be disabled.
+```{r Demo_line}
+plot_single_locus(view_range, tx_data, cvg, type = "scatter", sync_y = FALSE)
+```
+
+## Heatmap of coverage
+Browserly automatcially determines the type of plot for showing coverage. When many
+samples are displayed, browserly defaults to using a heatmap. This saves vertical space, without losing information.
+```{r Demo_hm}
+plot_single_locus(view_range, tx_data, cvg)
+```
+
+## SNP information
+SNPs can be added from external sources, provided as GRanges. Here we use SNP information from the [GWAS catalog](https://www.ebi.ac.uk/gwas/).
+```{r SNP data}
+snps <- readRDS("/gne/research/workspace/finklej/ExternalData/SNP/gwas_catalog_v1.0.1-associations_e84_r2016-07-10.rds")
+snps_in_range <- get_snps_in_range(snp_gr = snps, target_range = view_range)
+```
+
+```{r SNP track}
+plot_single_locus(view_range, tx_data, cvg, type='scatter', snps = snps_in_range,
+                  stacking = 'squish', sync_y = FALSE)
+```
+
+## Function abstraction
+If the same files and annotation data will be used multiple times, but the view range will change, it is often more convenient to have a wrapper function around `plot_single_locus`. In this example we abstract the function call so that only the target range is provided to the new function. This simplification is particularly useful when using browserly in a Shiny application.
+```{r Function abstraction}
+trackview_function <- make_browserly_function(cvg_files = fi[idx, "File.bw"],
+                                              tx_data = tx_data, 
+                                              sample_names = shortened_names, 
+                                              cvg_scaling = sf,
+                                              stacking = 'squish',
+                                              snps = snps)
+```
+
+Now we can plot new regions very easily.
+```{r Function plot}
+# Let's switch genes and plot NRIP1
+new_view <- extend_grange(get_view_range(chr = 21, start =  14961235, end = 15065936), 20000)
+trackview_function(new_view)
+```
+
+
+
+## Additional plotly arguments
+All plotly arguments that can be passed to a trace can also be passed through `plot_single_locus`. The outcome of these arguments is not guaranteed. Please see the [plotly documentation](https://plot.ly/r/reference/) for more information.
+
+
+# Mesoscale view
+Browserly also provides functionality for displaying multiple genomic loci. This may be useful when the user wants to compare coverage for several genes under many different conditions. For example, prior knowledge may indicate that a set of genes shows signifcant differential expression, which may be attributable to changes in transcription factor binding between treatments.
+
+## Data preparation
+```{r echo=FALSE}
+# set the gene list
+genes <- c('RNF2', 'E2F1', 'GREB1', 'BAP1')
+
+# Set how far upstream and downstream  you want to view from the TSS
+extension <- 50000
+conditions <- names(idx)
+cvg_files <- fi[idx, "File.bw"]
+```
+
+The user specifies the genes of interest, as well as the coverage files for the samples that will be displayed.
+```{r}
+genes
+cvg_files
+```
+
+The browserly plotting function requires two additional arguments:
+
+1. A GRangesList of coverage data. Each item in the list will be on a separate subplot
+2. A GRangesList of the annotation data corresponding to the coverage region in item 1. These will be displayed on separate subplots, paired with the appropriate coverage.
+
+Here we prepare the gene regions to be compared by centering around each gene's TSS. This provides a uniform comparison between genes.
+```{r center data}
+centered_genes <- lapply(genes, function(gene){
+  gene_data <- get_centered_gene_info(gene = gene,
+                                      extension = extension,
+                                      cvg_files = cvg_files,
+                                      sample_names = conditions,
+                                      scaling_factor = sf,
+                                      tx_data = tx_data,
+                                      symbol_table = symbol_table)
+  return(gene_data)
+})
+
+cvg_list <- GRangesList(lapply(centered_genes, function(x) {x$gene_cvg}))
+names(cvg_list) <- genes
+tx_list <- GRangesList(lapply(centered_genes, function(x) {x$gene_tx}))
+names(tx_list) <- genes
+
+```
+
+## Multi gene plot
+Next we plot the gene coverage for each gene under the specified conditions. By default, the subplots are not on the same scaled. This can be changed using the same `sync_y` argument as in the single locus view.
+```{r}
+plot_multiple_genes(genes = genes,
+                    centered_cvg = cvg_list,
+                    centered_tx = tx_list)
+```
+
+## Adding expression data
+
+```{r Expression Data, echo= FALSE}
+rpkmEset <- readRDS("/gne/research/workspace/schepa/Carroll_Data/GSE68358.rpkmEset.with_fdata.Rds")
+T47D_eset <- rpkmEset[,grep("T47D",pData(rpkmEset)$celltype)]
+treat_groups = stringr::str_trim(sapply(stringr::str_split(pData(T47D_eset)$treatment,":"), 
+                     function(x) x[[2]])) %>% gsub("+","_",., fixed= TRUE) %>% 
+ gsub("_3hr","",.)
+genes_entrez <- fData(T47D_eset)$entrez[fData(T47D_eset)$symbol %in% genes]
+exprs_idx <- match(genes_entrez, rownames(exprs(T47D_eset)))
+gene_exprs <- exprs(T47D_eset)[exprs_idx,]
+colnames(gene_exprs) <- treat_groups
+rownames(gene_exprs) <- genes
+```
+
+Gene expression can be added to the plots if a named matrix is passed. The rows correspond to the genes to be plotted, and the columns are labelled by treatment condition. Columns with the same names are grouped together in box plots.
+```{r}
+print(gene_exprs)
+plot_multiple_genes(genes = genes,
+                    centered_cvg = cvg_list,
+                    centered_tx = tx_list,
+                    gene_exprs = gene_exprs)
+```
