@@ -6,6 +6,7 @@
 #' @param tx_data 
 #' @param type 
 #' @param cvg_scaling 
+#' @param hm_thresh 
 #' @param sample_names 
 #' @param stacking 
 #' @param sync_y 
@@ -275,8 +276,13 @@ plot_single_locus <- function(target_range,
 #' @param cvg GRanges: mcols should include the data to be plotted
 #' @param track_name str: unique identifier for the plot. This is used to find appropriate axes when controlling annotations and domains
 #' @param type str: type of plot
+#' @param fill 
+#' @param mode 
+#' @param showlegend 
+#' @param colors 
 #' @param ... additional arguments passed to plotly function "add_trace"
 #'
+#' @importFrom RColorBrewer brewer.pal
 #' @return plotly object
 #' @export
 #'

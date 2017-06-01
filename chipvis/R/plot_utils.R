@@ -1,4 +1,5 @@
 # Some utility functions for use with plotly
+#' @importFrom RColorBrewer brewer.pal brewer.pal.info
 
 no_axis = list(title = "",
                zeroline = FALSE,

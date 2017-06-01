@@ -19,6 +19,8 @@ make_track_function(cvg_files, genome, tx_data, binsize = 250,
 
 \item{tx_data}{}
 
+\item{binsize}{}
+
 \item{cvg_scaling}{}
 
 \item{bg_title}{}
@@ -31,11 +33,15 @@ make_track_function(cvg_files, genome, tx_data, binsize = 250,
 
 \item{hm_binsize}{}
 
+\item{hm_scaling}{}
+
 \item{snp_gr}{}
 
 \item{tss_gr}{}
 
 \item{ucsc}{}
+
+\item{existing_tracks}{}
 
 \item{gatrack_kwargs}{}
 
@@ -48,8 +54,6 @@ make_track_function(cvg_files, genome, tx_data, binsize = 250,
 \item{dtrack_kwargs}{}
 
 \item{plot_kwargs}{}
-
-\item{target_range}{}
 }
 \description{
 Title

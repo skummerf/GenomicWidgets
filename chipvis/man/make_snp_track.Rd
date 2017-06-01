@@ -11,7 +11,7 @@ make_snp_track(snp_gr, target_range, kwargs = list())
 
 \item{target_range}{}
 
-\item{strack.kwargs}{}
+\item{kwargs}{}
 }
 \description{
 Make SNP Track

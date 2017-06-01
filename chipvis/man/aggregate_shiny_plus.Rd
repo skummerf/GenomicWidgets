@@ -24,6 +24,12 @@ aggregate_shiny_plus(mats, regions, track_function, region_widths = 50000,
 \arguments{
 \item{mats}{}
 
+\item{regions}{}
+
+\item{track_function}{}
+
+\item{region_widths}{}
+
 \item{sample_groups}{vector of groups to which matrices belong}
 
 \item{colors}{either RColorbrewer pallete name or vector of colors}
@@ -43,6 +49,8 @@ aggregate_shiny_plus(mats, regions, track_function, region_widths = 50000,
 \item{row_order}{}
 
 \item{k}{}
+
+\item{row_groups}{}
 
 \item{clust_dist}{}
 

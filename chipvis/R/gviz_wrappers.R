@@ -28,6 +28,7 @@ make_tiled_range <- function(gr, binwidth){
 #' @param tss 
 #' @param target_range 
 #' @param chr 
+#' @param kwargs 
 #' @author Justin Finkle
 #' @return
 #' @export
@@ -101,7 +102,6 @@ make_grtrack <- function(exon_data, genome, chr, kwargs = list()){
 
 #' Make GenomeAxisTrack
 #'
-#' @param target_range 
 #' @param kwargs 
 #'
 #' @return
@@ -123,7 +123,7 @@ make_gatrack <- function(kwargs = list()){
 #'
 #' @param snp_gr 
 #' @param target_range 
-#' @param strack.kwargs 
+#' @param kwargs 
 #' @author Justin Finkle
 #' @return
 #' @export
@@ -182,22 +182,21 @@ sort_snps <- function(snp_gr, type_col = 'CONTEXT'){
 #' Make Data Tracks
 #' @description Builds Gviz DataTrack objects for plotting based on coverage
 #'
-#' @param gr GRange to plot
 #' @param genome str
-#' @param chr str
 #' @param bg_title str: color for track panel backgrounds 
 #' @param colors list-optional: colors for coverage tracks
 #' @param type str: 'hist' for multiple coverage tracks, 'heatmap' for condensed view
 #' @param binwidth scalar
 #' @param val str: value in cvg.L elements to use for binning coverage. Default is "score"
-#' @param cvg_list 
+#' @param cvg 
 #' @param kwargs 
-#' @param scaling 
+#' @param hm_scaling 
 #'
 #' @return dtrack list: DataTrack objects
 #' @export
 #' @author Justin Finkle
 #' @import Gviz
+#' @importFrom RColorBrewer brewer.pal
 #'
 #' @examples
 make_data_tracks <- function(cvg, genome,

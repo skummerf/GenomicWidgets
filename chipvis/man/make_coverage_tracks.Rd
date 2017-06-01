@@ -12,15 +12,25 @@ make_coverage_tracks(inputs, target_range, sample_names = names(inputs),
 \arguments{
 \item{inputs}{filenames of bigwig, bam, or RData file}
 
+\item{target_range}{}
+
+\item{sample_names}{}
+
 \item{binsize}{binsize to bin coverage}
 
+\item{method}{}
+
 \item{format}{format of files, default is auto}
+
+\item{bin}{}
+
+\item{scaling_factors}{}
 
 \item{up}{basepairs upstream of center to use}
 
 \item{down}{basepairs downstream of center to use}
 
-\item{ranges}{ranges for which to compute coverage within}
+\item{stranded}{}
 }
 \description{
 make_coverage_tracks

@@ -16,6 +16,14 @@ browserly_cvg_track(cvg, track_name, type = c("scatter", "heatmap"),
 
 \item{type}{str: type of plot}
 
+\item{fill}{}
+
+\item{mode}{}
+
+\item{showlegend}{}
+
+\item{colors}{}
+
 \item{...}{additional arguments passed to plotly function "add_trace"}
 }
 \value{

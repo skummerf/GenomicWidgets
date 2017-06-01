@@ -1,6 +1,6 @@
 Package: chipVis
 Type: Package
-Title: interactive visualization of genomics data
+Title: Interactive visualization of Genomics Data
 Version: 0.1.0.9999
 Date: 2016-06-24
 Authors@R: c(person("Alicia", "Schep", email = "aschep@gmail.com",
@@ -10,9 +10,9 @@ Authors@R: c(person("Alicia", "Schep", email = "aschep@gmail.com",
               person("Sarah","Kummerfeld", email = "kummerfeld.sarah@gene.com",
                   role = c("aut")),
               person("Genentech", role = "cph"))
-Description: interactive visualization of ChIP-seq, ATAC-seq, RNA-seq, and other genomic data
-License: file GNE_LICENSE
-Imports: 
+Description: Interactive visualization of ChIP-seq, ATAC-seq, RNA-seq, and other genomic data.
+License: file LICENSE
+Imports:
     rtracklayer,
     GenomicRanges,
     Gviz,
@@ -21,8 +21,14 @@ Imports:
     iheatmapr,
     annotate,
     stringr,
-    bamsignals
+    bamsignals,
+    RColorBrewer,
+    S4Vectors,
+    biovizBase,
+    dplyr,
+    OrganismDbi
 RoxygenNote: 6.0.1
-Suggests: 
+Suggests:
     shiny,
-    testthat
+    testthat,
+    knitr

@@ -51,6 +51,20 @@ genomics_heatmap(mat, x = iheatmapr:::default_x(mat),
 
 \item{scale_method}{what method to use for scaling, either standardize, center, normalize}
 
+\item{colorscale}{}
+
+\item{col_groups_palette}{}
+
+\item{col_groups_name}{}
+
+\item{row_groups_palette}{}
+
+\item{row_groups_name}{}
+
+\item{show_row_groups_colorbar}{}
+
+\item{show_col_groups_colorbar}{}
+
 \item{x_labels}{axis labels for x axis (default is x)}
 
 \item{y_labels}{axis labels for y axis (default is NULL)}
@@ -63,7 +77,7 @@ genomics_heatmap(mat, x = iheatmapr:::default_x(mat),
 
 \item{font}{list of font attributes}
 
-\item{...}{additional argument to \code{\link[iheatmapr]{simple_heatmap}}}
+\item{...}{additional arguments}
 }
 \value{
 iheatmap object, which can be printed to generate an interactive graphic

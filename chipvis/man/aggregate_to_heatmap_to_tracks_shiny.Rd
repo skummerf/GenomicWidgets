@@ -8,6 +8,19 @@ aggregate_to_heatmap_to_tracks_shiny(aggregate_plot, heatmaps, track_function,
   link_functions, title = "Heatmap linked to Genome Tracks",
   options = list(height = 1400))
 }
+\arguments{
+\item{aggregate_plot}{}
+
+\item{heatmaps}{}
+
+\item{track_function}{}
+
+\item{link_functions}{}
+
+\item{title}{}
+
+\item{options}{}
+}
 \description{
 heatmap_to_browserly_shiny
 }

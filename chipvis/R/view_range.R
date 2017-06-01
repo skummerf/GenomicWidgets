@@ -1,6 +1,6 @@
 #' Title
 #'
-#' @param tx_data 
+#' @param keytype 
 #' @param db_object 
 #' @param symbol 
 #' @param chr 
@@ -38,8 +38,11 @@ get_view_range <- function(db_object,
 #' Get Symbol Range
 #' 
 #' @description Make a GRange that cover the exon list
-#' @param exon.df data.frame: the exons included in the annotation
-#'
+#' @param db_object 
+#' @param symbol 
+#' @param keytype 
+#' 
+#' @importFrom OrganismDbi select
 #' @author Justin Finkle
 #' @return range.gene GRange: s
 #' @export
@@ -111,7 +114,7 @@ extend_grange <- function(gr, extend=0){
 #'
 #' @param bwList vector: list of files to use to get coverage. Currently only accepts BigWig files
 #' @param target_range GRange: specifies the range in which to get coverage
-#' @param names vector: names to give each GRange coverage created
+#' @param sample_names vector: names to give each GRange coverage created
 #' @param cvg_scaling vector: values by which to scale each coverage value. See get_cvg_scaling for more information.
 #'
 #' @return cvg_list GRangesList: coverage for each file supplied

@@ -8,6 +8,9 @@ biocLite('rtracklayer')
 biocLite('GenomicRanges')
 biocLite('Gviz')
 biocLite('annotate')
+biocLite("S4Vectors")
+biocLite("biovizBase")
+biocLite("OrganismDbi")
 
 library(devtools)
 
@@ -19,6 +22,8 @@ install.packages("shiny")
 install.packages("plotly")
 install.packages("fastcluster")
 install.packages("stringr")
+install.packages("RColorBrewer")
+install.packages("dplyr")
 
 # Libraries used in development:
 install.packages("roxygen2")

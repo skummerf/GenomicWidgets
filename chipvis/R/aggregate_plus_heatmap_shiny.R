@@ -16,6 +16,7 @@ AGGREGATE_SOURCE = "Agg"
 #' @param include_method 
 #' @param row_order 
 #' @param k 
+#' @param row_groups 
 #' @param clust_dist 
 #' @param signal 
 #' @param plot_signal 
@@ -129,6 +130,9 @@ aggregate_shiny <- function(mats,
 #' aggregate_shiny_plus
 #' 
 #' @param sample_groups vector of groups to which matrices belong
+#' @param regions 
+#' @param track_function 
+#' @param region_widths 
 #' @param colors either RColorbrewer pallete name or vector of colors
 #' @param xlab axis name for x axis
 #' @param pct percentile argument if PercentileMax chosen as scale_method
@@ -142,6 +146,7 @@ aggregate_shiny <- function(mats,
 #' @param include_method 
 #' @param row_order 
 #' @param k 
+#' @param row_groups 
 #' @param clust_dist 
 #' @param signal 
 #' @param plot_signal 
@@ -275,6 +280,11 @@ aggregate_shiny_plus <- function(mats,
 
 #' aggregate_to_heatmap_shiny
 #' 
+#' @param aggregate_plot 
+#' @param heatmaps 
+#' @param title 
+#' @param options 
+#' 
 #' @export
 aggregate_to_heatmap_shiny <- function(aggregate_plot,
                                        heatmaps, 
@@ -318,6 +328,13 @@ aggregate_to_heatmap_shiny <- function(aggregate_plot,
 }
 
 #' heatmap_to_browserly_shiny
+#' 
+#' @param aggregate_plot 
+#' @param heatmaps 
+#' @param track_function 
+#' @param link_functions 
+#' @param title 
+#' @param options
 #' 
 #' @export
 aggregate_to_heatmap_to_browserly_shiny <- function(aggregate_plot,
@@ -387,6 +404,13 @@ aggregate_to_heatmap_to_browserly_shiny <- function(aggregate_plot,
 }
 
 #' heatmap_to_browserly_shiny
+#' 
+#' @param aggregate_plot 
+#' @param heatmaps 
+#' @param track_function 
+#' @param link_functions 
+#' @param title 
+#' @param options 
 #' 
 #' @export
 aggregate_to_heatmap_to_tracks_shiny <- function(aggregate_plot,

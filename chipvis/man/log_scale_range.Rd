@@ -8,9 +8,15 @@ log_scale_range(center, chromosome, n = 10, extension = 1e+06,
   min_bin = 100)
 }
 \arguments{
+\item{center}{}
+
+\item{chromosome}{}
+
 \item{n}{}
 
-\item{gr}{}
+\item{extension}{}
+
+\item{min_bin}{}
 }
 \description{
 Title

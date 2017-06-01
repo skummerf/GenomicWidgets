@@ -19,6 +19,8 @@ make_coverage_matrix(inputs, ranges, binsize = 1, format = c("auto",
 \item{up}{basepairs upstream of center to use}
 
 \item{down}{basepairs downstream of center to use}
+
+\item{...}{}
 }
 \description{
 make_coverage_matrix

@@ -3,6 +3,7 @@
 ##' Expand sample table with paths to useful files
 ##' @title Expand sample table with paths to useful files
 ##' @param dat.samples Input sample table with minimal columns Sample.Name and Dir.ngs_pipeline
+##' @param dir.bed 
 ##' @return data frame including additional columns
 ##' @author Suchit Jhunjhunwala
 ##' @export
@@ -324,7 +325,6 @@ ngsPipelineResult <- function (dirs, file = ".summary_alignment.tab$", sep = "\t
 ##' @param regularize Logical, indicating whether only the regular chromosomes should be output
 ##' @return tss granges
 ##' @author Jinfeng Liu, Suchit Jhunjhunwala
-##' @import GenomicFeatures
 ##' @export
 tssFromTxdb <- function(txdb, regularize=TRUE) {
   tx <- as.data.frame(transcripts(txdb))

@@ -12,6 +12,8 @@ get_view_range(db_object, symbol = NULL, keytype = c("SYMBOL", "TXNAME"),
 
 \item{symbol}{}
 
+\item{keytype}{}
+
 \item{chr}{}
 
 \item{start}{}
@@ -19,8 +21,6 @@ get_view_range(db_object, symbol = NULL, keytype = c("SYMBOL", "TXNAME"),
 \item{end}{}
 
 \item{strand}{}
-
-\item{tx_data}{}
 }
 \description{
 Title

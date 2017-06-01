@@ -7,7 +7,11 @@
 get_symbol_range(db_object, symbol, keytype)
 }
 \arguments{
-\item{exon.df}{data.frame: the exons included in the annotation}
+\item{db_object}{}
+
+\item{symbol}{}
+
+\item{keytype}{}
 }
 \value{
 range.gene GRange: s

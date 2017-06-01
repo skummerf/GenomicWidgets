@@ -43,6 +43,8 @@ aggregate_shiny(mats, sample_groups = NULL, colors = "Dark2",
 
 \item{k}{}
 
+\item{row_groups}{}
+
 \item{clust_dist}{}
 
 \item{signal}{}

@@ -9,6 +9,8 @@ normalize_coverage_matrix(mats, method = c("localRms", "localMean",
   scalar = NULL)
 }
 \arguments{
+\item{mats}{}
+
 \item{method}{normalization method option, see Details}
 
 \item{pct}{Percentile, only used if PercentileMax is method}

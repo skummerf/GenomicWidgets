@@ -14,6 +14,8 @@ plot_track_view(cvg, target_range, exon_data, genome, bg_title = "black",
   snptrack_kwargs = list(), dtrack_kwargs = list(), plot_kwargs = list())
 }
 \arguments{
+\item{cvg}{GRangesList: typically the results of importing wig/bw/... files for each sample}
+
 \item{target_range}{GRange: range to plot}
 
 \item{exon_data}{data.frame: exon information}
@@ -30,11 +32,15 @@ plot_track_view(cvg, target_range, exon_data, genome, bg_title = "black",
 
 \item{hm_binsize}{}
 
+\item{hm_scaling}{}
+
 \item{snp_gr}{}
 
 \item{tss_gr}{}
 
 \item{ucsc}{}
+
+\item{existing_tracks}{}
 
 \item{gatrack_kwargs}{}
 
@@ -47,10 +53,6 @@ plot_track_view(cvg, target_range, exon_data, genome, bg_title = "black",
 \item{dtrack_kwargs}{list-optional: additional arguments for DataTrack. These should only be used for global arguments that will apply to all datatracks}
 
 \item{plot_kwargs}{}
-
-\item{cvg_list}{GRangesList: typically the results of importing wig/bw/... files for each sample}
-
-\item{scaling}{}
 }
 \value{
 ptracks list: track objects plotted by Gviz
