@@ -15,6 +15,8 @@ adjust_y_domains(plotly_obj, ax_info, heights, sort_decrease = TRUE)
 get_subplot_ax_info}
 
 \item{heights}{numeric: heights of each track, including annotation tracks}
+
+\item{sort_decrease}{}
 }
 \value{
 plotly_obj

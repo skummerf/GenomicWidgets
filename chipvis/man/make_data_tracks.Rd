@@ -9,6 +9,8 @@ make_data_tracks(cvg, genome, bg_title = "black", colors = NULL,
   kwargs = list())
 }
 \arguments{
+\item{cvg}{}
+
 \item{genome}{str}
 
 \item{bg_title}{str: color for track panel backgrounds}
@@ -21,15 +23,9 @@ make_data_tracks(cvg, genome, bg_title = "black", colors = NULL,
 
 \item{val}{str: value in cvg.L elements to use for binning coverage. Default is "score"}
 
+\item{hm_scaling}{}
+
 \item{kwargs}{}
-
-\item{gr}{GRange to plot}
-
-\item{chr}{str}
-
-\item{cvg_list}{}
-
-\item{scaling}{}
 }
 \value{
 dtrack list: DataTrack objects

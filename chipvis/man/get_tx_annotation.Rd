@@ -12,8 +12,6 @@ get_tx_annotation(range, tx_data, no_introns = FALSE)
 \item{tx_data}{}
 
 \item{no_introns}{}
-
-\item{db_object}{}
 }
 \description{
 get_tx_annotation

@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(plotly)
 library(Biobase)
 library(chipVis)
-library(iHeatmapR)
+library(iheatmapr)
 options(ucscChromosomeNames=FALSE)
 
 e <- readRDS("~/workspace/BAP1_Data/esetRPKM.RDS")

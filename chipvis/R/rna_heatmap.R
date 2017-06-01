@@ -16,13 +16,20 @@
 #' @param source source name, useful for shiny
 #' @param scale scale matrix by rows, cols or none
 #' @param scale_method what method to use for scaling, either standardize, center, normalize
+#' @param colorscale 
+#' @param col_groups_palette 
+#' @param col_groups_name 
+#' @param row_groups_palette 
+#' @param row_groups_name 
+#' @param show_row_groups_colorbar 
+#' @param show_col_groups_colorbar 
 #' @param x_labels axis labels for x axis (default is x)
 #' @param y_labels axis labels for y axis (default is NULL)
 #' @param x_title x axis title (default is NULL)
 #' @param y_title y axis title (default is NULL)
 #' @param colorbar_grid colorbar grid parameters, to be set by \code{\link[iheatmapr]{setup_colorbar_grid}}
 #' @param font list of font attributes
-#' @param ... additional argument to \code{\link[iheatmapr]{simple_heatmap}}
+#' @param ... additional arguments
 #' @return iheatmap object, which can be printed to generate an interactive graphic
 #' @export
 #' @author Alicia Schep
@@ -95,6 +102,7 @@ genomics_heatmap <- function(mat,
 
 #' add_genomics_heatmap
 #' 
+#' @param p 
 #' @param mat matrix of values to be plotted as heatmap
 #' @param x x xaxis labels, by default colnames of mat
 #' @param col_order how to order columns? See Details
@@ -104,12 +112,19 @@ genomics_heatmap <- function(mat,
 #' @param name Name for colorbar
 #' @param scale scale matrix by rows, cols or none
 #' @param scale_method what method to use for scaling, either standardize or center
+#' @param colorscale 
+#' @param show_colorbar 
+#' @param col_groups_palette 
+#' @param col_groups_name 
+#' @param show_col_groups_colorbar 
 #' @param x_labels axis labels for x axis (default is x)
 #' @param y_labels axis labels for y axis (default is NULL)
 #' @param x_title x axis title
 #' @param y_title y axis title
 #' @param buffer amount of space to leave empty before this plot, relative to size 
 #' of first heatmap
+#' @param ... 
+#' 
 #' @export
 #' @author Alicia Schep
 add_genomics_heatmap <- function(p,

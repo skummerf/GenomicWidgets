@@ -31,14 +31,13 @@ transcriptsByOverlaps <- function(x, ranges, maxgap = 0L, minoverlap = 1L,
 
 #' get_tx_annotation
 #'
-#' @param db_object 
 #' @param range 
 #' @param tx_data 
 #' @param no_introns 
 #'
 #' @return
 #' @export
-#' @import GenomeInfoDb GenomicRanges
+#' @import GenomicRanges
 #' @examples
 get_tx_annotation <- function(range, tx_data, no_introns=FALSE){
   in_style <- seqlevelsStyle(range)[[1]]
@@ -96,7 +95,7 @@ get_tx_features <- function(tx_names, tx_data){
 #' @param txdb 
 #' @param org_db 
 #' @param str_regex 
-#'
+#' @importFrom dplyr summarize
 #' @return
 #' @export
 #'

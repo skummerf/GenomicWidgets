@@ -15,6 +15,8 @@ add_genomics_heatmap(p, mat, x = iheatmapr:::default_x(mat),
   buffer = 0.2, ...)
 }
 \arguments{
+\item{p}{}
+
 \item{mat}{matrix of values to be plotted as heatmap}
 
 \item{x}{x xaxis labels, by default colnames of mat}
@@ -33,6 +35,16 @@ add_genomics_heatmap(p, mat, x = iheatmapr:::default_x(mat),
 
 \item{scale_method}{what method to use for scaling, either standardize or center}
 
+\item{colorscale}{}
+
+\item{show_colorbar}{}
+
+\item{col_groups_palette}{}
+
+\item{col_groups_name}{}
+
+\item{show_col_groups_colorbar}{}
+
 \item{x_labels}{axis labels for x axis (default is x)}
 
 \item{y_labels}{axis labels for y axis (default is NULL)}
@@ -43,6 +55,8 @@ add_genomics_heatmap(p, mat, x = iheatmapr:::default_x(mat),
 
 \item{buffer}{amount of space to leave empty before this plot, relative to size 
 of first heatmap}
+
+\item{...}{}
 }
 \description{
 add_genomics_heatmap

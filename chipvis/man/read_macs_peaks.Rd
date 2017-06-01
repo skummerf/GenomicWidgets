@@ -10,8 +10,6 @@ read_macs_peaks(sample_list, file_info)
 \item{sample_list}{}
 
 \item{file_info}{}
-
-\item{gr}{}
 }
 \description{
 Title

@@ -1,18 +1,20 @@
 #' Title
 #'
-#' @param target_range 
 #' @param cvg_files 
 #' @param genome 
 #' @param tx_data 
+#' @param binsize 
 #' @param bg_title 
 #' @param colors 
 #' @param type 
 #' @param hm_thresh 
 #' @param cvg_scaling 
 #' @param hm_binsize 
+#' @param hm_scaling 
 #' @param snp_gr 
 #' @param tss_gr 
 #' @param ucsc 
+#' @param existing_tracks 
 #' @param gatrack_kwargs 
 #' @param grtrack_kwargs 
 #' @param tsstrack_kwargs 
@@ -81,7 +83,7 @@ make_track_function <- function(cvg_files,
 ##' Adapted from gChipseq function of the same name. Credit to Jinfeng Liu
 ##' plot genomic coverage along the gene
 ##'
-##' @param cvg_list GRangesList: typically the results of importing wig/bw/... files for each sample
+##' @param cvg GRangesList: typically the results of importing wig/bw/... files for each sample
 ##' @param target_range GRange: range to plot 
 ##' @param exon_data data.frame: exon information
 ##' @param genome str: genome build, e.g. hg19, GRCh38, etc.
@@ -89,11 +91,12 @@ make_track_function <- function(cvg_files,
 ##' @param colors str-optional: colors for coverage data tracks
 ##' @param type str-optional: type of datatrack to plot. Currently only 'hist' and 'heatmap' are supported
 ##' @param hm_thresh integer-optional: threshold above which a heatmap is plotted. Can change threshold or override with type
-##' @param scaling 
+##' @param hm_scaling 
 ##' @param hm_binsize 
 ##' @param snp_gr 
 ##' @param tss_gr 
 ##' @param ucsc 
+##' @param existing_tracks 
 ##' @param gatrack_kwargs 
 ##' @param grtrack_kwargs list-optional: additional arguments for GeneRegionTrack
 ##' @param tsstrack_kwargs 
@@ -102,7 +105,7 @@ make_track_function <- function(cvg_files,
 ##' @param plot_kwargs 
 ##'
 ##' @return ptracks list: track objects plotted by Gviz
-##' @import Gviz RColorBrewer
+##' @import Gviz
 ##' @export
 ##' @author Justin Finkle
 plot_track_view <- function(cvg, target_range, exon_data, genome,

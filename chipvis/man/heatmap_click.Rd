@@ -6,6 +6,13 @@
 \usage{
 heatmap_click(heatmap, ranges, width = 50000)
 }
+\arguments{
+\item{heatmap}{}
+
+\item{ranges}{}
+
+\item{width}{}
+}
 \description{
 heatmap_click
 }

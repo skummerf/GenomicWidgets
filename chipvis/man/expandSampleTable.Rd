@@ -8,6 +8,8 @@ expandSampleTable(dat.samples, dir.bed)
 }
 \arguments{
 \item{dat.samples}{Input sample table with minimal columns Sample.Name and Dir.ngs_pipeline}
+
+\item{dir.bed}{}
 }
 \value{
 data frame including additional columns

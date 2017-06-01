@@ -7,6 +7,17 @@
 heatmap_to_tracks_shiny(heatmap, track_function, link,
   title = "Heatmap linked to Genome Tracks", options = list(height = 1400))
 }
+\arguments{
+\item{heatmap}{}
+
+\item{track_function}{}
+
+\item{link}{}
+
+\item{title}{}
+
+\item{options}{}
+}
 \description{
 heatmap_to_tracks_shiny
 }

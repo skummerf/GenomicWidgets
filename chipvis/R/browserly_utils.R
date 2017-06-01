@@ -106,6 +106,7 @@ get_snps_in_range <- function(snp_gr = GRanges(),
 #' @param ax_info data.frame: contains relevant axes information. created using 
 #' get_subplot_ax_info
 #' @param heights numeric: heights of each track, including annotation tracks
+#' @param sort_decrease
 #'
 #' @return plotly_obj
 #'
@@ -170,6 +171,7 @@ reflect_ranges <- function(gr,
 #' @param group_col character: the column in snp_info for grouping traces. 
 #' Default is "CONTEXT" which corresponds to the type of mutation in the GWAS 
 #' catalog, e.g. 'missense'
+#' @importFrom biovizBase mold
 #'
 #' @return plotly_object
 #'
@@ -322,7 +324,8 @@ make_subplots <- function(plot_data,
 #'  Margins are automatically adjusted
 #' @param title_rotation numeric: angle of plot titles. Only used if 
 #' native_title is FALSE
-#'
+#' 
+#' @importFrom dplyr slice
 #' @return
 #'
 #' @author Justin Finkle

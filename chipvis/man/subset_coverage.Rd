@@ -6,6 +6,11 @@
 \usage{
 subset_coverage(coverage, idx)
 }
+\arguments{
+\item{coverage}{}
+
+\item{idx}{}
+}
 \description{
 subset_coverage
 }

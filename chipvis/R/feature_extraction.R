@@ -26,8 +26,11 @@ avg_peak_in_range <- function(gr, peaks_gr){
 
 #' Title
 #'
-#' @param gr 
+#' @param center 
+#' @param chromosome 
 #' @param n 
+#' @param extension 
+#' @param min_bin 
 #'
 #' @return
 #' @export
@@ -146,7 +149,6 @@ make_lines <- function(symbol_range, scaled_range, hm_vals, base){
 #'
 #' @param sample_list 
 #' @param file_info 
-#' @param gr 
 #'
 #' @return
 #' @export
@@ -173,7 +175,7 @@ read_macs_peaks <- function(sample_list, file_info){
 #'
 #' @param peak_list 
 #' @param gr 
-#'
+#' @importFrom biovizBase mold
 #' @return
 #' @export
 #'

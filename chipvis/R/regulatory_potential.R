@@ -4,6 +4,7 @@
 #' @param txdb txdb object
 #' @param by_gene return a GRangesList with tss grouped by gene
 #' @param db basename of meta-data package to use for \code{\link[annotate]{getSYMBOL}}
+#' @importFrom S4Vectors split
 #' @return GRanges or GRangesList
 #' @export
 get_tss_from_txdb <- function( txdb, by_gene = TRUE, db = 'org.Hs.eg'){

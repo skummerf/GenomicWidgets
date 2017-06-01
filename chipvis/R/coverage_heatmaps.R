@@ -1,9 +1,15 @@
+#' log10rowMeans
+#'
+#' @param x 
+#' @param na.rm 
+#' @param pseudo 
+#' 
 #' @export
 log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
   log10(rowMeans(x, na.rm = na.rm) + pseudo)
 }
 
-#' coverage_heatmap
+#' Coverage Heatmap
 #' 
 #' @param data single coverage matrix or list of coverage matrices
 #' @param x x axis labels
@@ -23,26 +29,30 @@ log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
 #' @param show_xlabels show xlabels?  default is TRUE
 #' @param start label for start of x range
 #' @param end label for end of x range
-#' @param xlab x axis label
 #' @param font list of font attributes
+#' @param p 
+#' @param signal_name 
+#' @param col_title 
+#' @param cluster_by 
+#' @param ... 
+#' 
 #' @return iheatmap object
 #' @export
 #' @author Alicia Schep
 #' @rdname coverage_heatmap
 #' @name coverage_heatmap
-#' @aliases coverage_heatmap,matrix-method coverage_heatmap,list-method
-#' add_coverage_heatmap,IheatmapHorizontal,matrix-method
-#' @export
 #' @import iheatmapr
 setGeneric("coverage_heatmap", 
            function(data, ...) standardGeneric("coverage_heatmap"))
 
 #' @rdname coverage_heatmap
+#' @aliases add_coverage_heatmap
 #' @export
 setGeneric("add_coverage_heatmap", 
            function(p, data, ...) standardGeneric("add_coverage_heatmap"))
 
-
+#' @rdname coverage_heatmap
+#' @aliases coverage_heatmap-matrix
 setMethod("coverage_heatmap", c(data = "matrix"),
           function(data, 
                    x = default_x(data),
@@ -144,6 +154,8 @@ setMethod("coverage_heatmap", c(data = "matrix"),
               
 })
 
+#' @rdname coverage_heatmap
+#' @aliases IheatmapHorizontal-matrix
 setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "matrix"),
           function(p,
                    data, 
@@ -223,8 +235,10 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "matrix"),
             
             return(p)
             
-          })          
-          
+          })
+
+#' @rdname coverage_heatmap
+#' @aliases coverage_heatmap-list
 setMethod("coverage_heatmap", c(data = "list"),
           function(data, 
                    x = default_x(data[[1]]),
@@ -399,7 +413,8 @@ setMethod("coverage_heatmap", c(data = "list"),
             
           })          
 
-
+#' @rdname coverage_heatmap
+#' @aliases IheatmapHorizontal-list
 setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "list"),
           function(p,
                    data, 
@@ -500,9 +515,17 @@ default_end <- function(x){
 }
 
 
-
+#' add_dist_to_tss
+#'
+#' @param p 
+#' @param ranges 
+#' @param tss 
+#' @param ... 
+#' 
 #' @export
 #' @importFrom GenomicRanges distanceToNearest
+#'
+#' @examples
 add_dist_to_tss <- function(p,
                             ranges,
                             tss,

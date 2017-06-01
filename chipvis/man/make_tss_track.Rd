@@ -12,6 +12,8 @@ make_tss_track(tss, target_range, chr, kwargs = list())
 \item{target_range}{}
 
 \item{chr}{}
+
+\item{kwargs}{}
 }
 \description{
 Make TSS Track

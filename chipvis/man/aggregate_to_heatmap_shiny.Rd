@@ -7,6 +7,15 @@
 aggregate_to_heatmap_shiny(aggregate_plot, heatmaps,
   title = "Aggregate Plot Linked to Heatmap", options = list(height = 1400))
 }
+\arguments{
+\item{aggregate_plot}{}
+
+\item{heatmaps}{}
+
+\item{title}{}
+
+\item{options}{}
+}
 \description{
 aggregate_to_heatmap_shiny
 }
