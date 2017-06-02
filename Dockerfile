@@ -23,7 +23,7 @@ RUN echo "local({\n  r <- getOption(\"repos\")\n\
 
 RUN apt-get update
 RUN apt-get install -y \
-  libxml2-dev libpng-dev
+  libxml2-dev libpng-dev openssh-client
 
 # Set MRAN repo to date
 RUN sed -i /usr/local/lib/R/etc/Rprofile.site -e 's/2017-04-26/2017-05-23/'
