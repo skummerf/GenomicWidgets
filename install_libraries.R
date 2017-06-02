@@ -15,7 +15,7 @@ biocLite("OrganismDbi")
 library(devtools)
 
 # Library used in chipVis from github:
-devtools::install_github("AliciaSchep/iheatmapr")
+devtools::install_github("AliciaSchep/iheatmapr@e4c4bdd54bde09643fc350f0d4df951f040b5267")
 
 # Libraries used in chipVis from CRAN:
 install.packages("shiny")
