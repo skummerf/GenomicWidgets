@@ -1,0 +1,167 @@
+
+#' genomics_heatmap
+#' 
+#' @param mat matrix of values to be plotted as heatmap
+#' @param x x xaxis labels, by default colnames of mat
+#' @param y y axis labels, by default rownames of mat
+#' @param row_order how to order rows?  See Details
+#' @param col_order how to order columns? See Details
+#' @param row_groups groups for rows, overriden if row_k is set and row_order is kmeans or hclust
+#' @param col_groups groups for columns, overriden if col_k is set and col_order is kmeans or hclust
+#' @param row_k number of clusters for rows, needed if row_order is kmeans or optional if hclust
+#' @param col_k number of clusters for columns, needed if row_order is kmeans or optional if hclust
+#' @param row_clust_dist distance function to use for row clustering if hierarchical clustering
+#' @param col_clust_dist distance function to use for column clustering if hierarchical clustering
+#' @param name Name for colorbar
+#' @param source source name, useful for shiny
+#' @param scale scale matrix by rows, cols or none
+#' @param scale_method what method to use for scaling, either standardize, center, normalize
+#' @param x_labels axis labels for x axis (default is x)
+#' @param y_labels axis labels for y axis (default is NULL)
+#' @param x_title x axis title (default is NULL)
+#' @param y_title y axis title (default is NULL)
+#' @param colorbar_grid colorbar grid parameters, to be set by \code{\link[iheatmapr]{setup_colorbar_grid}}
+#' @param font list of font attributes
+#' @param ... additional argument to \code{\link[iheatmapr]{simple_heatmap}}
+#' @return iheatmap object, which can be printed to generate an interactive graphic
+#' @export
+#' @author Alicia Schep
+genomics_heatmap <- function(mat, 
+                           x = iheatmapr:::default_x(mat),
+                           y = iheatmapr:::default_y(mat),   
+                           row_order = c("hclust","none","kmeans","groups"),
+                           col_order = c("groups","none","hclust","kmeans"),
+                           row_groups = NULL,
+                           col_groups = NULL,
+                           row_k = NULL,
+                           col_k = NULL,
+                           row_clust_dist = stats::dist,
+                           col_clust_dist = stats::dist,
+                           name = "Value",
+                           source = "HM",
+                           scale = c("rows","cols","none"),
+                           scale_method = c("standardize","center","normalize"),
+                           colorscale = continuous_colorscale(),
+                           col_groups_palette = iheatmapr:::DEFAULT_COLORS,
+                           col_groups_name = "Column<br>Groups",
+                           row_groups_palette = iheatmapr:::DEFAULT_COLORS,
+                           row_groups_name = "Row<br>Groups",
+                           show_row_groups_colorbar = TRUE,
+                           show_col_groups_colorbar = TRUE,
+                           x_labels = NULL,
+                           y_labels = NULL,
+                           x_title = NULL,
+                           y_title = NULL,
+                           colorbar_grid = setup_colorbar_grid(),
+                           font = list(),
+                           ...){
+  
+  row_order = match.arg(row_order)
+  col_order = match.arg(col_order)
+  scale = match.arg(scale)
+  scale_method = match.arg(scale_method)
+  
+  iheatmapr::iheatmap(mat, 
+                            x = x,
+                            y = y,                   
+                            row_order = row_order,
+                            col_order = col_order,
+                            row_groups = row_groups,
+                            col_groups = col_groups,
+                            row_groups_name = row_groups_name,
+                            col_groups_name = col_groups_name,
+                            col_groups_palette = col_groups_palette,
+                            row_groups_palette = row_groups_palette,
+                            show_col_groups_colorbar = show_col_groups_colorbar,
+                            show_row_groups_colorbar = show_row_groups_colorbar,
+                            colorscale = colorscale,
+                            row_k = row_k,
+                            col_k = col_k,
+                            row_clust_dist = row_clust_dist,
+                            col_clust_dist = col_clust_dist,
+                            name = name,
+                            source = source,
+                            scale = scale,
+                            scale_method = scale_method,
+                            x_labels = x_labels,
+                            y_labels = y_labels,
+                            x_title = x_title,
+                            y_title = y_title,
+                            colorbar_grid = colorbar_grid,
+                            font = font,
+                            ...)
+  
+}
+
+#' add_genomics_heatmap
+#' 
+#' @param mat matrix of values to be plotted as heatmap
+#' @param x x xaxis labels, by default colnames of mat
+#' @param col_order how to order columns? See Details
+#' @param col_groups groups for columns, overriden if col_k is set and col_order is kmeans or hclust
+#' @param col_k number of clusters for columns, needed if row_order is kmeans or optional if hclust
+#' @param col_clust_dist distance function to use for column clustering if hierarchical clustering
+#' @param name Name for colorbar
+#' @param scale scale matrix by rows, cols or none
+#' @param scale_method what method to use for scaling, either standardize or center
+#' @param x_labels axis labels for x axis (default is x)
+#' @param y_labels axis labels for y axis (default is NULL)
+#' @param x_title x axis title
+#' @param y_title y axis title
+#' @param buffer amount of space to leave empty before this plot, relative to size 
+#' of first heatmap
+#' @export
+#' @author Alicia Schep
+add_genomics_heatmap <- function(p,
+                               mat, 
+                               x = iheatmapr:::default_x(mat),
+                               col_order = c("groups","none","hclust","kmeans"),
+                               col_groups = NULL,
+                               col_k = NULL,
+                               col_clust_dist = stats::dist,
+                               name = "Value",
+                               scale = c("rows","cols","none"),
+                               scale_method = c("standardize","center","normalize"),
+                               colorscale = continuous_colorscale(),
+                               show_colorbar = TRUE,
+                               col_groups_palette = iheatmapr:::DEFAULT_COLORS,
+                               col_groups_name = "Column<br>Groups",
+                               show_col_groups_colorbar = TRUE,
+                               x_labels = NULL,
+                               y_labels = NULL,
+                               x_title = NULL,
+                               y_title = NULL,
+                               buffer = 0.2,
+                               ...){
+  
+  
+  col_order = match.arg(col_order)
+  scale = match.arg(scale)
+  scale_method = match.arg(scale_method)
+  
+  p %>% iheatmapr::add_simple_heatmap(mat, 
+                                  x = x,
+                                  col_order = col_order,
+                                  col_groups = col_groups,
+                                  col_groups_name = col_groups_name,
+                                  col_groups_palette = col_groups_palette,
+                                  show_col_groups_colorbar = show_col_groups_colorbar,
+                                  colorscale = colorscale,
+                                  col_k = col_k,
+                                  col_clust_dist = col_clust_dist,
+                                  name = name,
+                                  scale = scale,
+                                  show_colorbar = show_colorbar,
+                                  scale_method = scale_method,
+                                  x_labels = x_labels,
+                                  x_title = x_title,
+                                  buffer = buffer,
+                                  ...)
+  
+}
+
+
+
+
+
+

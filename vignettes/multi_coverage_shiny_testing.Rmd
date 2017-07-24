@@ -1,0 +1,130 @@
+---
+title: "Multiple Chip-Seq Heatmap Example"
+author: "Alicia Schep"
+date: "7/8/2016"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE, cache = FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+require(gChipseq)
+require(TxDb.Mmusculus.BioMart.igis)
+require(biomaRt)
+require(rtracklayer)
+require(Gviz)
+require(chipVis)
+require(iHeatmapR)
+options(ucscChromosomeNames=FALSE)
+BiocParallel::register(BiocParallel::MulticoreParam(4, progressbar = FALSE))
+
+```
+
+## Reading in the Data
+
+Example of reading in data
+
+```{r inputs, warnings = FALSE, message = FALSE, results='hide'}
+
+
+file.sample <- "~/workspace/BAP1_Data/BAP1_june_2016_samples.txt"
+file.pair <- "~/workspace/BAP1_Data/BAP1_june_2016_pairs.txt"
+
+samples <- read.table(file.sample,as.is=TRUE,header=TRUE)
+samples_exp <- expandSampleTable(samples)
+
+pairs <- read.table(file.pair,as.is=TRUE,header=TRUE)
+pairs_exp <- expandPairedTable(pairs)
+
+tss <- tssFromTxdb(txdb = TxDb.Mmusculus.BioMart.igis)
+unique_tss <- unique(tss) #Remove same positions
+
+peaks <- lapply( pairs_exp$File.macs, readMacsPeaks, fc=5, minTags=10, fdr=0.1)
+peaks <- peaks[!sapply(peaks, is.null)]
+
+merged_peaks <- reduce(do.call(c, peaks))
+
+tss_in_peaks <- subsetByOverlaps(unique_tss, merged_peaks, maxgap = 1000)
+
+```
+
+## Prepping Data
+```{r bams, warnings = FALSE, message = FALSE, results='hide'}
+#source('/gnet/is7/workspace/schepa/chipVis/R/coverage_matrix.R')
+
+bam_files <- samples_exp$File.bam
+names(bam_files) <- samples$Genotype
+
+cvg_files <- samples_exp$File.bw
+names(cvg_files) <- samples$Genotype
+
+mRNF2 <- grep("mRNF2", samples$Genotype)
+
+cvg_mats <- make_coverage_matrix(inputs = bam_files[mRNF2],
+                                  ranges = tss_in_peaks,
+                                  binsize = 50,
+                                  up = 2500,
+                                  down = 2500)
+
+scale_factors <- get_scaling_factor(file_info = samples_exp)
+
+```
+
+## Multi coverage heatmap plot
+
+Argument clust_include says to use matrices 1 through 3 for clustering.  You could alternatively cluster based on just the first heatmap, or any combination of heatmaps that were supplied.  
+
+```{r}
+multi_coverage_heatmap(cvg_mats[1:3], 
+                       row_order = "kmeans", 
+                       k = 3, 
+                       clust_include = 1:3) %>% 
+  plot_iHeatmap()
+```
+
+
+## Single coverage shiny app
+
+
+```{r shiny3, echo=FALSE, cache = FALSE, message = FALSE}
+
+single_coverage_plot(input = cvg_mats[[1]][1:500,],#bam_files, 
+                    regions = tss_in_peaks[1:500], 
+                    region_names = tss_in_peaks$names[1:500], 
+                    cvg_files = cvg_files[mRNF2])
+
+```
+
+## Multi-coverage shiny app
+
+
+```{r shiny1, echo=FALSE, cache = FALSE, message = FALSE}
+ 
+ multi_coverage_plot(inputs = cvg_mats, 
+                     regions = tss_in_peaks, 
+                     region_names = tss_in_peaks$names, 
+                     cvg_files = cvg_files[mRNF2],
+                     aggregate_normalization = "scalar",
+                     scaling_factor = scale_factors[2,mRNF2])
+ 
+```
+
+# Simple RNA-seq Heatmap
+
+```{r simple_heatmap, message = FALSE}
+library(plotly)
+library(Biobase)
+
+e <- readRDS("~/workspace/BAP1_Data/esetRPKM.RDS")
+
+e <- e[which(substr(fData(e)$chr,1,3) == "chr"),]
+fData(e)$chr <- sapply(fData(e)$chr, function(x) substr(x, 4, nchar(x)))
+
+#source("~/workspace/chipVis/R/signal_heatmap.R")
+#source("~/workspace/chipVis/R/plot_utils.R")
+
+p1 = cluster_heatmap(exprs(e)[1:500,], y = as.character(fData(e)$symbol[1:500]), x = as.character(pData(e)$TREATMENT_NAME), row_order = "kmeans", col_order = "hclust", row_k = 8, col_k = 4, col_anno = list(Genotype = list(data = matrix(as.numeric(as.factor(pData(e)$TREATMENT_NAME)),nrow = 1), colorscale = chipVis:::dcolorscale(4))))$plot() %>% layout(margin = list(b= 100))
+
+p1
+```
+
