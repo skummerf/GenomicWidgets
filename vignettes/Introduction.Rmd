@@ -8,6 +8,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(iheatmapr)
 library(chipVis)
 library(dplyr)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(GenomicRanges)
 ```
 
 ## Example
@@ -24,8 +26,6 @@ names(bamfiles) <- left_join(data_frame(fileName = basename(bamfiles)), samp.inf
   select(sampleName) %>% unlist(use.names = FALSE)
 
 
-
-library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 promoter_regions <- promoters(TxDb.Hsapiens.UCSC.hg19.knownGene, 
                               upstream = 1000, downstream = 1000)
 promoter_regions <- promoter_regions[seqnames(promoter_regions) == "chr21"]
@@ -72,6 +72,21 @@ coverage_heatmap(ctcf_mats)
 
 # Interactive genome tracks
 
+## View ranges
+
+## Pre-load annotation data
+
+
+
+## Single track
+
+
+## Multiple tracks
+
+
+## Expression
+
+
 
 
 ## Single locus
@@ -87,7 +102,7 @@ A trackview requires three components to display properly.
 Browserly needs to know the range to plot. This is used to pull the correct annotation information. The function `get_view_range` makes the appropriate object for use with browserly. If passed an OrganismDbi object, `get_view_range` can also be used to get the range by gene symbol. 
 
 ```{r view_range}
-view_range <- get_view_range(chr = "chr21", start=9688000, end=9690000)
+view_range <- get_view_range(chr = "chr21", start=45050000, end=45068000)
 view_range
 ```
 
@@ -155,6 +170,8 @@ samples are displayed, browserly defaults to using a heatmap. This saves vertica
 ```{r Demo_hm}
 plot_single_locus(view_range, tx_data, cvg)
 ```
+
+
 ```{r}
 tr_fn <- make_browserly_function(bamfiles[c("Ctcf","Znf143","Suz12")], tx_data = tx_data,
                                 cvg_scaling = 100)
@@ -163,7 +180,12 @@ tr_fn <- make_browserly_function(bamfiles[c("Ctcf","Znf143","Suz12")], tx_data =
 
 ## Multiple locus
 
+
+
 ## Adding expression information
+
+
+
 
 ## Log scale???
 

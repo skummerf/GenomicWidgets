@@ -50,7 +50,7 @@ default is TRUE}
 
 \item{xlab}{x axis label}
 
-\item{font}{list of font attributes}
+\item{layout}{list of layout attributes}
 }
 \value{
 iheatmap object

@@ -1,6 +1,10 @@
 setMethod(single_locus_view,
           c("GRanges","character"),
-          function(window, object, annotation = NULL, ..., 
+          function(window, 
+                   object, 
+                   annotation = NULL, 
+                   summary = NULL,
+                   ..., 
                    track_names = ifelse(!is.null(names(object)),
                                         names(object),
                                         basename(object)),
@@ -8,14 +12,16 @@ setMethod(single_locus_view,
                    share_y = FALSE,
                    fill = c('tozeroy','none'), 
                    relative = FALSE, 
-                   showlegend = TRUE, 
+                   showlegend = !is.null(groups), 
                    colors = NULL, 
                    mode = 'lines',
                    annotation_position = c("top","bottom"),
                    annotation_size = 0.5){
             
             window <- as(window, "ViewRange")
-            single_locus_view(window, object, annotation = annotation, ...,
+            single_locus_view(window, object, annotation = annotation,
+                              summary = summary,
+                              ...,
                               track_names = track_names, groups = groups,
                               share_y = share_y, fill = match.arg(fill),
                               relative = relative, showlegend = showlegend,
@@ -28,7 +34,9 @@ setMethod(single_locus_view,
 
 setMethod(single_locus_view,
           c("ViewRange","character"),
-          function(window, object, annotation = NULL, ..., 
+          function(window, object, annotation = NULL, 
+                   summary = NULL,
+                   ..., 
                    track_names = ifelse(!is.null(names(object)),
                                         names(object),
                                         basename(object)),
@@ -100,8 +108,13 @@ setMethod(single_locus_view,
               heights = rep(1, length(tracks))
             }
             
-            out <- new("LocusView", as(tracks,"SimpleList"), share_y = share_y,
-                       view = window, heights = heights)
+            if (is.null(summary)){
+              out <- new("LocusView", as(tracks,"SimpleList"), share_y = share_y,
+                         view = window, heights = heights)
+            } else{
+              out <- new("LocusView", as(tracks,"SimpleList"), share_y = share_y,
+                       view = window, heights = heights, summary = summary, summary_width = 0.25)
+            }
             
             return(out)  
             
@@ -109,8 +122,18 @@ setMethod(single_locus_view,
 
 yaxis_names <- function(x, start = 1L){
  stopifnot(length(x) >= 1)
- out <- paste0("yaxis", seq(start, start + length(x) - 1))
+ if (length(x@summary@data) > 0){
+   end = start + length(x)
+ } else{
+   end = start + length(x) - 1
+ }
+ out <- paste0("yaxis", seq(start, end))
  if (start == 1L) out[1] <- "yaxis"
+ if (length(x@summary@data) > 0){
+   out = list(out[seq_len(length(out)-1)], out[length(out)])
+ } else{
+   out = list(out, c())
+ }
  out
 }
 
@@ -142,6 +165,24 @@ setMethod(get_layout, "SignalPlot",
                                 zeroline = FALSE,
                                 showgrid = FALSE,
                                 range = range)
+            
+            return(out)
+            
+            
+          })
+
+setMethod(get_layout, "LocusSummaryPlot",
+          function(object, yname, domain, anchor, ...){
+            
+            if (length(object@data) == 0) return(NULL)
+            
+            out <- list()
+            
+            # y axis settings
+            out[[yname]] = modifyList(object@layout,
+                                      list(domain = domain,
+                                           anchor = anchor,
+                                           side = "right"))
             
             return(out)
             
@@ -193,8 +234,11 @@ setMethod(min, "MultiLocusView",
 
 setMethod(make_trace, signature = c(x = "LocusView"),
           definition = function(x, ynames, ...){
-            traces <- unlist(purrr::map2(as.list(x), ynames, make_trace, view = x@view), 
+            traces <- unlist(purrr::map2(as.list(x), ynames[[1]], make_trace, view = x@view), 
                              recursive = FALSE)
+            if (length(x@summary@data) >= 1){
+              traces <- c(traces, make_trace(x@summary, ynames[[2]], "xaxis2"))
+            }
             
             traces
           })
@@ -219,6 +263,7 @@ setMethod(get_layout, signature = c(object = "LocusView"),
 
 locus_to_plotly_list <- function(x, ystart = 1L){
   ynames <- yaxis_names(x, ystart)
+  
   traces <- make_trace(x, ynames)
     
   if (x@share_y){
@@ -226,13 +271,32 @@ locus_to_plotly_list <- function(x, ystart = 1L){
   } else{
     range = NULL
   }
-  layout_setting <- list(xaxis = 
-                           list(title = as.character(seqnames(x@view)),
-                                zeroline = FALSE,
-                                #showline = FALSE,
-                                anchor = gsub("yaxis","y",ynames[length(ynames)]),
-                                range = c(relative_position(x@view, start(x@view)),
-                                           relative_position(x@view, end(x@view)))))
+  
+  if (length(x@summary@data) == 0){
+    layout_setting <- list(xaxis = 
+                             list(title = as.character(seqnames(x@view)),
+                                  zeroline = FALSE,
+                                  #showline = FALSE,
+                                  anchor = gsub("yaxis","y",ynames[[1]][length(ynames[[1]])]),
+                                  range = c(relative_position(x@view, start(x@view)),
+                                            relative_position(x@view, end(x@view)))))
+  } else{
+    layout_setting <- list(xaxis = 
+                             list(title = as.character(seqnames(x@view)),
+                                  zeroline = FALSE,
+                                  #showline = FALSE,
+                                  anchor = gsub("yaxis","y",ynames[[1]][length(ynames[[1]])]),
+                                  range = c(relative_position(x@view, start(x@view)),
+                                            relative_position(x@view, end(x@view))),
+                                  domain = c(0, 0.95*(1 - x@summary_width))),
+                           xaxis2 = list(zeroline = FALSE,
+                                         domain = c(1 -x@summary_width* 0.95, 1),
+                                         anchor = gsub("yaxis","y",ynames[[2]])))
+                                          
+    
+  }
+  
+  
   sizes = x@heights / sum(x@heights)
   domains = list()
   start_domain <- 0
@@ -242,9 +306,10 @@ locus_to_plotly_list <- function(x, ystart = 1L){
   }
   
   layout_setting <- c(layout_setting,
-                      get_layout(x, ynames, domains, range))
+                      get_layout(x, ynames[[1]], domains, range),
+                      get_layout(x@summary, ynames[[2]], c(0,1), "x2"))
   
-  shapes <- make_shapes(x, ynames)
+  shapes <- make_shapes(x, ynames[[1]])
 
   layout_setting$shapes <- shapes
     

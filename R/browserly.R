@@ -331,7 +331,7 @@ browserly_cvg_track <- function(cvg,
                  x=x_data,
                  hoverinfo='x+y+z',
                  name = track_name,
-                 colorscale = continuous_colorscale("Purples")(track_data),
+                 #colorscale = continuous_colorscale("Purples")(track_data),
                  ...)
   }
   return(p)

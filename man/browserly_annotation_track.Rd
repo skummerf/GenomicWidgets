@@ -18,7 +18,7 @@ axes and adjusting domains}
 used for hoverinfo. Should almost always be 0.}
 
 \item{markercolor}{character: color to use for markers. Default is 'grey'. If 
-set to NULL, different colors will be used for each class of anntoation 
+set to NULL, different colors will be used for each class of annotation 
 feature, e.g. intron, cds, utr3}
 }
 \value{

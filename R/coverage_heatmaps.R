@@ -24,7 +24,7 @@ log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
 #' @param start label for start of x range
 #' @param end label for end of x range
 #' @param xlab x axis label
-#' @param font list of font attributes
+#' @param layout list of layout attributes
 #' @return iheatmap object
 #' @export
 #' @author Alicia Schep
@@ -41,6 +41,101 @@ setGeneric("coverage_heatmap",
 #' @export
 setGeneric("add_coverage_heatmap", 
            function(p, data, ...) standardGeneric("add_coverage_heatmap"))
+
+# Method for bamfile or list of bamfiles (or bigwig files)
+setMethod("coverage_heatmap", c(data = "character"),
+          function(data, 
+                   windows,
+                   row_order = c("signal","hclust","kmeans","groups","none"),
+                   k = NULL,
+                   groups = NULL,
+                   clust_dist = stats::dist,
+                   signal = log10rowMeans(data),
+                   plot_signal = TRUE,
+                   name = "Coverage",
+                   signal_name = "Avg. (log10)",
+                   summary = TRUE,
+                   scale_method = c("localRms", 
+                                    "localMean", 
+                                    "localNonZeroMean", 
+                                    "PercentileMax", 
+                                    "scalar", 
+                                    "none"),
+                   pct = 0.95,
+                   scale_factor = 1, 
+                   show_xlabels = TRUE,
+                   col_title = "Position",
+                   layout = list(font = list(size = 10)),
+                   ...){
+            
+            # ADD HERE
+          })
+
+# Method for ScoreMatrix
+setMethod("coverage_heatmap", c(data = "ScoreMatrix"),
+          function(data, 
+                   start, 
+                   end, 
+                   x = seq(start, end, length.out = ncol(data)),
+                   y = default_y(data), 
+                   row_order = c("signal","hclust","kmeans","groups","none"),
+                   k = NULL,
+                   groups = NULL,
+                   clust_dist = stats::dist,
+                   signal = log10rowMeans(data),
+                   plot_signal = TRUE,
+                   name = "Coverage",
+                   signal_name = "Avg. (log10)",
+                   summary = TRUE,
+                   scale_method = c("localRms", 
+                                    "localMean", 
+                                    "localNonZeroMean", 
+                                    "PercentileMax", 
+                                    "scalar", 
+                                    "none"),
+                   pct = 0.95,
+                   scale_factor = 1, 
+                   show_xlabels = TRUE,
+                   col_title = "Position",
+                   layout = list(font = list(size = 10)),
+                   ...){
+            
+            # ADD HERE
+          })
+
+
+# Method for ScoreMatrixList
+setMethod("coverage_heatmap", c(data = "ScoreMatrixList"),
+          function(data, 
+                   start, 
+                   end, 
+                   x = seq(start, end, length.out = ncol(data)),
+                   y = default_y(data), 
+                   row_order = c("signal","hclust","kmeans","groups","none"),
+                   k = NULL,
+                   groups = NULL,
+                   clust_dist = stats::dist,
+                   signal = log10rowMeans(data),
+                   plot_signal = TRUE,
+                   name = "Coverage",
+                   signal_name = "Avg. (log10)",
+                   summary = TRUE,
+                   scale_method = c("localRms", 
+                                    "localMean", 
+                                    "localNonZeroMean", 
+                                    "PercentileMax", 
+                                    "scalar", 
+                                    "none"),
+                   pct = 0.95,
+                   scale_factor = 1, 
+                   show_xlabels = TRUE,
+                   col_title = "Position",
+                   layout = list(font = list(size = 10)),
+                   ...){
+            
+            # ADD HERE
+          })
+
 
 
 setMethod("coverage_heatmap", c(data = "matrix"),
@@ -68,7 +163,7 @@ setMethod("coverage_heatmap", c(data = "matrix"),
                    start = x[1],
                    end = default_end(x),     
                    col_title = "Position",
-                   font = list(size = 10),
+                   layout = list(font = list(size = 10)),
                    ...){
             
             row_order <- match.arg(row_order)
@@ -89,7 +184,7 @@ setMethod("coverage_heatmap", c(data = "matrix"),
                               x = x, 
                               y = y,
                               x_categorical = FALSE,
-                              font = font,
+                              layout = layout,
                               ...)
             
             if (!is.null(groups) && row_order != "groups"){
@@ -117,27 +212,23 @@ setMethod("coverage_heatmap", c(data = "matrix"),
               
               p <- add_col_labels(p,
                                   ticktext = ticktext, 
-                                  tickvals = tickvals, 
-                                  font = font)
+                                  tickvals = tickvals)
               
             } 
             
             if (is.character(col_title) && nchar(col_title) > 0){
               p <- add_col_title(p,
                                  col_title, 
-                                 font = font, 
                                  side = "bottom")
             }
             
             if (plot_signal){
               p <- add_row_signal(p,
-                                  signal, signal_name, 
-                                  layout = list(font = font))
+                                  signal, signal_name)
             }
             if (summary){
               p <- add_col_summary(p,
-                                   groups = groups, showlegend = FALSE,
-                                   layout = list(font = font))
+                                   groups = groups, showlegend = FALSE)
             }
             
             return(p)
@@ -165,7 +256,6 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "matrix"),
                    start = x[1],
                    end = default_end(x),     
                    col_title = "Position",
-                   font = list(size = 10),
                    ...){
             
             scale_method <- match.arg(scale_method)
@@ -197,28 +287,24 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "matrix"),
               
               p <- add_col_labels(p,
                                   ticktext = ticktext, 
-                                  tickvals = tickvals, 
-                                  font = font)
+                                  tickvals = tickvals)
               
             } 
             
             if (is.character(col_title) && nchar(col_title) > 0){
               p <- add_col_title(p,
                                  col_title, 
-                                 font = font, 
                                  side = "bottom")
             }
             
             if (plot_signal){
               p <- add_row_signal(p,
-                                  signal, signal_name, 
-                                  layout = list(font = font))
+                                  signal, signal_name)
             }
             if (summary){
               p <- suppressWarnings(add_col_summary(p,
                                                     groups = TRUE, 
-                                                    showlegend = FALSE,
-                                                    layout = list(font = font)))
+                                                    showlegend = FALSE))
             }
             
             return(p)
@@ -251,7 +337,7 @@ setMethod("coverage_heatmap", c(data = "list"),
                    start = x[1],
                    end = default_end(x),     
                    col_title = "Position",
-                   font = list(size = 10),
+                   layout = list(font = list(size = 10)),
                    ...){
             
             stopifnot(all(sapply(data, inherits, "matrix")))
@@ -276,7 +362,7 @@ setMethod("coverage_heatmap", c(data = "list"),
                               x = x, 
                               y = y,
                               x_categorical = FALSE,
-                              font = font,
+                              layout = layout,
                               ...)
             
             if (!is.null(groups) && row_order != "groups"){
@@ -329,36 +415,31 @@ setMethod("coverage_heatmap", c(data = "list"),
               
               p <- add_col_labels(p,
                                   ticktext = ticktext, 
-                                  tickvals = tickvals, 
-                                  font = font)
+                                  tickvals = tickvals)
               
             } 
             
             if (is.character(col_title) && nchar(col_title) > 0){
               p <- add_col_title(p,
                                  col_title, 
-                                 font = font, 
                                  side = "bottom")
             }
             
             if (plot_signal){
               p <- add_row_signal(p,
                                   signal[[1]], 
-                                  signal_name, 
-                                  layout = list(font = font))
+                                  signal_name)
             }
             if (summary){
               summary_yaxis = "summary"
               p <- add_col_summary(p,
                                    groups = groups, 
                                    showlegend = FALSE,
-                                   layout = list(font = font),
                                    yname = summary_yaxis)
             }
             
             if (!is.null(names(data)[1]))
-              p <- add_col_title(p, names(data)[1], side = "top", 
-                                 font = font)
+              p <- add_col_title(p, names(data)[1], side = "top")
             
             if (length(data) > 1){
               for (i in 2:length(data)){
@@ -384,14 +465,13 @@ setMethod("coverage_heatmap", c(data = "list"),
                 if (show_xlabels){
                   p <- add_col_labels(p,
                                             ticktext = ticktext, 
-                                      tickvals = tickvals, font = font)
+                                      tickvals = tickvals)
                 }
                 if (!is.null(col_title)){
-                  p <- add_col_title(p, col_title, font = font)
+                  p <- add_col_title(p, col_title)
                 }
                 if (!is.null(names(data)[i]))
-                  p <- add_col_title(p, names(data)[i], side = "top", 
-                                         font = font)
+                  p <- add_col_title(p, names(data)[i], side = "top")
               }
             }
             
@@ -421,7 +501,6 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "list"),
                    start = x[1],
                    end = default_end(x),     
                    col_title = "Position",
-                   font = list(size = 10),
                    ...){
             
             stopifnot(all(sapply(data, inherits, "matrix")))
@@ -473,14 +552,13 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "list"),
               if (show_xlabels){
                 p <- add_col_labels(p,
                                     ticktext = ticktext, 
-                                    tickvals = tickvals, font = font)
+                                    tickvals = tickvals)
               }
               if (!is.null(col_title)){
-                p <- add_col_title(p, col_title, font = font)
+                p <- add_col_title(p, col_title)
               }
               if (!is.null(names(data)[i]))
-                p <- add_col_title(p, names(data)[i], side = "top", 
-                                   font = font)
+                p <- add_col_title(p, names(data)[i], side = "top")
             }
             
             

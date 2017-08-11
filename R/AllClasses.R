@@ -56,10 +56,12 @@ setClass("LocusView",
                    layout = "list",
                    share_y = "logical",
                    summary = "LocusSummaryPlot",
-                   widths = "numeric",
+                   summary_width = "numeric",
                    heights = "numeric"),
          prototype = list(elementType = "LocusPlot"),
          contains = c("SimpleList"))
+
+
 
 setClass("MultiLocusView",
          slots = c(layout = "list",

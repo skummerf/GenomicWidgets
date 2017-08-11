@@ -158,7 +158,7 @@ setMethod("make_annotation_track", c("ViewRange", "TranscriptParts"),
 #' @import dplyr
 #' @export
 setMethod(make_trace, signature = c(x = "AnnotationPlot"),
-          definition = function(x, yax, view, ...){
+          definition = function(x, yax, view, xax = "xaxis", ...){
             #Invisible Points
             anno_data <- as.data.frame(x@transcripts, row.names = NULL)
             if (nrow(anno_data) == 0) return(NULL)
@@ -178,6 +178,7 @@ setMethod(make_trace, signature = c(x = "AnnotationPlot"),
                                                   y = stepping,
                                                   text = text,
                                                   yaxis = gsub("yaxis","y",yax),
+                                                  xaxis = gsub("xaxis","x",xax),
                                                   hoverinfo = 'x+text',
                                                   opacity = 0,
                                                   type='scatter',
