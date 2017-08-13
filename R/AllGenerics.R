@@ -18,6 +18,14 @@ setGeneric("make_signal_track",
 setGeneric("make_locus_summary",
            function(object, ...) standardGeneric("make_locus_summary"))
 
+setGeneric("make_locus_summaries",
+           function(object, ...) standardGeneric("make_locus_summaries"))
+
+setGeneric("make_summary_plotter",
+           function(object, ...) standardGeneric("make_summary_plotter"))
+
+setGeneric("make_track_plotter",
+           function(object, ...) standardGeneric("make_track_plotter"))
 
 setGeneric("single_locus_view",
            function(window, object, ...) standardGeneric("single_locus_view"))
@@ -32,4 +40,9 @@ setGeneric("relative_position",
 
 setGeneric("get_layout",
            function(object, ...) standardGeneric("get_layout"))
+
+
+
+setGeneric("normalize_coverage_matrix",
+           function(mats, ...) standardGeneric("normalize_coverage_matrix"))
 

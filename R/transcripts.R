@@ -142,7 +142,7 @@ setMethod("make_annotation_track", c("ViewRange", "TranscriptParts"),
             
             # add stepping
             if (length(tx_info) >= 1)
-              tx_info <- add_tx_stepping(tx_info, stacking = stacking)
+              tx_info <- add_stepping(tx_info, stacking = stacking)
             
             # Make AnnotationPlot object
             new("AnnotationPlot",
@@ -155,14 +155,13 @@ setMethod("make_annotation_track", c("ViewRange", "TranscriptParts"),
 
 
 #' @importMethodsFrom iheatmapr make_trace
-#' @import dplyr
 #' @export
 setMethod(make_trace, signature = c(x = "AnnotationPlot"),
           definition = function(x, yax, view, xax = "xaxis", ...){
             #Invisible Points
             anno_data <- as.data.frame(x@transcripts, row.names = NULL)
             if (nrow(anno_data) == 0) return(NULL)
-            anno_data <- mutate(anno_data,
+            anno_data <- dplyr::mutate(anno_data,
                                text = paste0('Tx ID: ',
                                      transcript,
                                      '<br>',
@@ -173,8 +172,8 @@ setMethod(make_trace, signature = c(x = "AnnotationPlot"),
                                start = relative_position(view, start),
                                end = relative_position(view, end),
                                midpoint = (start + end) / 2)
-            anno_data <- group_by(anno_data, transcript)
-            trace_data <- summarise(anno_data, trace = list(list(x = midpoint,
+            anno_data <- dplyr::group_by(anno_data, transcript)
+            trace_data <- dplyr::summarise(anno_data, trace = list(list(x = midpoint,
                                                   y = stepping,
                                                   text = text,
                                                   yaxis = gsub("yaxis","y",yax),

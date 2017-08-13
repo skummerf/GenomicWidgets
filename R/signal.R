@@ -19,7 +19,7 @@ setMethod("make_signal_track", c("GRanges","character"),
           })
 
 setMethod("make_signal_track", c("ViewRange","character"),
-          function(window, object, bin.num = 1000, ..., 
+          function(window, object, binsize = 25, ..., 
                    track_names = ifelse(!is.null(names(object)),
                                         basename(names(object)),
                                         object),
@@ -31,9 +31,9 @@ setMethod("make_signal_track", c("ViewRange","character"),
             
             fill <- match.arg(fill)
             
-            sm <- genomation::ScoreMatrixList(object, as(window,"GRanges"), 
-                                              bin.num = bin.num, ...)
-            names(sm) <- track_names
+            names(object) <- track_names
+            sm <- make_coverage_matrix(object, as(window,"GRanges"),
+                                       binsize = binsize, ...)
             
             
             if (is.null(colors)){
@@ -50,7 +50,7 @@ setMethod("make_signal_track", c("ViewRange","character"),
             
             # Make SignalPlot object
             new("SignalPlot",
-                signal = sm,
+                signal = assays(sm),
                 color = colors,
                 mode = mode,
                 fill = fill,

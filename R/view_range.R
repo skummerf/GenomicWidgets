@@ -24,6 +24,7 @@ setAs("GRanges","RelativeViewRange",
         new("RelativeViewRange", from)
       })
 
+#' @export
 make_view_range <- function(chrom,
                        start, 
                        end, 
@@ -47,6 +48,7 @@ make_view_range <- function(chrom,
   out
 }
 
+#' @export
 fetch_view_range <- function(db_object, 
                  symbol, 
                  keytype = c('SYMBOL', 'TXNAME'),

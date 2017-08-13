@@ -39,7 +39,7 @@ setClass("AnnotationPlot",
 
 #' @importClassesFrom genomation ScoreMatrixList
 setClass("SignalPlot",
-         slots = c(signal = "ScoreMatrixList",
+         slots = c(signal = "SimpleList",
                    mode = "character",
                    fill = "character",
                    color = "character",
@@ -47,7 +47,7 @@ setClass("SignalPlot",
          ),
          contains = "LocusPlot")
 
-setClass("LocusSummaryPlot",
+setClass("LocusSummary",
          slots = c(data = "list",
                    layout = "list"))
 
@@ -55,19 +55,24 @@ setClass("LocusView",
          slots = c(view = "ViewRange",
                    layout = "list",
                    share_y = "logical",
-                   summary = "LocusSummaryPlot",
-                   summary_width = "numeric",
                    heights = "numeric"),
          prototype = list(elementType = "LocusPlot"),
          contains = c("SimpleList"))
 
-
-
-setClass("MultiLocusView",
-         slots = c(layout = "list",
-                   share_y = "logical"),
+setClass("LocusViewList",
+         slots = c(share_y = "logical"),
          prototype = list(elementType = "LocusView"),
          contains = c("SimpleList"))
+
+setClass("LocusSummaryList",
+         prototype = list(elementType = "LocusSummary"),
+         contains = c("SimpleList"))
+
+setClass("MultiLocusView",
+         slots = c(tracks = "LocusViewList",
+                   summaries = "LocusSummaryList",
+                   summary_width = "numeric",
+                   layout = list()))
 
 
 

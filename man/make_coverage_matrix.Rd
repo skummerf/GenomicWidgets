@@ -20,6 +20,9 @@ make_coverage_matrix(inputs, ranges, binsize = 1, format = c("auto",
 
 \item{down}{basepairs downstream of center to use}
 }
+\value{
+RangedSummarizedExperiment
+}
 \description{
 make_coverage_matrix
 }

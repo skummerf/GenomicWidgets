@@ -9,6 +9,7 @@
 #' @details up and down are 0 by default -- if not specified, actual range is used.  All ranges
 #' must be of equal width.  If up and/or down are provided, then the center of the range and up 
 #' basepairs upstream and down basepairs downstream are used.
+#' @return RangedSummarizedExperiment 
 #' @import GenomicRanges
 #' @export
 #' @author Alicia Schep
@@ -84,7 +85,7 @@ make_coverage_matrix <- function(inputs,
   } else {
     stop("Format not recognized")
   }
-  return(out)
+  return(SummarizedExperiment(out, rowRanges = ranges))
 }
 
 #' normalize_coverage_matrix
@@ -98,27 +99,53 @@ make_coverage_matrix <- function(inputs,
 #' "localNonZeroMean", "PercentileMax", "scalar", and "none".  
 #' @export
 #' @author Alicia Schep
-normalize_coverage_matrix <- function(mats, 
-                                      method = c("localRms", "localMean", 
-                                                      "localNonZeroMean", "PercentileMax", "scalar", "none"), 
-                                      pct = 0.95, scalar = NULL){
-  method = match.arg(method)
-  if (!is.list(mats)){
-    out <- normalize_coverage_matrix_single(mats, method, pct, scalar)
-  } else{
-    if (method == "scalar"){
-      stopifnot(!is.null(scalar))
-        out <- lapply(1:length(mats), function(x) {
-          normalize_coverage_matrix_single(mats[[x]],method = "scalar",scalar = scalar[x])
-        })
-        names(out) <- names(mats)
-    } else{
-      out <- lapply(mats, normalize_coverage_matrix_single, method = method, pct = pct)
-    }
-  }
-  return(out)
-}
+setMethod(normalize_coverage_matrix, "list",
+          function(mats, 
+                   method = c("localRms", 
+                              "localMean", 
+                              "localNonZeroMean", 
+                              "PercentileMax", 
+                              "scalar", "none"), 
+                   pct = 0.95, 
+                   scalar = NULL){
+            method = match.arg(method)
+            if (method == "scalar"){
+              stopifnot(!is.null(scalar))
+              out <- lapply(1:length(mats), function(x) {
+                normalize_coverage_matrix_single(mats[[x]],method = "scalar",scalar = scalar[x])
+              })
+              names(out) <- names(mats)
+            } else{
+              out <- lapply(mats, normalize_coverage_matrix_single, method = method, pct = pct)
+            }
+            
+            return(out)
+          })
 
+#' @export
+setMethod(normalize_coverage_matrix, "matrix",
+          function(mats, 
+                   method = c("localRms", 
+                              "localMean", 
+                              "localNonZeroMean", 
+                              "PercentileMax", 
+                              "scalar", "none"), 
+                   pct = 0.95, 
+                   scalar = NULL){
+            method = match.arg(method)
+            out <- normalize_coverage_matrix_single(mats, method, pct, scalar)
+            return(out)
+          })
+
+#' @export
+setMethod(normalize_coverage_matrix, "SummarizedExperiment",
+          function(mats, 
+                   ...){
+            method = match.arg(method)
+            out <- mats
+            assays(out) <- normalize_coverage_matrix(as.list(assays(mats)), ...)
+            return(out)
+          })
 
 ## Modified from gChipseq package
 ## not exported
@@ -249,104 +276,3 @@ bin_track_mat <- function(track_mat, target_range, tiled_range, scaling_factors)
 }
 
 
-coverage_track_from_bigwig <- function(bigwig_file, target_range){
-  rtracklayer::import.bw(bigwig_file, selection = target_range, as = "NumericList")@listData[[1]]
-}
-
-coverage_track_from_bam <- function(bam_file, target_range){
-  as.list(bamsignals::bamCoverage(bam_file, target_range, verbose = FALSE))[[1]]
-}
-
-
-
-#' make_coverage_tracks
-#' @param inputs filenames of bigwig, bam, or RData file
-#' @param ranges ranges for which to compute coverage within
-#' @param binsize binsize to bin coverage
-#' @param format format of files, default is auto 
-#' @param up basepairs upstream of center to use
-#' @param down basepairs downstream of center to use
-#' @details up and down are 0 by default -- if not specified, actual range is used.  All ranges
-#' must be of equal width.  If up and/or down are provided, then the center of the range and up 
-#' basepairs upstream and down basepairs downstream are used.
-#' @import GenomicRanges
-#' @export
-#' @author Alicia Schep
-make_coverage_tracks <- function(inputs, 
-                                 target_range, 
-                                 sample_names = names(inputs),
-                               binsize = 100, 
-                               method = c("a","j"),
-                               format = c("auto","bigwig","bam"), 
-                               bin = TRUE,
-                               scaling_factors = rep(1, length(inputs)),
-                               up = 0,
-                               down = 0,
-                               stranded = FALSE){
-  format = match.arg(format)
-  method = match.arg(method)
-  stopifnot(length(target_range) == 1)
-  negative_strand <- FALSE
-  
-  if (up > 0 || down > 0){
-      target_range <- resize(target_range, fix = "center", width = 1)
-      target_range <- promoters(target_range, upstream = up, downstream = down)
-    } 
-  #if (binsize > 1 && width(target_range[1]) %% binsize != 0){
-  #    target_range <- resize(target_range, fix = "center", width = (width(target_range[1]) %/% binsize +1)*binsize)
-  #}
-  if (stranded && strand(target_range) == "-"){
-    negative_strand <- TRUE
-  }
-  if (format == "auto"){
-    if (length(inputs) == 1){
-      tmp = inputs
-    } else{
-      tmp = inputs[[1]]
-    }
-    if (is.character(tmp)){
-      if (substr(tmp, nchar(tmp) - 6 , nchar(tmp)) == ".bigwig" || 
-          substr(tmp, nchar(tmp) - 2 , nchar(tmp)) == ".bw"){
-        format = "bigwig"
-      } else if (substr(tmp, nchar(tmp) - 3 , nchar(tmp)) == ".bam"){
-        format = "bam"
-      } else{
-        stop("Cannot determine format of inputs.")
-      }
-    }
-  }
-  strand(target_range) <- "*"
-  if (method == "a"){
-    if (format == "bigwig"){
-      tracks <- sapply(inputs, coverage_track_from_bigwig, target_range)
-    } else if (format == "bam"){
-      tracks <- sapply(inputs, coverage_track_from_bam, target_range)
-    } else{
-      stop("Incorrect format!")
-    }
-    if (is.null(dim(tracks))) tracks <- matrix(tracks, nrow = 1)
-    colnames(tracks) <- sample_names
-    out <- GenomicRanges::tile(target_range, width = binsize)[[1]]
-    tracks <- bin_track_mat(tracks, target_range, out, scaling_factors)
-    mcols(out) <- tracks
-    if (stranded && negative_strand) out <- rev(out)
-  } else{
-    stopifnot(format == "bigwig")
-    out <- get_coverage_in_range(inputs, 
-                                 target_range = target_range, 
-                                 cvg_scaling = scaling_factors,
-                                 sample_names = sample_names)
-    out <- bin_coverage_in_range(out, target_range, binwidth = binsize)
-    if (stranded && negative_strand) out <- rev(out)
-  }
-  return(out)
-}
-
-#' subset_coverage
-#' 
-#' @export
-#' @author Alicia Schep
-subset_coverage <- function(coverage, idx){
-  mcols(coverage) <- mcols(coverage)[,idx]
-  coverage
-}

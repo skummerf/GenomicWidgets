@@ -33,7 +33,8 @@ setMethod("make_locus_summary", c("SummarizedExperiment"),
                          pointpos = pointpos,
                          boxpoints = boxpoints,
                          showlegend = FALSE,
-                         marker = list(color = colors)))
+                         marker = list(color = colors),
+                         ...))
             } else{
               y = assay(object,assay_name)[row_name,]
               data <- purrr::pmap(list(split(y, groups), colors, levels(as.factor(groups))),
@@ -44,18 +45,99 @@ setMethod("make_locus_summary", c("SummarizedExperiment"),
                                           type = "box",
                                           pointpos = pointpos,
                                           boxpoints = boxpoints,
-                                          marker = list(color = k))
+                                          marker = list(color = k),
+                                          ...)
                                    })
             }
             
             # Make LocusSummary
-            new("LocusSummaryPlot",
+            new("LocusSummary",
                 data = data,
                 layout = list(title = signal))
           })
 
+
+setMethod("make_locus_summaries", c("SummarizedExperiment"),
+          function(object,  
+                   row_names,
+                   assay_name = assayNames(object)[1],
+                   ..., 
+                   groups = NULL,
+                   showlegend = !is.null(colors), 
+                   colors = NULL,
+                   boxpoints = c("all","Outliers","false"),
+                   pointpos = 0,
+                   signal = "Expression"){
+            
+            boxpoints = match.arg(boxpoints)
+            
+            if (is.null(colors)){
+              colors <- "blue"
+            }
+            
+            summaries <- purrr::map(seq_along(row_names), function(x){
+              make_locus_summary(object, x, 
+                                 assay_name = assay_name,
+                                 groups = groups, 
+                                 showlegend = if (x == 1) showlegend else FALSE,
+                                 legendgroup = "summary",
+                                 colors = colors,
+                                 boxpoints = boxpoints,
+                                 pointpos = pointpos,
+                                 signal = signal)
+            })
+            
+            new("LocusSummaryList", as(summaries,"SimpleList"))
+            
+          })
+
 #' @export
-setMethod(make_trace, signature = c(x = "LocusSummaryPlot"),
+setMethod("make_summary_plotter", c("SummarizedExperiment"),
+          function(object,  
+                   assay_name = assayNames(object)[1],
+                   ..., 
+                   groups = NULL,
+                   showlegend = !is.null(colors), 
+                   colors = NULL,
+                   boxpoints = c("all","Outliers","false"),
+                   pointpos = 0,
+                   signal = "Expression"){
+            
+            boxpoints = match.arg(boxpoints)
+            purrr::partial(make_locus_summaries,
+                           object = object,
+                           assay_name = assay_name,
+                           ...,
+                           groups = groups,
+                           showlegend = showlegend,
+                           boxpoints = boxpoints,
+                           pointpos = pointpos,
+                           signal = signal)
+          })
+
+
+setMethod(get_layout, "LocusSummary",
+          function(object, yname, domain, anchor, ...){
+            
+            if (length(object@data) == 0) return(NULL)
+            
+            out <- list()
+            
+            # y axis settings
+            out[[yname]] = modifyList(object@layout,
+                                      list(zeroline = FALSE,
+                                           domain = domain,
+                                           anchor = gsub("xaxis","x",anchor),
+                                           side = "right",
+                                           ...))
+            
+            return(out)
+            
+            
+          })
+
+#' @export
+setMethod(make_trace, signature = c(x = "LocusSummary"),
           definition = function(x, yax, xax, ...){
             lapply(x@data, function(y){ 
               y$yaxis = gsub("yaxis","y",yax)
@@ -81,7 +163,7 @@ summary_to_plotly_list <- function(x){
 
 #' @export
 setMethod(to_widget,
-          c("LocusSummaryPlot"),
+          c("LocusSummary"),
           function(p){
             out <- summary_to_plotly_list(p)
             htmlwidgets::createWidget(
