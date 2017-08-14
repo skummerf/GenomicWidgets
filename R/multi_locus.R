@@ -8,11 +8,11 @@ setMethod(multi_locus_view,
             if (length(windows) == 1){
               multi_locus_view(as(windows, "ViewRange"),
                                object,
-                               ...,)
+                               ...)
             } else{
               multi_locus_view(as(windows, "RelativeViewRange"),
                                object,
-                               ...,)
+                               ...)
             }
           })
 
@@ -145,6 +145,23 @@ setMethod(multi_locus_view,
             
           })      
 
+#' make_track_plotter
+#' 
+#' Function to generate a function that takes in a range and plots coverage track
+#' @param object vector of bam or bigwig file names
+#' @param annotation TxDb or OrganismDb object
+#' @param ... additional arguments
+#' @param track_names names to associate with each file
+#' @param groups vector of group assignments.  traces will be grouped onto subplots
+#' based on group assignments (if only showing 1 region)
+#' @param share_y share the y axis?
+#' @param fill fillmode for line plot
+#' @param relative ignore for now
+#' @param showlegend show the legend?
+#' @param colors colors for each bam file
+#' @param mode mode for plot
+#' @param annotation_position plot annotations on bottom or on top of signal traces
+#' @param annotation_size relative size of annotation plot
 #' @export
 setMethod(make_track_plotter,
           c("character"),
@@ -193,6 +210,19 @@ setMethod(make_track_plotter,
             out
           })
 
+#' Combine genome track view with locus summary
+#' 
+#' @param track_function function to make tracks, as created by
+#'  \code{\link{make_track_plotter}}
+#' @param summary_function function to make locus summaries, as created by
+#'  \code{\link{make_summary_plotter}}
+#' @param windows GenomicRanges of windows that can serve as inputs to track_function
+#' @param row_names vector of row names that can serve as inputs to summary_function
+#' @param summary_width width of summary plot in resulting visualization
+#' 
+#' @return a function which takes in names and generates a plot with track views
+#' and a summary plot per locus
+#'
 #' @export
 make_track_plus_summary_plotter <- function(track_function,
                                             summary_function,

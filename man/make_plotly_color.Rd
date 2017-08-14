@@ -10,6 +10,9 @@ make_plotly_color(color_str)
 \arguments{
 \item{color_str}{}
 }
+\value{
+color rgb value
+}
 \description{
 make_plotly_color
 Convert R colors to plotly compatible rgb values
@@ -17,3 +20,4 @@ Convert R colors to plotly compatible rgb values
 \author{
 Justin Finkle
 }
+\keyword{internal}

@@ -1,4 +1,4 @@
 library(testthat)
-library(chipVis)
+library(GenomicWidgets)
 
-test_check("chipVis")
+test_check("GenomicWidgets")

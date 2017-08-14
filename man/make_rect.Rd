@@ -20,7 +20,7 @@ make_rect(df, height, yref, fillcolor = "lightslateblue")
 \item{fillcolor}{character: color of the rectangle}
 }
 \value{
-
+list of rectangle shapes
 }
 \description{
 make_rect
@@ -30,3 +30,4 @@ as cds, and utr.
 \author{
 Justin Finkle
 }
+\keyword{internal}

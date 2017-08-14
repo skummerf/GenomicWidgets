@@ -10,7 +10,7 @@ setMethod("make_locus_summary", c("SummarizedExperiment"),
                    colors = NULL,
                    boxpoints = c("all","Outliers","false"),
                    pointpos = 0,
-                   signal = "Expression"){
+                   ytitle = "Expression"){
             
             boxpoints = match.arg(boxpoints)
             
@@ -29,7 +29,7 @@ setMethod("make_locus_summary", c("SummarizedExperiment"),
                          x = groups,
                          type = "box",
                          text = text,
-                         name = signal,
+                         name = ytitle,
                          pointpos = pointpos,
                          boxpoints = boxpoints,
                          showlegend = FALSE,
@@ -41,7 +41,7 @@ setMethod("make_locus_summary", c("SummarizedExperiment"),
                                    function(j,k,l){
                                      list(y = j,
                                           x = l,
-                                          name = signal,
+                                          name = ytitle,
                                           type = "box",
                                           pointpos = pointpos,
                                           boxpoints = boxpoints,
@@ -53,7 +53,7 @@ setMethod("make_locus_summary", c("SummarizedExperiment"),
             # Make LocusSummary
             new("LocusSummary",
                 data = data,
-                layout = list(title = signal))
+                layout = list(title = ytitle))
           })
 
 
@@ -67,7 +67,7 @@ setMethod("make_locus_summaries", c("SummarizedExperiment"),
                    colors = NULL,
                    boxpoints = c("all","Outliers","false"),
                    pointpos = 0,
-                   signal = "Expression"){
+                   ytitle = "Expression"){
             
             boxpoints = match.arg(boxpoints)
             
@@ -85,13 +85,24 @@ setMethod("make_locus_summaries", c("SummarizedExperiment"),
                                  colors = colors,
                                  boxpoints = boxpoints,
                                  pointpos = pointpos,
-                                 signal = signal)
+                                 ytitle = ytitle)
             })
             
             new("LocusSummaryList", as(summaries,"SimpleList"))
             
           })
 
+#' make_summary_plotter
+#' @param object SummarizedExperiment
+#' @param assay_name name of assay to use
+#' @param ... additional arguments
+#' @param groups either vector of group assignments of name of column in object 
+#' colData that corresponds to vector of group assignments
+#' @param showlegend show the legend?
+#' @param colors colors to use
+#' @param boxpoints plot individual points?
+#' @param pointpos relative position of points to boxes
+#' @param ytitle name for yaxis
 #' @export
 setMethod("make_summary_plotter", c("SummarizedExperiment"),
           function(object,  
@@ -102,7 +113,7 @@ setMethod("make_summary_plotter", c("SummarizedExperiment"),
                    colors = NULL,
                    boxpoints = c("all","Outliers","false"),
                    pointpos = 0,
-                   signal = "Expression"){
+                   ytitle = "Expression"){
             
             boxpoints = match.arg(boxpoints)
             purrr::partial(make_locus_summaries,
@@ -113,7 +124,7 @@ setMethod("make_summary_plotter", c("SummarizedExperiment"),
                            showlegend = showlegend,
                            boxpoints = boxpoints,
                            pointpos = pointpos,
-                           signal = signal)
+                           ytitle = ytitle)
           })
 
 

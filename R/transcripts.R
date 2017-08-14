@@ -228,63 +228,16 @@ setMethod("make_shapes", c(x = "AnnotationPlot"),
 
 
 
-annotation_to_plotly_list <- function(x){
-  traces <- make_trace(x, "yaxis")
-  shapes <- make_shapes(x, "yaxis")
-  layout_setting <- list()#get_layout(x)
-  layout_setting$shapes <- shapes
-  out <- list(data = traces,
-              layout = layout_setting,
-              source = "Annotation Track",#,x@source,
-              config = list(modeBarButtonsToRemove =
-                              c("sendDataToCloud",
-                                "autoScale2d")))
-  attr(out, "TOJSON_FUNC") <- function(x, ...) {
-    jsonlite::toJSON(x, digits = 50, auto_unbox = TRUE, force = TRUE,
-           null = "null", na = "null", ...)
-  }
-  out
-}
-
-
-#' @export
-setMethod(to_widget,
-          c("AnnotationPlot"),
-          function(p){
-            out <- annotation_to_plotly_list(p)
-            print("a")
-            htmlwidgets::createWidget(name = "GenomicWidgets",
-                         x = out,
-                         width = out$layout$width,
-                         height = out$layout$height,
-                         sizingPolicy = htmlwidgets::sizingPolicy(browser.fill = TRUE,
-                                                                  viewer.fill = TRUE,
-                                                     defaultWidth = "100%",
-                                                     defaultHeight = 400),
-                        dependencies = plotly_dependency())
-          })
-
-
-
-plotly_dependency <- function(){
-  htmltools::htmlDependency(
-    "plotlyjs", "1.29.2",
-    src = system.file('htmlwidgets', 'lib', 'plotlyjs', package = 'iheatmapr'),
-    script = "plotly-latest.min.js",
-    stylesheet = "plotly-htmlwidgets.css"
-  )
-}
-
 #' make_plotly_color
 #' Convert R colors to plotly compatible rgb values
 #'
 #' @param color_str 
 #'
-#' @return
+#' @return color rgb value
 #' @export
 #'
+#' @keywords internal
 #' @author Justin Finkle
-#' @examples
 make_plotly_color <- function(color_str){
   # Plotly accepts some string colors, but it is safer to use rgb(0,0,0) values
   p_color <- rgb(t(col2rgb(color_str)), maxColorValue = 255)

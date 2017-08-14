@@ -173,11 +173,14 @@ track_plotter(resize(ctcf.peaks[1:5], width = 10000, fix = "center"))
 
 ## Add in gene or locus level summaries
 
+We can add a boxplot next to each region summarizing the gene expression levels (or any other feature of the locus) for some group of samples.  We do that by first creating a function to generate such a summary based on a SummarizedExperiment object.  We pass along to the `group` argument the name of a column in the colData of the SummarizedExperiment object that we will use to group the expression values along the x axis.  
 
 ```{r}
 summary_plotter <- make_summary_plotter(rpkm_chr21,
                                         groups = "GROUP")
 ```
+
+We use the function `make_track_plus_summary_plotter` to link our track plotter and our summary plotter.  We give both of the plot generators, as well as the ranges that correspond to all the rows of the expression data and the rownames of the expression data.  
 
 ```{r}
 combined_plotter <- make_track_plus_summary_plotter(track_plotter, 
@@ -186,12 +189,16 @@ combined_plotter <- make_track_plus_summary_plotter(track_plotter,
                                                     rownames(rpkm_chr21))
 ```
 
+Calling our combined plotter function with some rownames of the expression data creates a plot of the ChIP-seq signal around the TSS of those genes as well as a boxplot of the gene expression for different samples for that gene on the right.  
+
 ```{r}
 combined_plotter(rownames(rpkm_chr21)[1:3])
 ```
 
 
 # Apps linking heatmaps to genome tracks
+
+We can link our heatmap views of many genes/regions with the more detailed track views by making a shiny app that links the two through a click event.  We will need both our heatmap object, a track generator function, and a link function that helps link the heatmap to the track view.  The link function takes as input the heatmap as well as the potential input for the track function.  That input should be ordered according to how the rows were ordered in the input data for the heatmap.  
 
 Note: The following code has to be run interactively!
 

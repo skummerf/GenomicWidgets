@@ -1,4 +1,14 @@
 
+
+plotly_dependency <- function(){
+  htmltools::htmlDependency(
+    "plotlyjs", "1.29.2",
+    src = system.file('htmlwidgets', 'lib', 'plotlyjs', package = 'iheatmapr'),
+    script = "plotly-latest.min.js",
+    stylesheet = "plotly-htmlwidgets.css"
+  )
+}
+
 setMethod("show", "GenomeTrackWidget",
           function(object){
             print(to_widget(object))

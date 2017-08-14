@@ -319,6 +319,7 @@ aggregate_to_heatmap_shiny <- function(aggregate_plot,
 
 #' heatmap_to_browserly_shiny
 #' 
+#' @import shiny
 #' @export
 aggregate_to_heatmap_to_browserly_shiny <- function(aggregate_plot,
                                                     heatmaps, 
@@ -326,8 +327,7 @@ aggregate_to_heatmap_to_browserly_shiny <- function(aggregate_plot,
                                        link_functions,
                                        title = "Heatmap linked to Genome Tracks",
                                        options = list(height = 1400)){
-  require(shiny)
-  require(plotly)  
+  requireNamespace(shiny)
   
   # Check regions
   

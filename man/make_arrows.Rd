@@ -21,9 +21,13 @@ make_arrows(df, yref, arrowlen = 500, arrowheight = 0.15, arrowgap = 1500)
 \item{arrowgap}{numeric: gap between arrows on long introns}
 }
 \value{
-
+list of arrow shapes
 }
 \description{
 make_arrows
 Draw arrows for introns
 }
+\author{
+Justin Finkle
+}
+\keyword{interanl}

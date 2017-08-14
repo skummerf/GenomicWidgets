@@ -22,8 +22,7 @@ heatmap_to_tracks_shiny <- function(heatmap,
                                     link,
                                     title = "Heatmap linked to Genome Tracks",
                                     options = list(height = 1400)){
-  require(shiny)
-  require(plotly)  
+  requireNamespace(shiny)
   
   # Check regions
   
