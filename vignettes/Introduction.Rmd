@@ -14,7 +14,7 @@ library(SummarizedExperiment)
 
 # Package goals
 
-The GenomicWidgets package enables the creation of interactive visualizations for functional genomics data in R. These interactive visualizations can be included in stand-alone Rmarkdown HTML documents, or can be linked in shiny applications.  
+The GenomicWidgets package enables the creation of interactive visualizations for functional genomics data in R. These interactive visualizations can be included in stand-alone Rmarkdown HTML documents, or can be linked in shiny applications. These visualization are intended to highlight the data at different scales, from a single locus to hundreds of regions along the genome, and to enable the views at different scales to be linked together.    
 
 # Genomics Heatmaps
 
