@@ -41,22 +41,22 @@ compute_regulatory_potential <- function(peaks, tss, max_dist = 100000){
                                                    tss_flat, 
                                                    maxgap = max_dist, 
                                                    ignore.strand = TRUE)) %>%
-      mutate(group = tss_group[subjectHits], 
+      dplyr::mutate(group = tss_group[subjectHits], 
              tmp_dists = GenomicRanges::distance(peaks[queryHits],
                                                  tss_flat[subjectHits],
                                                  ignore.strand = TRUE)) %>%
-      group_by(group, queryHits) %>%
-      summarise(dists = min(tmp_dists)) %>% 
-      summarise(scores = score_func(dists))
+      dplyr::group_by(group, queryHits) %>%
+      dplyr::summarise(dists = min(tmp_dists)) %>% 
+      dplyr::summarise(scores = score_func(dists))
     out[score_df$group] = score_df$scores
   } else if (inherits(tss, "GRanges")){
     score_df <- as.data.frame(GenomicRanges::findOverlaps(peaks, 
                                                    tss, 
                                                    maxgap = max_dist, 
                                                    ignore.strand = TRUE)) %>%
-      mutate(dists = GenomicRanges::distance(peaks[queryHits],tss[subjectHits], ignore.strand = TRUE)) %>%
-      group_by(subjectHits) %>% 
-      summarise(scores = score_func(dists))
+      dplyr::mutate(dists = GenomicRanges::distance(peaks[queryHits],tss[subjectHits], ignore.strand = TRUE)) %>%
+      dplyr::group_by(subjectHits) %>% 
+      dplyr::summarise(scores = score_func(dists))
     out[score_df$subjectHits] = score_df$scores
   } else{
     stop("Invalid tss input, must be GRangesList or GRanges")

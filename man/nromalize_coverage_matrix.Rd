@@ -3,22 +3,34 @@
 \docType{methods}
 \name{normalize_coverage_matrix,list-method}
 \alias{normalize_coverage_matrix,list-method}
+\alias{normalize_coverage_matrix,matrix-method}
+\alias{normalize_coverage_matrix,SummarizedExperiment-method}
 \title{normalize_coverage_matrix}
 \usage{
 \S4method{normalize_coverage_matrix}{list}(mats, method = c("localRms",
   "localMean", "localNonZeroMean", "PercentileMax", "scalar", "none"),
   pct = 0.95, scalar = NULL)
+
+\S4method{normalize_coverage_matrix}{matrix}(mats, method = c("localRms",
+  "localMean", "localNonZeroMean", "PercentileMax", "scalar", "none"),
+  pct = 0.95, scalar = NULL)
+
+\S4method{normalize_coverage_matrix}{SummarizedExperiment}(mats, ...)
 }
 \arguments{
+\item{mats}{matrix, list of matrix, or SummarizedExperiment}
+
 \item{method}{normalization method option, see Details}
 
 \item{pct}{Percentile, only used if PercentileMax is method}
 
 \item{scalar}{vector of scalars used for normalizing each mat, only 
 used if scalar is method}
+
+\item{...}{additional arguments to normalize_coverage_matrix}
 }
 \description{
-normalize_coverage_matrix
+Normalizes coverage matrices using one of several methods.
 }
 \details{
 Normalization choices are "localRms", "localMean", 

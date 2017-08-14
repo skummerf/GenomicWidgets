@@ -4,16 +4,12 @@ HEATMAP_SOURCE = "HM"
 #' heatmap_click
 #' 
 #' @export
-heatmap_click <- function(heatmap, ranges, width = 50000){
-  ranges <- resize(ranges, fix = "center", width = width)
+heatmap_click <- function(heatmap, x){
   out <- function(){
-    s <- event_data("plotly_click", source = HEATMAP_SOURCE)
+    s <- iheatmapr_event(heatmap, "click")
     if(is.null(s)) return(NULL)
-    yaxis <- plots(heatmap)[[s$curve + 1]]@yaxis
-    if (yaxes(heatmap)[[yaxis]]@id != "y") return(NULL)
-    ro <- yaxes(heatmap)[[yaxis]]@order
-    ix <- ro[s$y]
-    return(ranges[ix])
+    ix <- s$row
+    return(x[ix])
   }
   return(out)
 }
@@ -37,23 +33,23 @@ heatmap_to_tracks_shiny <- function(heatmap,
     titlePanel(title),
     
     fluidRow(
-      plotlyOutput("heat")
+      iheatmaprOutput("heat")
     ),
     fluidRow(
-      plotOutput("tracks")
+      GenomicWidgetsOutput("tracks")
     )
   )
   
   # Define server logic required to draw a histogram
   server <- function(input, output) {
     
-    output$heat <- renderPlotly({
-      heatmap %>% as_plotly(source = HEATMAP_SOURCE)
+    output$heat <- renderIheatmap({
+      heatmap
     })
     
-    output$tracks <- renderPlot({
+    output$tracks <- renderGenomicWidgets({
       linker <- link() 
-      track_function(linker)  
+      if (is.null(linker)) NULL else track_function(linker) 
     })
     
   }
@@ -63,48 +59,3 @@ heatmap_to_tracks_shiny <- function(heatmap,
   
 }
 
-#' heatmap_to_browserly_shiny
-#' 
-#' @export
-heatmap_to_browserly_shiny <- function(heatmap, 
-                                    track_function,
-                                    link,
-                                    title = "Heatmap linked to Genome Tracks",
-                                    options = list(height = 1400)){
-  require(shiny)
-  require(plotly)  
-  
-  # Check regions
-  
-  ui <- fluidPage(
-    
-    # Application title
-    titlePanel(title),
-    
-    fluidRow(
-      plotlyOutput("heat")
-    ),
-    fluidRow(
-      plotlyOutput("tracks")
-    )
-  )
-  
-  # Define server logic required to draw a histogram
-  server <- function(input, output) {
-    
-    output$heat <- renderPlotly({
-      heatmap %>% as_plotly(source = HEATMAP_SOURCE)
-    })
-    
-    output$tracks <- renderPlotly({
-      linker <- link() 
-      if (is.null(linker)) return(NULL)
-      track_function(linker)  
-    })
-    
-  }
-  
-  # Run the application 
-  shinyApp(ui = ui, server = server, options = options)
-  
-}

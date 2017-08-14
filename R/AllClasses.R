@@ -20,10 +20,9 @@ setClass("RelativeViewRange",
          contains = "ViewRange")
 
 setValidity("RelativeViewRange", 
-            function(object){
-              ("relative" %in% colnames(mcols(object)) & "reference" %in% 
-                 colnames(mcols(object)))
-            })
+             function(object){
+               "relative" %in% colnames(mcols(object))
+             })
 
 
 setClass("LocusPlot",
@@ -37,7 +36,6 @@ setClass("AnnotationPlot",
          slots = c(transcripts = "GRanges"),
          contains = "LocusPlot")
 
-#' @importClassesFrom genomation ScoreMatrixList
 setClass("SignalPlot",
          slots = c(signal = "SimpleList",
                    mode = "character",
@@ -59,20 +57,25 @@ setClass("LocusView",
          prototype = list(elementType = "LocusPlot"),
          contains = c("SimpleList"))
 
+setClass("GenomicWidgets",
+         contains = c("VIRTUAL"))
+
 setClass("LocusViewList",
-         slots = c(share_y = "logical"),
+         slots = c(share_y = "logical",
+                   xtitle = "character"),
          prototype = list(elementType = "LocusView"),
-         contains = c("SimpleList"))
+         contains = c("SimpleList","GenomicWidgets"))
 
 setClass("LocusSummaryList",
          prototype = list(elementType = "LocusSummary"),
-         contains = c("SimpleList"))
+         contains = c("SimpleList","GenomicWidgets"))
 
-setClass("MultiLocusView",
+setClass("GenomeTrackWidget",
          slots = c(tracks = "LocusViewList",
                    summaries = "LocusSummaryList",
                    summary_width = "numeric",
-                   layout = list()))
+                   layout = list()),
+         contains = "GenomicWidgets")
 
 
 

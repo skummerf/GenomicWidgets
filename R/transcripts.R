@@ -1,3 +1,5 @@
+#' @export
+#' @importClassesFrom GenomicFeatures TxDb
 setMethod("unpack_transcripts", signature = "TxDb",
           function(object){
             unpack_transcripts_inner(object)
@@ -191,7 +193,7 @@ setMethod("make_shapes", c(x = "AnnotationPlot"),
           function(x, yax, view, ...){
             ann_ax <- gsub("yaxis","y",yax)
             tx_info <- as.data.frame(x@transcripts, row.names = NULL)
-            tx_info <- mutate(tx_info,
+            tx_info <- dplyr::mutate(tx_info,
                               start = relative_position(view, start),
                               end = relative_position(view, end),
                               midpoint = (start + end) / 2)
@@ -241,7 +243,7 @@ setMethod(to_widget,
           function(p){
             out <- annotation_to_plotly_list(p)
             print("a")
-            htmlwidgets::createWidget(name = "chipVis",
+            htmlwidgets::createWidget(name = "GenomicWidgets",
                          x = out,
                          width = out$layout$width,
                          height = out$layout$height,
@@ -263,6 +265,148 @@ plotly_dependency <- function(){
   )
 }
 
+#' make_plotly_color
+#' Convert R colors to plotly compatible rgb values
+#'
+#' @param color_str 
+#'
+#' @return
+#' @export
+#'
+#' @author Justin Finkle
+#' @examples
+make_plotly_color <- function(color_str){
+  # Plotly accepts some string colors, but it is safer to use rgb(0,0,0) values
+  p_color <- rgb(t(col2rgb(color_str)), maxColorValue = 255)
+  return(p_color)
+}
+
+
+#' make_rect
+#' Make the rectangle objects. These are used to display annotation features such
+#' as cds, and utr.
+#'
+#' @param df data.frame: data used to draw the shapes. Required columns include 
+#' "start", "end", and "stepping"
+#' @param height numeric: the height of the rectangles
+#' @param yref character: axis on which to draw the rectangles, in the form of 
+#' "yaxis[2-9]" or "y[2-9]"
+#' @param fillcolor character: color of the rectangle
+#'
+#' @return
+#'
+#' @author Justin Finkle
+#' @examples
+make_rect <- function(df, 
+                      height, 
+                      yref,
+                      fillcolor = 'lightslateblue'){
+  fillcolor <- make_plotly_color(fillcolor)
+  yref <- gsub("yaxis", "y", yref)
+  if(nrow(df)>0){
+    rect_list <- vector("list", nrow(df))
+    for(e in 1:nrow(df)){
+      row <- df[e, ]
+      rect_list[[e]] <- list(type = "rect", fillcolor = fillcolor, opacity = 1, 
+                             line=list(width=0),
+                             x0 = row$start, x1 = row$end, xref = "x",
+                             y0 = row$stepping-height, y1 = row$stepping+height, 
+                             yref = yref)
+    }
+  } else {
+    rect_list <- NULL
+  }
+  return(rect_list)
+}
+
+#' make_arrows
+#' Draw arrows for introns
+#'
+#' @param df data.frame: data used to draw the shapes. Required columns include 
+#' "start", "end", "strand", "midpoint", and "stepping"
+#' @param yref character: axis on which to draw the rectangles, in the form of 
+#' "yaxis[2-9]" or "y[2-9]"
+#' @param arrowlen numeric: how long the arrow should be, in x coordinates
+#' @param arrowheight numeric: how tall the arrow should be, in yref coordinates
+#' @param arrowgap  numeric: gap between arrows on long introns
+#'
+#' @return
+#'
+#' @examples
+make_arrows <- function(df, 
+                        yref, 
+                        arrowlen = 500, 
+                        arrowheight = 0.15, 
+                        arrowgap = 1500){
+  # Set the y ref
+  yref <- gsub("yaxis", "y", yref)
+  if(nrow(df)>0){
+    line_list <- vector("list", nrow(df))
+    arrow_list <- vector("list", nrow(df))
+    for(i in 1:nrow(df)){
+      row <- df[i, ]
+      
+      # Make the intron line
+      line_list[[i]] <- list(x0 = row$start, y0=row$stepping, 
+                             x1 = row$end, y1 = row$stepping, 
+                             xref = "x", yref = yref,
+                             type = "line",
+                             line = list(width = 0.5, 
+                                         dash = ifelse(row$strand == "-", 
+                                                       "dot","solid")))
+      # Add arrows to the lines
+      if (row$end - row$start > 2 * arrowlen){
+        if (row$strand == "-"){
+          arrow_pos <- row$midpoint - arrowlen * 0.5
+        } else{
+          arrow_pos <- row$midpoint + arrowlen * 0.5
+        }
+        arrow_list[[i]] <- arrow_helper(arrow_pos,
+                                        row$strand,
+                                        arrowlen,
+                                        arrowheight,
+                                        row$stepping,
+                                        yref)
+      }
+    }
+    out <- c(unlist(arrow_list, recursive = FALSE), line_list)
+  } else {
+    out <- NULL
+  }
+  return(out)
+}
+
+#' arrow_helper
+#' Draw lines that make arrows on the intron shapes
+#'
+#' @param arrow_start 
+#' @param strand 
+#' @param arrowlen 
+#' @param arrowheight 
+#' @param y 
+#' @param yref 
+#'
+#' @return
+#'
+#' @examples
+arrow_helper <- function(arrow_start, 
+                         strand, arrowlen, 
+                         arrowheight, 
+                         y, 
+                         yref){
+  arrow_end <- ifelse(strand =="-", arrow_start + arrowlen, 
+                      arrow_start - arrowlen)
+  list(list(x0 = arrow_start, x1=arrow_end, 
+            y0 = y, y1 = y - arrowheight, 
+            xref = "x", yref = yref,
+            type = "line",
+            line = list(width = 0.5)),
+       list(x0 = arrow_start, x1=arrow_end, 
+            y0 = y, y1 = y + arrowheight, 
+            xref = "x", yref = yref,
+            type = "line",
+            line = list(width = 0.5)))
+}
 
 
 

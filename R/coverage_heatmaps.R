@@ -5,6 +5,7 @@ log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
 
 #' coverage_heatmap
 #' 
+#' Makes an interactive coverage heatmap.
 #' @param data single coverage matrix or list of coverage matrices
 #' @param x x axis labels
 #' @param y y axis labels
@@ -31,7 +32,14 @@ log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
 #' @rdname coverage_heatmap
 #' @name coverage_heatmap
 #' @aliases coverage_heatmap,matrix-method coverage_heatmap,list-method
-#' add_coverage_heatmap,IheatmapHorizontal,matrix-method
+#' coverage_heatmap,SummarizedExperiment-method 
+#' coverage_heatmap,ScoreMatrix-method
+#' coverage_heatmap,ScoreMatrixList-method
+#' add_coverage_heatmap,IheatmapHorizontal,matrix-method 
+#' add_coverage_heatmap,IheatmapHorizontal,list-method
+#' add_coverage_heatmap,IheatmapHorizontal,SummarizedExperiment-method
+#' add_coverage_heatmap,IheatmapHorizontal,ScoreMatrix-method
+#' add_coverage_heatmap,IheatmapHorizontal,ScoreMatrixList-method
 #' @export
 #' @import iheatmapr
 setGeneric("coverage_heatmap", 
@@ -42,16 +50,40 @@ setGeneric("coverage_heatmap",
 setGeneric("add_coverage_heatmap", 
            function(p, data, ...) standardGeneric("add_coverage_heatmap"))
 
-# Method for bamfile or list of bamfiles (or bigwig files)
-setMethod("coverage_heatmap", c(data = "character"),
+
+# Method for SummarizedExperiment
+setMethod("coverage_heatmap", c(data = "SummarizedExperiment"),
           function(data, 
-                   windows,
+                   assay = assayNames(data), 
                    ...){
             
-            # ADD HERE
+            if (length(assay) == 1){
+              stopifnot(assay %in% assayNames(data))
+              coverage_heatmap(assays(data)[[assay]], ...)
+            } else{
+              stopifnot(all(assay %in% assayNames(data)))
+              coverage_heatmap(lapply(assays(data)[assay], as.matrix),...)
+            }
+          })
+
+setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal",data = "SummarizedExperiment"),
+          function(p,
+                   data, 
+                   assay = assayNames(data), 
+                   ...){
+            
+            if (length(assay) == 1){
+              stopifnot(assay %in% assayNames(data))
+              add_coverage_heatmap(p, assays(data)[[assay]], ...)
+            } else{
+              stopifnot(all(assay %in% assayNames(data)))
+              add_coverage_heatmap(p, lapply(assays(data)[assay], as.matrix),...)
+            }
           })
 
 # Method for ScoreMatrix
+#' @export
+#' @importClassesFrom genomation ScoreMatrix ScoreMatrixList
 setMethod("coverage_heatmap", c(data = "ScoreMatrix"),
           function(data, 
                    start, 
@@ -66,6 +98,19 @@ setMethod("coverage_heatmap", c(data = "ScoreMatrix"),
                              end = end, ...)
           })
 
+setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "ScoreMatrix"),
+          function(p,
+                   data, 
+                   start, 
+                   end, 
+                   x = seq(start, end, length.out = ncol(data)),
+                   ...){
+            
+            add_coverage_heatmap(p, as.matrix(data),
+                             x = x, 
+                             start = start,
+                             end = end, ...)
+          })
 
 # Method for ScoreMatrixList
 setMethod("coverage_heatmap", c(data = "ScoreMatrixList"),
@@ -78,6 +123,22 @@ setMethod("coverage_heatmap", c(data = "ScoreMatrixList"),
             
             data_list <- lapply(data, as.matrix)
             coverage_heatmap(data_list,
+                             x = x, y = y,
+                             start = start,
+                             end = end, ...)
+          })
+
+setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "ScoreMatrixList"),
+          function(p,
+                   data, 
+                   start, 
+                   end, 
+                   x = seq(start, end, length.out = ncol(data)),
+                   ...){
+            
+            data_list <- lapply(data, as.matrix)
+            add_coverage_heatmap(p,
+                             data_list,
                              x = x, y = y,
                              start = start,
                              end = end, ...)

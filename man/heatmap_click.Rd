@@ -4,7 +4,7 @@
 \alias{heatmap_click}
 \title{heatmap_click}
 \usage{
-heatmap_click(heatmap, ranges, width = 50000)
+heatmap_click(heatmap, x)
 }
 \description{
 heatmap_click

@@ -2,33 +2,18 @@ setMethod(multi_locus_view,
           c("GRanges","character"),
           function(windows, 
                    object, 
-                   annotation = NULL, 
-                   ..., 
-                   track_names = ifelse(!is.null(names(object)),
-                                        names(object),
-                                        basename(object)),
-                   name = mcols(windows)$name,
-                   share_y = FALSE,
-                   fill = c('tozeroy','none'), 
-                   showlegend = (length(object) > 1), 
-                   colors = NULL, 
-                   mode = 'lines',
-                   annotation_position = c("bottom","top"),
-                   annotation_size = 0.2){
+                   ...){
             
-            multi_locus_view(as(windows, "RelativeViewRange"),
+            
+            if (length(windows) == 1){
+              multi_locus_view(as(windows, "ViewRange"),
                                object,
-                               annotation,
-                               ...,
-                               track_names = track_names,
-                               name = name,
-                               share_y = share_y,
-                               fill = match.arg(fill),
-                               showlegend = showlegend,
-                               colors = colors,
-                               mode = mode,
-                               annotation_position = match.arg(annotation_position),
-                               annotation_size = annotation_size)
+                               ...,)
+            } else{
+              multi_locus_view(as(windows, "RelativeViewRange"),
+                               object,
+                               ...,)
+            }
           })
 
 
@@ -36,7 +21,8 @@ setMethod(multi_locus_view,
           c("RelativeViewRange","character"),
           function(windows, 
                    object, 
-                   annotation = NULL, ..., 
+                   annotation = NULL, 
+                   ..., 
                    track_names = ifelse(!is.null(names(object)),
                                         names(object),
                                         basename(object)),
@@ -81,9 +67,62 @@ setMethod(multi_locus_view,
                                        })
             ll <- new("LocusViewList", as(single_views,"SimpleList"), share_y = share_y)
             ll
-            #new("MultiLocusView", tracks = ll)
+            #new("GenomeTrackWidget", tracks = ll)
           })
           
+
+setMethod(multi_locus_view,
+          c("ViewRange","character"),
+          function(windows, 
+                   object, 
+                   annotation = NULL, ..., 
+                   track_names = ifelse(!is.null(names(object)),
+                                        names(object),
+                                        basename(object)),
+                   groups = NULL,
+                   name = mcols(windows)$name,
+                   share_y = FALSE,
+                   fill = c('tozeroy','none'), 
+                   showlegend = (length(object) > 1), 
+                   colors = NULL, 
+                   mode = 'lines',
+                   annotation_position = c("bottom","top"),
+                   annotation_size = 0.2){
+            
+            stopifnot(length(windows) == 1)
+            annotation_position <- match.arg(annotation_position)
+            
+            
+            sm <- length(object)
+            if (is.null(colors)){
+              if (sm == 1){
+                colors = "black"
+              } else if (sm <= 8){
+                colors = RColorBrewer::brewer.pal(sm,"Dark2")
+              } else if (sm <= 12){
+                colors = RColorBrewer::brewer.pal(sm,"Paired")
+              } else{
+                colors = rainbow(sm)
+              }
+            }
+            
+            single_views <- list(single_locus_view(windows,
+                                                   object = object,
+                                                   annotation = annotation,
+                                                   track_names = track_names,
+                                                   groups = groups,
+                                                   fill = fill,
+                                                   showlegend = showlegend ,
+                                                   colors = colors,
+                                                   mode = mode,
+                                                   annotation_position = annotation_position,
+                                                   annotation_size = annotation_size))
+            ll <- new("LocusViewList", as(single_views,"SimpleList"), share_y = share_y)
+            ll
+            #new("GenomeTrackWidget", tracks = ll)
+          })
+
+
 
 setMethod(multi_locus_view,
           c("character","character"),
@@ -128,23 +167,47 @@ setMethod(make_track_plotter,
             fill = match.arg(fill)
             annotation_position = match.arg(annotation_position)
             
-            purrr::partial(multi_locus_view,
-                           object = object,
-                           annotation = annotation,
-                           ...,
-                           track_names = track_names,
-                           groups = groups,
-                           share_y = share_y,
-                           fill = fill,
-                           relative = relative,
-                           showlegend = showlegend,
-                           colors = colors,
-                           mode = mode,
-                           annotation_position = annotation_position,
-                           annotation_size = annotation_size)
+            default_arglist <- list(
+              object = object,
+              annotation = annotation,
+              ...,
+              track_names = track_names,
+              groups = groups,
+              share_y = share_y,
+              fill = fill,
+              relative = relative,
+              showlegend = showlegend,
+              colors = colors,
+              mode = mode,
+              annotation_position = annotation_position,
+              annotation_size = annotation_size
+            )
             
+            out <- function(windows, ...){
+              arglist <- modifyList(default_arglist, 
+                                    list(...))
+              do.call(multi_locus_view, c(list(windows = windows), arglist))
+              
+            }
             
+            out
           })
+
+#' @export
+make_track_plus_summary_plotter <- function(track_function,
+                                            summary_function,
+                                            windows,
+                                            row_names,
+                                            summary_width = 0.25){
+  out <- function(rows, track_args = NULL, summary_args = NULL){
+    ix <- match(rows, row_names)
+    tracks <- do.call(track_function, c(list(windows = windows[ix]), track_args))
+    summaries <- do.call(summary_function, c(list(row_names = row_names[ix]), summary_args))
+    new("GenomeTrackWidget", tracks = tracks, summaries = summaries, 
+        summary_width = summary_width)
+  }
+  return(out)
+}
 
 setMethod(make_trace, signature = c(x = "LocusViewList"),
           definition = function(x, ynames, ...){
@@ -177,10 +240,20 @@ setMethod(get_layout, signature = c(object = "LocusViewList"),
             } else{
               range = NULL
             }
+            
+            if (length(object@xtitle) == 0){
+              if (length(object) > 1 || is(object[[1]]@view, "RelativeViewRange")){
+                xtitle = "Relative Position"
+              } else{
+                xtitle = as.character(seqnames(object[[1]]@view))
+              }
+            } else{
+              xtitle = object@xtitle
+            }
+            
             layout_setting <- list(xaxis = 
-                                     list(title = "Relative Position",
+                                     list(title = xtitle,
                                           zeroline = FALSE,
-                                          #showline = FALSE,
                                           anchor = gsub("yaxis","y",ynames_flat[length(ynames_flat)]),
                                           range = c(relative_position(object[[1]]@view, start(object[[1]]@view)),
                                                     relative_position(object[[1]]@view, end(object[[1]]@view))),
@@ -307,10 +380,10 @@ multi_locus_to_plotly_list <- function(x){
 setMethod(to_widget,
           c("LocusViewList"),
           function(p){
-            p <- new("MultiLocusView", tracks = p)
+            p <- new("GenomeTrackWidget", tracks = p)
             out <- multi_locus_to_plotly_list(p)
             htmlwidgets::createWidget(
-              name = "chipVis",
+              name = "GenomicWidgets",
               x = out,
               width = out$layout$width,
               height = out$layout$height,
@@ -325,10 +398,10 @@ setMethod(to_widget,
 setMethod(to_widget,
           c("LocusSummaryList"),
           function(p){
-            p <- new("MultiLocusView", summaries = p, summary_width = 1)
+            p <- new("GenomeTrackWidget", summaries = p, summary_width = 1)
             out <- multi_locus_to_plotly_list(p)
             htmlwidgets::createWidget(
-              name = "chipVis",
+              name = "GenomicWidgets",
               x = out,
               width = out$layout$width,
               height = out$layout$height,
@@ -343,11 +416,11 @@ setMethod(to_widget,
 
 #' @export
 setMethod(to_widget,
-          c("MultiLocusView"),
+          c("GenomeTrackWidget"),
           function(p){
             out <- multi_locus_to_plotly_list(p)
             htmlwidgets::createWidget(
-              name = "chipVis",
+              name = "GenomicWidgets",
               x = out,
               width = out$layout$width,
               height = out$layout$height,
@@ -358,3 +431,8 @@ setMethod(to_widget,
               dependencies = plotly_dependency())
           })
 
+setMethod(to_widget,
+          c("NULL"),
+          function(p){
+            NULL
+          })

@@ -76,7 +76,8 @@ setMethod("make_locus_summaries", c("SummarizedExperiment"),
             }
             
             summaries <- purrr::map(seq_along(row_names), function(x){
-              make_locus_summary(object, x, 
+              make_locus_summary(object, 
+                                 row_names[x], 
                                  assay_name = assay_name,
                                  groups = groups, 
                                  showlegend = if (x == 1) showlegend else FALSE,
@@ -145,37 +146,5 @@ setMethod(make_trace, signature = c(x = "LocusSummary"),
               y})
           })
 
-summary_to_plotly_list <- function(x){
-  traces <- make_trace(x, "yaxis","xaxis")
-  layout_setting <- x@layout
-  out <- list(data = traces,
-              layout = layout_setting,
-              source = "Annotation Track",#,x@source,
-              config = list(modeBarButtonsToRemove =
-                              c("sendDataToCloud",
-                                "autoScale2d")))
-  attr(out, "TOJSON_FUNC") <- function(x, ...) {
-    jsonlite::toJSON(x, digits = 50, auto_unbox = TRUE, force = TRUE,
-                     null = "null", na = "null", ...)
-  }
-  out
-}
-
-#' @export
-setMethod(to_widget,
-          c("LocusSummary"),
-          function(p){
-            out <- summary_to_plotly_list(p)
-            htmlwidgets::createWidget(
-              name = "chipVis",
-              x = out,
-              width = out$layout$width,
-              height = out$layout$height,
-              sizingPolicy = htmlwidgets::sizingPolicy(browser.fill = TRUE,
-                                                       viewer.fill = TRUE,
-                                                       defaultWidth = "100%",
-                                                       defaultHeight = 400),
-              dependencies = plotly_dependency())
-          })
 
 

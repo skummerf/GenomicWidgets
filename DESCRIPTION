@@ -1,4 +1,4 @@
-Package: chipVis
+Package: GenomicWidgets
 Type: Package
 Title: interactive visualization of genomics data
 Version: 0.1.1.9999
@@ -7,6 +7,7 @@ Authors@R: c(person("Alicia", "Schep", email = "aschep@gmail.com",
                   role = c("aut", "cre")),
               person("Justin", "Finkle", 
                   role = c("aut")),
+              person("August","Guang", role = c("ctb")),
               person("Sarah","Kummerfeld", email = "kummerfeld.sarah@gene.com",
                   role = c("aut")),
               person("Genentech", role = "cph"))
@@ -15,15 +16,14 @@ License: file GNE_LICENSE
 Imports: 
     rtracklayer,
     GenomicRanges,
-    Gviz,
     plotly,
-    fastcluster,
     iheatmapr,
     annotate,
     stringr,
     bamsignals,
-    genomation,
-    OrganismDbi
+    OrganismDbi,
+    SummarizedExperiment,
+    GenomicFeatures
 RoxygenNote: 6.0.1
 Suggests: 
     shiny,

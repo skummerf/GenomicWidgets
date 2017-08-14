@@ -6,72 +6,49 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(iheatmapr)
-library(chipVis)
-library(dplyr)
+library(GenomicWidgets)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(GenomicRanges)
 ```
 
-## Example
+# Package goals
 
-
-```{r}
-bamfiles <- list.files(system.file("extdata", package = "genomationData"),
-           pattern = "*.bam$", full.names = TRUE)
-
-samp.file = system.file('extdata/SamplesInfo.txt',package='genomationData')
-samp.info = read.table(samp.file, header=TRUE, sep='\t', 
-                       stringsAsFactors = FALSE)
-names(bamfiles) <- left_join(data_frame(fileName = basename(bamfiles)), samp.info) %>%
-  select(sampleName) %>% unlist(use.names = FALSE)
-
-
-promoter_regions <- promoters(TxDb.Hsapiens.UCSC.hg19.knownGene, 
-                              upstream = 1000, downstream = 1000)
-promoter_regions <- promoter_regions[seqnames(promoter_regions) == "chr21"]
-
-cov_mats <- make_coverage_matrix(bamfiles, promoter_regions, binsize = 20)
-
-ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
-                         "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
-                         package = "genomationData"))
-ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
-ctcf.peaks = ctcf.peaks[order(-ctcf.peaks$signalValue)]
-ctcf.peaks = resize(ctcf.peaks, width = 1, fix = "center")
-
-ctcf_mats <- make_coverage_matrix(bamfiles, ctcf.peaks, 
-                                  up = 1000, down = 1000, 
-                                  binsize = 25)
-
-coverage_heatmap(ctcf_mats[[1]])
-
-```
-
-```{r}
-coverage_heatmap(ctcf_mats)
-```
-
-
+The GenomicWidgets package enables the creation of interactive visualizations for functional genomics data in R. These interactive visualizations can be included in stand-alone Rmarkdown HTML documents, or can be linked in shiny applications.  
 
 # Genomics Heatmaps
 
+The GenomicWidgets package builds on the iheatmapr package to enable creation of complex, interactive heatmaps for genomics data.  
+
 ## Expression heatmap
+
+GenomicWidgets includes an `iheatmap` method for SummarizedExperiment objects, which are often used for storing expression data.  Compared to the `iheatmap` method for a matrix, the method for SummarizedExperiment has some different default settings that are often appropriate for expression or epigenomics data.  
+
+The package includes a small subset of the expression data from the Roadmap Epigenomics project.  
 
 ```{r}
 data("rpkm_chr21")
 ```
 
+Here is what the `iheatmap` method applied to the matrix of RPKM values looks like:
+
 ```{r}
 iheatmap(assays(rpkm_chr21)[["rpkm"]])
 ```
+
+If instead we apply it to the SummarizedExperiment object, we see the result is different:
 
 ```{r}
 iheatmap(rpkm_chr21,"rpkm")
 ```
 
+For SummarizedExperiment, hierarchical clustering and standardization of rows is the default.  
+
+We can further enhance this heatmap by passing along additional components of the SummarizedExperiment object to additional arguments to the `iheatmap` method.  
+
 ```{r}
 iheatmap(rpkm_chr21, "rpkm",
-         x = colData(rpkm_chr21)$STD_NAME, y = rowData(rpkm_chr21)$SYMBOL, 
+         x = colData(rpkm_chr21)$STD_NAME, 
+         y = rowData(rpkm_chr21)$SYMBOL, 
          col_annotation = colData(rpkm_chr21)[,c("TYPE","SEX")])
 ```
 
@@ -79,7 +56,11 @@ There is also an `add_iheatmap` method defined for SummarizedExperiment for addi
 
 ## Coverage heatmaps
 
+GenomicWidgets also has methods for making coverage heatmaps.  
+
 ### The data
+
+For demonstration of coverage heatmaps, we'll use ChIP-seq data for the H1 ESC cell line from the ENCODE project included in the genomationData Bioconductor package.  We'll first read in a sample table and get the correct paths to the files.  
 
 ```{r}
 genomation_dir <- system.file("extdata", package = "genomationData")
@@ -90,6 +71,8 @@ samp.info <- read.table(samp.file, header=TRUE, sep='\t',
 samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
 
 ```
+
+Then we'll read in the location of CTCF peaks.  We'll plot the coverage at these peaks.
 
 ```{r}
 ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
@@ -102,75 +85,85 @@ ctcf.peaks = resize(ctcf.peaks, width = 501, fix = "center")
 
 ### Making coverage matrices
 
+We first will make coverage matrices.  These will be returned as RangedSummarizedExperiment objects.  
+
 ```{r}
-ctcf_mats <- make_coverage_matrix(bamfiles, 
+ctcf_mats <- make_coverage_matrix(samp.info$fileName[1:5], 
                                   ctcf.peaks, 
-                                  up = 1000, down = 1000, 
+                                  input_names = samp.info$sampleName[1:5],
+                                  up = 250, 
+                                  down = 250, 
                                   binsize = 25)
 
 ```
 
+You can also use your own preferred  method for making a coverage matrix.  The `coverage_heatmap` method shown below can accept either a SummarizedExperiment, a plain matrix, a list of matrices, or a ScoreMatrix or ScoreMatrixList object from the genomation package.  
 
 ### Single coverage
 
-```{r}
-coverage_heatmap(ctcf_mats[[1]])
-```
+Here we will create a single coverage heatmap for the CTCF ChIP-seq.
 
+```{r}
+coverage_heatmap(ctcf_mats, "Ctcf")
+```
 
 ### Adding coverage heatmap
 
-### Multiple coverage
+```{r}
+coverage_heatmap(ctcf_mats, "Ctcf") %>% add_coverage_heatmap(ctcf_mats, "Znf143")
+```
 
-### Add multiple coverage heatmaps
 
-### Coverage heatmap at TSS
+### Multiple coverage heatmaps
+
+```{r}
+coverage_heatmap(ctcf_mats, c("Ctcf","Znf143"))
+```
+
+You can also add multiple coverage heatmaps at once to an existing heatmap using `add_coverage_heatmaps`. We will demonstrate that in the next section.
 
 ### Combining expression heatmap with coverage heatmap
 
+Get coverage matrix at tss for the Chip-Seq
+
+```{r}
+tss <- promoters(rowRanges(rpkm_chr21), up = 1, down = 1)
+
+tss_mats <- make_coverage_matrix(samp.info$fileName[1:5], 
+                                  tss, 
+                                  input_names = samp.info$sampleName[1:5],
+                                  up = 500, 
+                                  down = 500, 
+                                  binsize = 25)
+```
+
+Make expression heatmap and then add coverage heatmap for TSS for two of the factors:
+
+```{r}
+iheatmap(rpkm_chr21, "rpkm",
+         x = colData(rpkm_chr21)$STD_NAME, 
+         y = rowData(rpkm_chr21)$SYMBOL, 
+         col_annotation = colData(rpkm_chr21)[,c("TYPE","SEX")]) %>% 
+  add_coverage_heatmap(tss_mats, c("P300","Suz12"))
+```
+
 # Interactive genome tracks
+
+GenomicWidgets also has functions for interactive local views of genomic signals.  
 
 ## View ranges
 
 ## Pre-load annotation data
 
-## Single track
-
-## Multiple tracks
-
-## Expression
-
-
-
-
-## Single locus
-
-### View Range
-
-
-```{r view_range}
-view_range <- make_view_range(chr = "chr21", start=45050000, end=45068000)
-view_range
-```
-
-### Annotation data
-We pre-load the annotation information from the TxDB into an easily searched list. This saves time when repeated calls are made to find the genomic ranges and features that are used in plotting coverage information. 
-The variable `tx_data` contains several lists that a indexed by transcript
-feature (e.g. intron, utr5). It also keeps track of the seqlevelstyle used
-in the database.
-
 ```{r Load Annotation reference}
-library(TxDb.Hsapiens.UCSC.hg19.knownGene)
-txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
-tx_data <- load_tx_data(txdb)
-print(names(tx_data))
+tx_data <- unpack_transcripts(TxDb.Hsapiens.UCSC.hg19.knownGene)
 ```
-
 
 ## Track plotter
 
 ```{r}
-track_plotter <- make_track_plotter(samp.info$sampleName[1:3], tx_data, 
+track_plotter <- make_track_plotter(samp.info$fileName[1:3], 
+                                    tx_data, 
                                     track_names = samp.info$sampleName[1:3] , 
                                     share_y = TRUE)
 ```
@@ -179,50 +172,54 @@ track_plotter <- make_track_plotter(samp.info$sampleName[1:3], tx_data,
 track_plotter(ctcf.peaks[1])
 ```
 
+## Multiple regions
 
-
-
-## Standard plot
-
-```{r Demo_stacking}
-
+```{r}
+track_plotter(ctcf.peaks[1:3])
 ```
 
-By default, browserly densely stacks all overlapping transcripts to save visual space. Future versions may allow for the display of "canonical" transcripts. All y axes default to being on the same scale, but this can also be disabled.
-
-## Heatmap of coverage
-Browserly automatcially determines the type of plot for showing coverage. When many
-samples are displayed, browserly defaults to using a heatmap. This saves vertical space, without losing information.
-```{r Demo_hm}
-plot_single_locus(view_range, tx_data, cvg)
-```
+## Add in gene or locus level summaries
 
 
 ```{r}
-tr_fn <- make_browserly_function(bamfiles[c("Ctcf","Znf143","Suz12")], tx_data = tx_data,
-                                cvg_scaling = 100)
+summary_plotter <- make_summary_plotter(rpkm_chr21,
+                                        groups = "GROUP")
 ```
 
+```{r}
+combined_plotter <- make_track_plus_summary_plotter(track_plotter, 
+                                                    summary_plotter,
+                                                    resize(tss, width = 5000, fix = "center"),
+                                                    rownames(rpkm_chr21))
+```
 
-## Multiple locus
+```{r}
+combined_plotter(rownames(rpkm_chr21)[2:5])
+```
 
-
-
-## Adding expression information
-
-
-
-
-## Log scale???
 
 # Apps linking heatmaps to genome tracks
 
+Note: The following code has to be run interactively!
 
-```{r}
+```{r, eval= FALSE}
+hm <- iheatmap(rpkm_chr21, "rpkm",
+         x = colData(rpkm_chr21)$STD_NAME, 
+         y = rowData(rpkm_chr21)$SYMBOL, 
+         col_annotation = colData(rpkm_chr21)[,c("TYPE","SEX")]) %>% 
+  add_coverage_heatmap(tss_mats, c("P300","Suz12"))
+
+link_fn <- heatmap_click(hm, rownames(rpkm_chr21))
+
+heatmap_to_tracks_shiny(hm, combined_plotter, link_fn)
 
 ```
 
+## To do
 
+* Reverse strand for negative
+* Easier Customization of y axis labels
+* Easier customization of x axis labels
 
 
 

@@ -15,6 +15,7 @@
 #' @author Alicia Schep
 make_coverage_matrix <- function(inputs, 
                                  ranges, 
+                                 input_names = names(inputs),
                                  binsize = 1, 
                                  format = c("auto","bigwig","bam"),
                                  up = 0,
@@ -33,9 +34,10 @@ make_coverage_matrix <- function(inputs,
     ranges <- resize(ranges, fix = "center", width = (width(ranges[1]) %/% binsize +1)*binsize)
   }
   
-  rn <- paste(seqnames(ranges), 
+  rn <- paste(as.character(seqnames(ranges)), 
               paste(end(ranges),start(ranges), sep="-"), 
               sep=":")
+  names(ranges) <- rn
   
   if (up > 0 || down > 0){
     coln <- seq(-up,down - binsize,binsize)
@@ -43,6 +45,7 @@ make_coverage_matrix <- function(inputs,
     coln <- seq(1,width(ranges[1]),binsize)
   }
   
+  names(inputs) <- input_names
   #Determine format
   if (format == "auto"){
     if (length(inputs) == 1){
@@ -67,6 +70,8 @@ make_coverage_matrix <- function(inputs,
     if (length(inputs) == 1){
       out <- coverage_mat_from_bigwig(inputs, ranges, binsize, coln)
       rownames(out) <- rn
+      out <- list(out)
+      names(out) <- input_names
     } else{
       out <- lapply(inputs, coverage_mat_from_bigwig, ranges, binsize, coln)
       out <- lapply(out, function(x) {rownames(x) = rn; x})
@@ -78,6 +83,8 @@ make_coverage_matrix <- function(inputs,
     if (length(inputs) == 1){
       out <- coverage_mat_from_bam(inputs, ranges, binsize, coln)
       rownames(out) <- rn
+      out <- list(out)
+      names(out) <-  input_names
     } else{
       out <- lapply(inputs, coverage_mat_from_bam, ranges, binsize, coln)
       out <- lapply(out, function(x) {rownames(x) = rn; x})
@@ -85,19 +92,22 @@ make_coverage_matrix <- function(inputs,
   } else {
     stop("Format not recognized")
   }
-  return(SummarizedExperiment(out, rowRanges = ranges))
+  return(SummarizedExperiment::SummarizedExperiment(out, rowRanges = ranges))
 }
 
 #' normalize_coverage_matrix
 #' 
-#' @param mats
+#' Normalizes coverage matrices using one of several methods.
+#' @param mats matrix, list of matrix, or SummarizedExperiment
 #' @param method normalization method option, see Details
 #' @param pct Percentile, only used if PercentileMax is method
 #' @param scalar vector of scalars used for normalizing each mat, only 
 #' used if scalar is method
+#' @param ... additional arguments to normalize_coverage_matrix
 #' @details Normalization choices are "localRms", "localMean", 
 #' "localNonZeroMean", "PercentileMax", "scalar", and "none".  
 #' @export
+#' @rdname nromalize_coverage_matrix
 #' @author Alicia Schep
 setMethod(normalize_coverage_matrix, "list",
           function(mats, 
@@ -121,7 +131,7 @@ setMethod(normalize_coverage_matrix, "list",
             
             return(out)
           })
-
+#' @rdname nromalize_coverage_matrix
 #' @export
 setMethod(normalize_coverage_matrix, "matrix",
           function(mats, 
@@ -138,6 +148,7 @@ setMethod(normalize_coverage_matrix, "matrix",
           })
 
 #' @export
+#' @rdname nromalize_coverage_matrix
 setMethod(normalize_coverage_matrix, "SummarizedExperiment",
           function(mats, 
                    ...){

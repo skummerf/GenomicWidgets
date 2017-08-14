@@ -4,8 +4,9 @@
 \alias{make_coverage_matrix}
 \title{make_coverage_matrix}
 \usage{
-make_coverage_matrix(inputs, ranges, binsize = 1, format = c("auto",
-  "bigwig", "bam"), up = 0, down = 0, ...)
+make_coverage_matrix(inputs, ranges, input_names = names(inputs),
+  binsize = 1, format = c("auto", "bigwig", "bam"), up = 0, down = 0,
+  ...)
 }
 \arguments{
 \item{inputs}{filenames of bigwig or bam}

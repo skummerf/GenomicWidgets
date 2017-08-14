@@ -1,3 +1,4 @@
+#' @export
 setAs("ViewRange","GRanges",
       function(from){
         out <- GRanges(seqnames = seqnames(from),
@@ -8,6 +9,7 @@ setAs("ViewRange","GRanges",
         return(out)
       })
 
+#' @export
 setAs("GRanges","ViewRange",
       function(from){
         if (!("name" %in% colnames(mcols(from)))) 
@@ -15,12 +17,13 @@ setAs("GRanges","ViewRange",
         new("ViewRange", from)
       })
 
+#' @export
 setAs("GRanges","RelativeViewRange",
       function(from){
         if (!("name" %in% colnames(mcols(from)))) 
           mcols(from)$name <- ""
-        stopifnot("relative" %in% colnames(mcols(from)))
-        stopifnot("reference" %in% colnames(mcols(from)))
+        if (!("relative" %in% colnames(mcols(from)))) 
+          mcols(from)$relative <- start(from) + width(from) %/% 2
         new("RelativeViewRange", from)
       })
 

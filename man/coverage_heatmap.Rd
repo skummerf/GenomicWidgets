@@ -4,7 +4,14 @@
 \alias{coverage_heatmap}
 \alias{coverage_heatmap,matrix-method}
 \alias{coverage_heatmap,list-method}
+\alias{coverage_heatmap,SummarizedExperiment-method}
+\alias{coverage_heatmap,ScoreMatrix-method}
+\alias{coverage_heatmap,ScoreMatrixList-method}
 \alias{add_coverage_heatmap,IheatmapHorizontal,matrix-method}
+\alias{add_coverage_heatmap,IheatmapHorizontal,list-method}
+\alias{add_coverage_heatmap,IheatmapHorizontal,SummarizedExperiment-method}
+\alias{add_coverage_heatmap,IheatmapHorizontal,ScoreMatrix-method}
+\alias{add_coverage_heatmap,IheatmapHorizontal,ScoreMatrixList-method}
 \alias{add_coverage_heatmap}
 \title{coverage_heatmap}
 \usage{
@@ -56,7 +63,7 @@ default is TRUE}
 iheatmap object
 }
 \description{
-coverage_heatmap
+Makes an interactive coverage heatmap.
 }
 \author{
 Alicia Schep

@@ -1,21 +1,10 @@
 
 
 setMethod("make_signal_track", c("GRanges","character"),
-          function(window, object, bin.num = 1000, ..., 
-                   track_names = ifelse(!is.null(names(object)),
-                                        basename(names(object)),
-                                        object),
-                   fill = c('tozeroy','none'), 
-                   showlegend = TRUE, 
-                   colors = NULL, 
-                   mode = 'lines',
-                   name = ifelse(length(track_names) > 1, "Coverage", track_names)){
+          function(window, object, ...){
             
-            make_signal_track(as(window,"ViewRange"), object, bin_num = bin_num,
-                              ..., 
-                              track_names = track_names, 
-                              fill = match.arg(fill), showlegend = showlegend,
-                              colors = colors, mode = mode, name = name)
+            make_signal_track(as(window,"ViewRange"), object, 
+                              ...)
           })
 
 setMethod("make_signal_track", c("ViewRange","character"),
@@ -27,14 +16,14 @@ setMethod("make_signal_track", c("ViewRange","character"),
                    showlegend = TRUE, 
                    colors = NULL, 
                    mode = 'lines',
-                   name = "Coverage"){
+                   name = ifelse(length(track_names) > 1, "Coverage", track_names)){
             
             fill <- match.arg(fill)
             
             names(object) <- track_names
             sm <- make_coverage_matrix(object, as(window,"GRanges"),
                                        binsize = binsize, ...)
-            
+
             
             if (is.null(colors)){
               if (length(sm == 1)){
@@ -112,7 +101,7 @@ setMethod(to_widget,
           function(p){
             out <- signal_to_plotly_list(p)
             htmlwidgets::createWidget(
-              name = "chipVis",
+              name = "GenomicWidgets",
               x = out,
               width = out$layout$width,
               height = out$layout$height,

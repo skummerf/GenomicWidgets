@@ -1,6 +1,6 @@
 // Function adapted from Plotly R Package 3.60, 
 HTMLWidgets.widget({
-  name: "chipVis",
+  name: "GenomicWidgets",
   type: "output",
   
   initialize: function(el, width, height) {
@@ -74,23 +74,23 @@ HTMLWidgets.widget({
       // https://plot.ly/javascript/zoom-events/
       graphDiv.on('plotly_relayout', function(d) {
       Shiny.onInputChange(
-      ".clientValue-" + "browserly_relayout" + "-" + x.source, 
+      ".clientValue-" + "GenomicWidgets_relayout" + "-" + x.source, 
       JSON.stringify(d)
       );
       });
-      graphDiv.on('plotly_hover', sendEventData('browserly_hover'));
-      graphDiv.on('plotly_click', sendEventData('browserly_click'));
-      graphDiv.on('plotly_selected', sendEventData('browserly_selected'));
+      graphDiv.on('plotly_hover', sendEventData('GenomicWidgets_hover'));
+      graphDiv.on('plotly_click', sendEventData('GenomicWidgets_click'));
+      graphDiv.on('plotly_selected', sendEventData('GenomicWidgets_selected'));
       graphDiv.on('plotly_unhover', function(eventData) {
-      Shiny.onInputChange(".clientValue-browserly_hover-" + x.source, null);
+      Shiny.onInputChange(".clientValue-GenomicWidgets_hover-" + x.source, null);
       });
       graphDiv.on('plotly_doubleclick', function(eventData) {
-      Shiny.onInputChange(".clientValue-browserly_click-" + x.source, null);
+      Shiny.onInputChange(".clientValue-GenomicWidgets_click-" + x.source, null);
       });
       // 'plotly_deselect' is code for doubleclick when in select mode
       graphDiv.on('plotly_deselect', function(eventData) {
-      Shiny.onInputChange(".clientValue-browserly_selected-" + x.source, null);
-      Shiny.onInputChange(".clientValue-browserly_click-" + x.source, null);
+      Shiny.onInputChange(".clientValue-GenomicWidgets_selected-" + x.source, null);
+      Shiny.onInputChange(".clientValue-GenomicWidgets_click-" + x.source, null);
       });
       } 
       
