@@ -9,6 +9,7 @@ library(iheatmapr)
 library(GenomicWidgets)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(GenomicRanges)
+library(SummarizedExperiment)
 ```
 
 # Package goals
@@ -151,31 +152,23 @@ iheatmap(rpkm_chr21, "rpkm",
 
 GenomicWidgets also has functions for interactive local views of genomic signals.  
 
-## View ranges
-
-## Pre-load annotation data
-
-```{r Load Annotation reference}
-tx_data <- unpack_transcripts(TxDb.Hsapiens.UCSC.hg19.knownGene)
-```
-
 ## Track plotter
 
 ```{r}
 track_plotter <- make_track_plotter(samp.info$fileName[1:3], 
-                                    tx_data, 
+                                    annotation = TxDb.Hsapiens.UCSC.hg19.knownGene, 
                                     track_names = samp.info$sampleName[1:3] , 
                                     share_y = TRUE)
 ```
 
 ```{r}
-track_plotter(ctcf.peaks[1])
+track_plotter(resize(ctcf.peaks[1], width = 10000, fix = "center"))
 ```
 
 ## Multiple regions
 
 ```{r}
-track_plotter(ctcf.peaks[1:3])
+track_plotter(resize(ctcf.peaks[1:5], width = 10000, fix = "center"))
 ```
 
 ## Add in gene or locus level summaries
@@ -194,7 +187,7 @@ combined_plotter <- make_track_plus_summary_plotter(track_plotter,
 ```
 
 ```{r}
-combined_plotter(rownames(rpkm_chr21)[2:5])
+combined_plotter(rownames(rpkm_chr21)[1:3])
 ```
 
 
@@ -217,9 +210,11 @@ heatmap_to_tracks_shiny(hm, combined_plotter, link_fn)
 
 ## To do
 
-* Reverse strand for negative
+* Reverse plot for negative strand
 * Easier Customization of y axis labels
 * Easier customization of x axis labels
+* add description of grouping options, fine-tune
+* check color handling
 
 
 

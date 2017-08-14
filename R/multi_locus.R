@@ -169,7 +169,7 @@ setMethod(make_track_plotter,
             
             default_arglist <- list(
               object = object,
-              annotation = annotation,
+              annotation = unpack_transcripts(annotation),
               ...,
               track_names = track_names,
               groups = groups,

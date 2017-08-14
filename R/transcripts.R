@@ -5,6 +5,16 @@ setMethod("unpack_transcripts", signature = "TxDb",
             unpack_transcripts_inner(object)
           })
 
+#' @importClassesFrom OrganismDbi OrganismDb
+setMethod("unpack_transcripts", signature = "OrganismDb",
+          function(object){
+            unpack_transcripts_inner(object)
+          })
+
+setMethod("unpack_transcripts", signature = "NULL",
+          function(object){
+            NULL
+          })
 
 
 unpack_transcripts_inner <- function(db_object){
@@ -293,10 +303,10 @@ make_plotly_color <- function(color_str){
 #' "yaxis[2-9]" or "y[2-9]"
 #' @param fillcolor character: color of the rectangle
 #'
-#' @return
+#' @return list of rectangle shapes
+#' @keywords internal
 #'
 #' @author Justin Finkle
-#' @examples
 make_rect <- function(df, 
                       height, 
                       yref,
@@ -330,9 +340,10 @@ make_rect <- function(df,
 #' @param arrowheight numeric: how tall the arrow should be, in yref coordinates
 #' @param arrowgap  numeric: gap between arrows on long introns
 #'
-#' @return
+#' @return list of arrow shapes
 #'
-#' @examples
+#' @keywords interanl
+#' @author Justin Finkle
 make_arrows <- function(df, 
                         yref, 
                         arrowlen = 500, 
@@ -376,21 +387,10 @@ make_arrows <- function(df,
   return(out)
 }
 
-#' arrow_helper
-#' Draw lines that make arrows on the intron shapes
-#'
-#' @param arrow_start 
-#' @param strand 
-#' @param arrowlen 
-#' @param arrowheight 
-#' @param y 
-#' @param yref 
-#'
-#' @return
-#'
-#' @examples
+
 arrow_helper <- function(arrow_start, 
-                         strand, arrowlen, 
+                         strand, 
+                         arrowlen, 
                          arrowheight, 
                          y, 
                          yref){

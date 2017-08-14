@@ -57,25 +57,22 @@ setClass("LocusView",
          prototype = list(elementType = "LocusPlot"),
          contains = c("SimpleList"))
 
-setClass("GenomicWidgets",
-         contains = c("VIRTUAL"))
 
 setClass("LocusViewList",
          slots = c(share_y = "logical",
                    xtitle = "character"),
          prototype = list(elementType = "LocusView"),
-         contains = c("SimpleList","GenomicWidgets"))
+         contains = c("SimpleList"))
 
 setClass("LocusSummaryList",
          prototype = list(elementType = "LocusSummary"),
-         contains = c("SimpleList","GenomicWidgets"))
+         contains = c("SimpleList"))
 
 setClass("GenomeTrackWidget",
          slots = c(tracks = "LocusViewList",
                    summaries = "LocusSummaryList",
                    summary_width = "numeric",
-                   layout = list()),
-         contains = "GenomicWidgets")
+                   layout = list()))
 
 
 

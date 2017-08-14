@@ -9,10 +9,13 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 
 # Reading in Roadmap Epigenomics Project Expression Data from AnnotationHub
 
+This vignette describes how the expression data object included in GenomicWidgets was created.
+
 ## Reading in protein coding RPKM
 
 ```{r}
 library(AnnotationHub)
+library(dplyr)
 ah = AnnotationHub()
 expr_data <- query(ah , c("EpigenomeRoadMap", "RPKM"))
 rpkm_pc = expr_data[["AH49019"]]
@@ -45,7 +48,6 @@ chr21 <- inner_join(entrez_mapping, genes_mapping, by = c("ENTREZID" = "GENEID")
 chr21_uniq <- dplyr::group_by(chr21, ENSEMBL) %>% filter(row_number()==1) %>% ungroup()
 
 ```
-
 
 ## Make SummarizedExperiment
 
