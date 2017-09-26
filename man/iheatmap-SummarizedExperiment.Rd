@@ -3,6 +3,8 @@
 \docType{methods}
 \name{iheatmap-SummarizedExperiment}
 \alias{iheatmap-SummarizedExperiment}
+\alias{iheatmap,SummarizedExperiment-method,}
+\alias{add_iheatmap,Summarized-Experiment-method}
 \alias{add_iheatmap,IheatmapHorizontal,SummarizedExperiment-method}
 \alias{add_iheatmap,IheatmapVertical,SummarizedExperiment-method}
 \title{Summarized Experiment iheatmap and iheatmap methods}

@@ -47,7 +47,7 @@ setMethod("make_signal_track", c("ViewRange","character"),
                 showlegend = showlegend)
           })
 
-#' @export
+
 setMethod(make_trace, signature = c(x = "SignalPlot"),
           definition = function(x, yax, view, xax = "xaxis", ...){
             
@@ -95,7 +95,7 @@ signal_to_plotly_list <- function(x){
   out
 }
 
-#' @export
+
 setMethod(to_widget,
           c("SignalPlot"),
           function(p){

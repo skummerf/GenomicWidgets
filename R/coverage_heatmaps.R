@@ -1,4 +1,18 @@
+#' log10rowMeans
+#' 
+#' Convenience function to take log10 after taking the mean. A pseudocount is 
+#' added before taking the log to avoid problems with zero.
+#' 
+#' @param x matrix
+#' @param na.rm remove NAs?
+#' @param pseudo pseudocount to add
+#' @return vector of values
 #' @export
+#' @examples 
+#' 
+#' mat = matrix(rpois(120,10), nrow = 10)
+#' log10rowMeans(mat)
+#' 
 log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
   log10(rowMeans(x, na.rm = na.rm) + pseudo)
 }
@@ -26,6 +40,7 @@ log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
 #' @param end label for end of x range
 #' @param xlab x axis label
 #' @param layout list of layout attributes
+#' @param ... additional arguments
 #' @return iheatmap object
 #' @export
 #' @author Alicia Schep
@@ -42,6 +57,37 @@ log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
 #' add_coverage_heatmap,IheatmapHorizontal,ScoreMatrixList-method
 #' @export
 #' @import iheatmapr
+#' @examples 
+#' 
+#' library(GenomicRanges)
+#' ## First we'll read in some sample data
+#' genomation_dir <- system.file("extdata", package = "genomationData")
+#' samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
+#' samp.info <- read.table(samp.file, header=TRUE, sep='\t', 
+#'                         stringsAsFactors = FALSE)
+#' samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
+#' ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
+#'                           "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
+#'                            package = "genomationData"))
+#' ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
+#' ctcf.peaks = ctcf.peaks[order(-ctcf.peaks$signalValue)]
+#' ctcf.peaks = resize(ctcf.peaks, width = 501, fix = "center")
+#' 
+#' ## Make coverage matrix
+#' ctcf_mats <- make_coverage_matrix(samp.info$fileName[1:5], 
+#'                                   ctcf.peaks, 
+#'                                   input_names = samp.info$sampleName[1:5],
+#'                                   up = 250, 
+#'                                   down = 250, 
+#'                                   binsize = 25)
+#'                                   
+#' ## Plot coverage for Ctcf and Znf143
+#' if (interactive()){
+#'   coverage_heatmap(ctcf_mats, "Ctcf") %>% 
+#'     add_coverage_heatmap(ctcf_mats, "Znf143")
+#' }                                   
+#' 
+#' 
 setGeneric("coverage_heatmap", 
            function(data, ...) standardGeneric("coverage_heatmap"))
 
@@ -66,7 +112,8 @@ setMethod("coverage_heatmap", c(data = "SummarizedExperiment"),
             }
           })
 
-setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal",data = "SummarizedExperiment"),
+setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal",
+                                    data = "SummarizedExperiment"),
           function(p,
                    data, 
                    assay = assayNames(data), 
@@ -77,7 +124,8 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal",data = "SummarizedE
               add_coverage_heatmap(p, assays(data)[[assay]], ...)
             } else{
               stopifnot(all(assay %in% assayNames(data)))
-              add_coverage_heatmap(p, lapply(assays(data)[assay], as.matrix),...)
+              add_coverage_heatmap(p, lapply(assays(data)[assay], 
+                                             as.matrix),...)
             }
           })
 
@@ -98,7 +146,8 @@ setMethod("coverage_heatmap", c(data = "ScoreMatrix"),
                              end = end, ...)
           })
 
-setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "ScoreMatrix"),
+setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", 
+                                    data = "ScoreMatrix"),
           function(p,
                    data, 
                    start, 
@@ -128,7 +177,8 @@ setMethod("coverage_heatmap", c(data = "ScoreMatrixList"),
                              end = end, ...)
           })
 
-setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "ScoreMatrixList"),
+setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", 
+                                    data = "ScoreMatrixList"),
           function(p,
                    data, 
                    start, 
@@ -576,43 +626,12 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "list"),
 
 
 
-
-
-
 default_end <- function(x){
   stopifnot(length(x) > 2)
   end = as.numeric(x[length(x)]) + as.numeric(x[2]) - as.numeric(x[1])
   as.character(end)
 }
 
-
-
-#' @export
-#' @importFrom GenomicRanges distanceToNearest
-add_dist_to_tss <- function(p,
-                            ranges,
-                            tss,
-                            ...){
-  
-  d = log10(abs(mcols(distanceToNearest(ranges, tss, 
-                                        ignore.strand = TRUE))$distance) + 1)
-  
-  
-  p <- add_row_plot(p,
-                    x = d,
-                    side = "right", 
-                    type = "scatter", 
-                    mode = "markers",
-                    x_layout = list(title = "Distance<br>to TSS<br>(log10)", 
-                                    range = c(-0.5,6),
-                                    tickvals = c(0,3,6),
-                                    zeroline = FALSE), 
-                    size = 0.3,
-                    buffer = 0.04,
-                    showlegend = FALSE)
-  
-  return(p)
-}
 
 
 

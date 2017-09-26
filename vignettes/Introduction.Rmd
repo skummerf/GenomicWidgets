@@ -1,6 +1,12 @@
 ---
 title: "Introduction"
-output: html_document
+author: "Alicia Schep"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
@@ -98,7 +104,7 @@ ctcf_mats <- make_coverage_matrix(samp.info$fileName[1:5],
 
 ```
 
-You can also use your own preferred  method for making a coverage matrix.  The `coverage_heatmap` method shown below can accept either a SummarizedExperiment, a plain matrix, a list of matrices, or a ScoreMatrix or ScoreMatrixList object from the genomation package.  
+You can also use your own preferred  method for making a coverage matrix.  The `coverage_heatmap` method shown below can accept either a SummarizedExperiment, a plain matrix, a list of matrices, or a ScoreMatrix or ScoreMatrixList object (objects from the genomation package).  
 
 ### Single coverage
 

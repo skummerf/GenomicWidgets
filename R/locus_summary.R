@@ -93,6 +93,9 @@ setMethod("make_locus_summaries", c("SummarizedExperiment"),
           })
 
 #' make_summary_plotter
+#' 
+#' Makes a summary plot for a genomic region. For use with make_track_plotter
+#' and make_track_plus_summary_plotter.
 #' @param object SummarizedExperiment
 #' @param assay_name name of assay to use
 #' @param ... additional arguments
@@ -104,6 +107,25 @@ setMethod("make_locus_summaries", c("SummarizedExperiment"),
 #' @param pointpos relative position of points to boxes
 #' @param ytitle name for yaxis
 #' @export
+#' 
+#' @author Alicia Schep and Justin Finkle
+#' @rdname make_summary_plotter
+#' @name make_summary_plotter
+#' @aliases make_summary_plotter,SummarizedExperiment-method
+#' @examples 
+#' 
+#' ## we'll read in some RNA counts
+#' data(rpkm_chr21)
+#' 
+#' ## Make summary plotter
+#' 
+#' summary_plotter <- make_summary_plotter(rpkm_chr21,
+#'   groups = "GROUP") 
+#'   
+#' if (interactive()){
+#'   summary_plotter(rownames(rpkm_chr21)[1:3])
+#' }   
+#' 
 setMethod("make_summary_plotter", c("SummarizedExperiment"),
           function(object,  
                    assay_name = assayNames(object)[1],
@@ -148,7 +170,6 @@ setMethod(get_layout, "LocusSummary",
             
           })
 
-#' @export
 setMethod(make_trace, signature = c(x = "LocusSummary"),
           definition = function(x, yax, xax, ...){
             lapply(x@data, function(y){ 

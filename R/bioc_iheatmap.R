@@ -33,6 +33,8 @@ se_default_y <- function(se, assay){
 #' @param ... additional arguments to \code{\link[iheatmapr]{iheatmap}}
 #' @rdname iheatmap-SummarizedExperiment
 #' @name iheatmap-SummarizedExperiment
+#' @aliases iheatmap,SummarizedExperiment-method, 
+#' add_iheatmap,Summarized-Experiment-method
 #' @export
 setMethod("iheatmap", c(data = "SummarizedExperiment"),
           function(data, 
@@ -56,7 +58,8 @@ setMethod("iheatmap", c(data = "SummarizedExperiment"),
 
 #' @rdname iheatmap-SummarizedExperiment
 #' @export
-setMethod("add_iheatmap", c(p = "IheatmapHorizontal", data = "SummarizedExperiment"),
+setMethod("add_iheatmap", c(p = "IheatmapHorizontal", 
+                            data = "SummarizedExperiment"),
           function(p, data, 
                    assay = assayNames(data)[[1]],
                    x = se_default_x(data),

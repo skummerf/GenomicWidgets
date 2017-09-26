@@ -1,10 +1,32 @@
+#' unpack_transcripts
+#' 
+#' Method to load transcript annotation data to a format that is easy to make
+#' transcript visualizations from. The resulting object can be passed to 
+#' make_track_plotter and will result in faster track function creation than 
+#' passing the TxDb or OrganismDb object. Useful if calling make_track_plotter
+#' multiple times.
+#' @param object a TxDb or OrganismDb object
 #' @export
+#' @name unpack_transcripts
+#' @rdname unpack_transcripts
+#' @return TranscriptParts object
+#' @author Alicia Schep and Justin Finkle
 #' @importClassesFrom GenomicFeatures TxDb
+#' @import GenomicFeatures
+#' @import GenomeInfoDb
+#' @import GenomicRanges
+#' @examples 
+#' 
+#' library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+#' transc <- unpack_transcripts(TxDb.Hsapiens.UCSC.hg19.knownGene)
+#' class(transc)
 setMethod("unpack_transcripts", signature = "TxDb",
           function(object){
             unpack_transcripts_inner(object)
           })
 
+#' @export
+#' @rdname unpack_transcripts
 #' @importClassesFrom OrganismDbi OrganismDb
 setMethod("unpack_transcripts", signature = "OrganismDb",
           function(object){
@@ -167,13 +189,12 @@ setMethod("make_annotation_track", c("ViewRange", "TranscriptParts"),
 
 
 #' @importMethodsFrom iheatmapr make_trace
-#' @export
 setMethod(make_trace, signature = c(x = "AnnotationPlot"),
           definition = function(x, yax, view, xax = "xaxis", ...){
             #Invisible Points
             anno_data <- as.data.frame(x@transcripts, row.names = NULL)
             if (nrow(anno_data) == 0) return(NULL)
-            anno_data <- dplyr::mutate(anno_data,
+            anno_data <- transform(anno_data,
                                text = paste0('Tx ID: ',
                                      transcript,
                                      '<br>',
@@ -182,31 +203,36 @@ setMethod(make_trace, signature = c(x = "AnnotationPlot"),
                                      "strand: ",
                                      strand),
                                start = relative_position(view, start),
-                               end = relative_position(view, end),
+                               end = relative_position(view, end))
+            anno_data <- transform(anno_data,
                                midpoint = (start + end) / 2)
-            anno_data <- dplyr::group_by(anno_data, transcript)
-            trace_data <- dplyr::summarise(anno_data, trace = list(list(x = midpoint,
-                                                  y = stepping,
-                                                  text = text,
-                                                  yaxis = gsub("yaxis","y",yax),
-                                                  xaxis = gsub("xaxis","x",xax),
-                                                  hoverinfo = 'x+text',
-                                                  opacity = 0,
-                                                  type='scatter',
-                                                  showlegend = FALSE,
-                                                  name = unique(transcript),
-                                                  mode = 'markers')))
-            trace_data$trace
+            
+            base_list <- list(yaxis = gsub("yaxis","y",yax),
+                              xaxis = gsub("xaxis","x",xax),
+                              hoverinfo = 'x+text',
+                              opacity = 0,
+                              type='scatter',
+                              showlegend = FALSE,
+                              mode = 'markers')
+            traces <- lapply(unique(anno_data$transcript), function(tname){
+              ix <- which(anno_data$transcript == tname)
+              c(base_list, list(x = anno_data$midpoint[ix],
+                   y = anno_data$stepping[ix],
+                   name = tname))
+              
+            })
+            traces
           })
 
 setMethod("make_shapes", c(x = "AnnotationPlot"),
           function(x, yax, view, ...){
             ann_ax <- gsub("yaxis","y",yax)
             tx_info <- as.data.frame(x@transcripts, row.names = NULL)
-            tx_info <- dplyr::mutate(tx_info,
+            tx_info <- transform(tx_info,
                               start = relative_position(view, start),
-                              end = relative_position(view, end),
-                              midpoint = (start + end) / 2)
+                              end = relative_position(view, end))
+            tx_info <- transform(tx_info,
+                                 midpoint = (start + end) / 2)
 
             cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ],
                                   height = 0.4,

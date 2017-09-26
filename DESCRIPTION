@@ -15,20 +15,20 @@ Description: Package for creating interactive visualizations of ChIP-seq,
   ATAC-seq, RNA-seq, and other genomic data.  Includes function for making shiny 
   app linking heatmaps to local track views. 
 License: file GNE_LICENSE
-Depends: 
+Depends:
   R (>= 2.10)
-Imports: 
+Imports:
     rtracklayer,
     GenomicRanges,
+    IRanges,
+    BiocGenerics,
+    GenomeInfoDb,
     RColorBrewer,
     S4Vectors,
-    dplyr,
     htmltools,
     jsonlite,
     purrr,
     iheatmapr,
-    annotate,
-    stringr,
     bamsignals,
     OrganismDbi,
     SummarizedExperiment,
@@ -36,8 +36,18 @@ Imports:
     genomation,
     htmlwidgets,
     knitr,
-    shiny
+    shiny,
+    methods,
+    stats,
+    graphics
 RoxygenNote: 6.0.1
-Suggests: 
+Suggests:
     testthat,
-    genomationData
+    genomationData,
+    rmarkdown,
+    Homo.sapiens,
+    TxDb.Hsapiens.UCSC.hg19.knownGene,
+    AnnotationDbi,
+    AnnotationHub,
+    dplyr
+VignetteBuilder: knitr

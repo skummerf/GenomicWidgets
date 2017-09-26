@@ -22,6 +22,8 @@ add_coverage_heatmap(p, data, ...)
 \arguments{
 \item{data}{single coverage matrix or list of coverage matrices}
 
+\item{...}{additional arguments}
+
 \item{x}{x axis labels}
 
 \item{y}{y axis labels}
@@ -64,6 +66,38 @@ iheatmap object
 }
 \description{
 Makes an interactive coverage heatmap.
+}
+\examples{
+
+library(GenomicRanges)
+## First we'll read in some sample data
+genomation_dir <- system.file("extdata", package = "genomationData")
+samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
+samp.info <- read.table(samp.file, header=TRUE, sep='\\t', 
+                        stringsAsFactors = FALSE)
+samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
+ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
+                          "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
+                           package = "genomationData"))
+ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
+ctcf.peaks = ctcf.peaks[order(-ctcf.peaks$signalValue)]
+ctcf.peaks = resize(ctcf.peaks, width = 501, fix = "center")
+
+## Make coverage matrix
+ctcf_mats <- make_coverage_matrix(samp.info$fileName[1:5], 
+                                  ctcf.peaks, 
+                                  input_names = samp.info$sampleName[1:5],
+                                  up = 250, 
+                                  down = 250, 
+                                  binsize = 25)
+                                  
+## Plot coverage for Ctcf and Znf143
+if (interactive()){
+  coverage_heatmap(ctcf_mats, "Ctcf") \%>\% 
+    add_coverage_heatmap(ctcf_mats, "Znf143")
+}                                   
+
+
 }
 \author{
 Alicia Schep

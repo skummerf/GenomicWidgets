@@ -124,27 +124,6 @@ setMethod(multi_locus_view,
 
 
 
-setMethod(multi_locus_view,
-          c("character","character"),
-          function(windows, object, annotation = NULL, ..., 
-                   track_names = ifelse(!is.null(names(object)),
-                                        names(object),
-                                        basename(object)),
-                   groups = NULL,
-                   share_y = FALSE,
-                   fill = c('tozeroy','none'), 
-                   relative = FALSE, 
-                   showlegend = TRUE, 
-                   colors = NULL, 
-                   mode = 'lines',
-                   annotation_position = c("top","bottom"),
-                   annotation_size = 0.5){
-            
-            
-            
-            
-          })      
-
 #' make_track_plotter
 #' 
 #' Function to generate a function that takes in a range and plots coverage track
@@ -163,6 +142,40 @@ setMethod(multi_locus_view,
 #' @param annotation_position plot annotations on bottom or on top of signal traces
 #' @param annotation_size relative size of annotation plot
 #' @export
+#' @rdname make_track_plotter
+#' @name make_track_plotter
+#' @aliases make_track_plotter,character-method
+#' 
+#' @author Alicia Schep and Justin Finkle
+#' @return function to make interactive track plots
+#' @examples 
+#' 
+#' library(GenomicRanges)
+#' ## First we'll read in some sample data
+#' genomation_dir <- system.file("extdata", package = "genomationData")
+#' samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
+#' samp.info <- read.table(samp.file, header=TRUE, sep="\t", 
+#'                         stringsAsFactors = FALSE)
+#' samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
+#' ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
+#'                          "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
+#'                           package = "genomationData"))
+#' ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
+#' 
+#' ## resize peaks to size 1000
+#' ctcf.peaks = resize(ctcf.peaks, width = 10000, fix = "center")
+#' 
+#' ## Make track plotter
+#' 
+#' track_plotter <- make_track_plotter(samp.info$fileName[1:3], 
+#'   annotation = TxDb.Hsapiens.UCSC.hg19.knownGene, 
+#'   track_names = samp.info$sampleName[1:3] , 
+#'   share_y = TRUE)
+#' if (interactive()){
+#'   track_plotter(ctcf.peaks[1])
+#'   track_plotter(ctcf.peaks[1:3])
+#' }   
+#' 
 setMethod(make_track_plotter,
           c("character"),
           function(object, 
@@ -216,14 +229,57 @@ setMethod(make_track_plotter,
 #'  \code{\link{make_track_plotter}}
 #' @param summary_function function to make locus summaries, as created by
 #'  \code{\link{make_summary_plotter}}
-#' @param windows GenomicRanges of windows that can serve as inputs to track_function
-#' @param row_names vector of row names that can serve as inputs to summary_function
+#' @param windows GenomicRanges of windows that can serve as inputs to 
+#' track_function
+#' @param row_names vector of row names that can serve as inputs to 
+#' summary_function
 #' @param summary_width width of summary plot in resulting visualization
 #' 
 #' @return a function which takes in names and generates a plot with track views
 #' and a summary plot per locus
 #'
 #' @export
+#' @author Alicia Schep and Justin Finkle
+#' 
+#' @examples 
+#' 
+#' library(GenomicRanges)
+#' ## First we'll read in some sample chip-seq data
+#' genomation_dir <- system.file("extdata", package = "genomationData")
+#' samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
+#' samp.info <- read.table(samp.file, header=TRUE, sep='\t', 
+#'                         stringsAsFactors = FALSE)
+#' samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
+#' 
+#' ## we'll also read in some RNA counts
+#' data(rpkm_chr21)
+#' 
+#' ## From the ranges of the rpkm object, we'll pull out the tss
+#' tss <- promoters(rowRanges(rpkm_chr21), up = 1, down = 1)
+#' 
+#' ## Make track plotter
+#' 
+#' track_plotter <- make_track_plotter(samp.info$fileName[1:3], 
+#'   annotation = TxDb.Hsapiens.UCSC.hg19.knownGene, 
+#'   track_names = samp.info$sampleName[1:3] , 
+#'   share_y = TRUE)
+#'   
+#' ## Make summary plotter
+#' 
+#' summary_plotter <- make_summary_plotter(rpkm_chr21,
+#'   groups = "GROUP") 
+#'   
+#' ## Make combined plotter
+#'   
+#' combined_plotter <- make_track_plus_summary_plotter(track_plotter, 
+#'   summary_plotter,
+#'   resize(tss, width = 5000, fix = "center"),
+#'   rownames(rpkm_chr21))
+#'   
+#' if (interactive()){
+#'   combined_plotter(rownames(rpkm_chr21)[1:3])
+#' }   
+#' 
 make_track_plus_summary_plotter <- function(track_function,
                                             summary_function,
                                             windows,
@@ -231,8 +287,10 @@ make_track_plus_summary_plotter <- function(track_function,
                                             summary_width = 0.25){
   out <- function(rows, track_args = NULL, summary_args = NULL){
     ix <- match(rows, row_names)
-    tracks <- do.call(track_function, c(list(windows = windows[ix]), track_args))
-    summaries <- do.call(summary_function, c(list(row_names = row_names[ix]), summary_args))
+    tracks <- do.call(track_function, c(list(windows = windows[ix]), 
+                                        track_args))
+    summaries <- do.call(summary_function, c(list(row_names = row_names[ix]), 
+                                             summary_args))
     new("GenomeTrackWidget", tracks = tracks, summaries = summaries, 
         summary_width = summary_width)
   }
@@ -281,13 +339,17 @@ setMethod(get_layout, signature = c(object = "LocusViewList"),
               xtitle = object@xtitle
             }
             
-            layout_setting <- list(xaxis = 
-                                     list(title = xtitle,
-                                          zeroline = FALSE,
-                                          anchor = gsub("yaxis","y",ynames_flat[length(ynames_flat)]),
-                                          range = c(relative_position(object[[1]]@view, start(object[[1]]@view)),
-                                                    relative_position(object[[1]]@view, end(object[[1]]@view))),
-                                          domain = x_domain))
+            layout_setting <- 
+              list(xaxis = 
+                     list(title = xtitle,
+                          zeroline = FALSE,
+                          anchor = gsub("yaxis","y",
+                                        ynames_flat[length(ynames_flat)]),
+                          range = c(relative_position(object[[1]]@view, 
+                                                      start(object[[1]]@view)),
+                                    relative_position(object[[1]]@view, 
+                                                      end(object[[1]]@view))),
+                          domain = x_domain))
             
             sizes = unlist(purrr::map(as.list(object), function(y) y@heights ))
             
@@ -299,30 +361,35 @@ setMethod(get_layout, signature = c(object = "LocusViewList"),
             for (i in rev(seq_along(object))){
               domains[[i]] =  list()
               for (j in rev(seq_along(object[[i]]))){
-                domains[[i]][[j]] <- c(start_domain, start_domain + (sizes[k]*0.95))
+                domains[[i]][[j]] <- c(start_domain, start_domain +
+                                         (sizes[k]*0.95))
                 start_domain <- start_domain + sizes[k]
                 k <- k - 1
               }
             }
             
             layout_setting <- c(layout_setting, 
-                                unlist(purrr::pmap(list(object = as.list(object), 
+                                unlist(purrr::pmap(list(object = 
+                                                          as.list(object), 
                                                         yname = ynames,
                                                         domain = domains),
                                                    get_layout,
-                                                   range = range), recursive = FALSE))
+                                                   range = range), 
+                                       recursive = FALSE))
             
             layout_setting
           })
 
 setMethod(get_layout, signature = c(object = "LocusSummaryList"),
-          definition = function(object, ynames, xax = "xaxis2", x_domain = c(0,1), ...){
+          definition = function(object, ynames, xax = "xaxis2", 
+                                x_domain = c(0,1), ...){
             
 
             layout_setting <- list()
             layout_setting[[xax]] = list(zeroline = FALSE,
                                           #showline = FALSE,
-                                          anchor = gsub("yaxis","y",ynames[length(ynames)]),
+                                          anchor = gsub("yaxis","y",
+                                                        ynames[length(ynames)]),
                                          domain = x_domain)
             
             sizes = rep(1 / length(object), length(object))
@@ -384,11 +451,12 @@ multi_locus_to_plotly_list <- function(x){
   if (length(x@summaries) !=0){
     summary_ynames <- yaxis_names(x@summaries, sum(lengths) + 1)
     traces <- c(traces, make_trace(x@summaries, summary_ynames, xax = xax))
-    layout_setting <- c(layout_setting, get_layout(x@summaries,
-                                                   summary_ynames,
-                                                   xax = xax,
-                                                   x_domain = c(1 - x@summary_width,
-                                                              1)))
+    layout_setting <- c(layout_setting, 
+                        get_layout(x@summaries,
+                                   summary_ynames,
+                                   xax = xax,
+                                   x_domain = c(1 - x@summary_width,
+                                                1)))
     
   }
   
@@ -444,6 +512,14 @@ setMethod(to_widget,
 
 
 
+#' to_widget
+#' 
+#' Method to convert GenomeTrackWidget to htmlwidgets objects
+#' @param p GenomeTrackWidget or other object storing plot information
+#' 
+#' @return htmlwidgets object
+#' @name to_widget
+#' @rdname to_widget
 #' @export
 setMethod(to_widget,
           c("GenomeTrackWidget"),

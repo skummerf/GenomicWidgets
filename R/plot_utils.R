@@ -75,7 +75,7 @@ alternating_colorscale <- function(x = 2, cols = c("lightgray","darkgray")){
 choose_discrete_palette <- function(x, existing = c()){
   
   qual_colors <- RColorBrewer::brewer.pal.info[which(RColorBrewer::brewer.pal.info$category == "qual"),]
-  new <- which(rownames(qual_colors) %ni% existing)
+  new <- which(!(rownames(qual_colors) %in% existing))
   if (length(new) == 0){
     existing_factors <- as.factor(existing)
     existing_tab <- tabulate(existing_factors)

@@ -8,6 +8,7 @@ setClass("TranscriptParts",
           seqlevelsStyle =  "character")
 )
 
+#' @importClassesFrom GenomicRanges GRanges
 setClass("ViewRange",
          contains = "GRanges")
 

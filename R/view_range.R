@@ -27,31 +27,54 @@ setAs("GRanges","RelativeViewRange",
         new("RelativeViewRange", from)
       })
 
+#' make_view_range
+#' 
+#' Makes a "ViewRange" object
+#' 
+#' @import BiocGenerics
+#' @importFrom IRanges IRanges
 #' @export
 make_view_range <- function(chrom,
                        start, 
                        end, 
                        strand = c("*", "+", "-"),
-                       relative = NULL,
-                       name = character(0)){
+                       name = character(0),
+                       relative = FALSE){
   
   strand <- match.arg(strand)
   gr <- GRanges(Rle(c(chrom)), IRanges(start = start, end = end), 
                 strand = strand)
-  if (is.null(relative)){
+  if (!relative){
     out <- new("ViewRange", 
                gr, 
                name = ifelse(length(name) == 0, as.character(gr), name))
   } else{
     out <- new("RelativeViewRange", 
                gr, 
-               relative = relative,
                name = ifelse(length(name) == 0, as.character(gr), name))
   }
   out
 }
 
+#' fetch_view_range
+#' 
+#' Function to get a range around a gene, using an OrganismDb or TxDb object
+#' 
+#' @param db_object OrganismDb or TxDb object
+#' @param symbol name of gene
+#' @param keytype type of key
+#' @param relative get range relative to TSS, TTS, or full gene
+#' @param up basepairs upstream to include
+#' @param down basepairs downstream to include
+#' 
+#' @return GenomicRanges
+#' @author Alicia Schep and Justin Finkle
 #' @export
+#' 
+#' @examples 
+#' 
+#' library(Homo.sapiens)
+#' fetch_view_range(Homo.sapiens,"GLI2")
 fetch_view_range <- function(db_object, 
                  symbol, 
                  keytype = c('SYMBOL', 'TXNAME'),
@@ -69,16 +92,18 @@ fetch_view_range <- function(db_object,
                                   keytype=keytype,
                                   column = c("TXCHROM", "TXEND", "TXID", 
                                              "TXNAME", "TXSTART", "TXSTRAND"))
+  
+  
   if (relative == "TSS"){
-    if (range_df$TXSTRAND == "-"){
-      start_range <- range_df$TXEND - down
-      end_range <- range_df$TXEND + up
+    if (range_df$TXSTRAND[1] == "-"){
+      start_range <- min(range_df$TXEND - down)
+      end_range <- max(range_df$TXEND + up)
       strand_range <- "-"
       rel <- range_df$TXEND
     } else{
-      start_range <- range_df$TXSTART - up
-      end_range <- range_df$TXSTART + down
-      strand_range <- range_df$TXSTRAND
+      start_range <- min(range_df$TXSTART - up)
+      end_range <- max(range_df$TXSTART + down)
+      strand_range <- "+"
       rel <- range_df$TXSTART
     }
     
@@ -87,18 +112,17 @@ fetch_view_range <- function(db_object,
                            end = end_range,
                            strand = strand_range,
                            name = symbol,
-                           relative = rel,
-                           reference = "TSS")  
+                           relative)  
   } else if (relative == "TTS"){
-    if (range_df$TXSTRAND == "-"){
-      start_range <- range_df$TXSTART - down
-      end_range <- range_df$TXSTART + up
+    if (range_df$TXSTRAND[1] == "-"){
+      start_range <- min(range_df$TXSTART - down)
+      end_range <- max(range_df$TXSTART + up)
       strand_range <- "-"
       rel <- range_df$TXSTART
     } else{
-      start_range <- range_df$TXEND - up
-      end_range <- range_df$TXEND + down
-      strand_range <- range_df$TXSTRAND
+      start_range <- min(range_df$TXEND - up)
+      end_range <- max(range_df$TXEND + down)
+      strand_range <- "+"
       rel <- range_df$TXEND
     }
     
@@ -107,24 +131,23 @@ fetch_view_range <- function(db_object,
                            end = end_range,
                            strand = strand_range,
                            name = symbol,
-                           relative = rel,
-                           reference = "TTS")  
+                           relative = rel)  
     
   } else{
-    if (range_df$TXSTRAND == "-"){
-      start_range <- range_df$TXSTART - down
-      end_range <- range_df$TXSTART + up
+    if (range_df$TXSTRAND[1] == "-"){
+      start_range <- min(range_df$TXSTART - down)
+      end_range <- max(range_df$TXSTART + up)
       strand_range <- "-"
     } else{
-      start_range <- range_df$TXEND - up
-      end_range <- range_df$TXEND + down
-      strand_range <- range_df$TXSTRAND
+      start_range <- min(range_df$TXEND - up)
+      end_range <- max(range_df$TXEND + down)
+      strand_range <- "+"
     }
     
     out <- make_view_range(chrom = range_df$TXCHROM,
                            start = start_range,
                            end = end_range,
-                           strand = range_df$TXSTRAND,
+                           strand = strand_range,
                            name = symbol) 
   }
   

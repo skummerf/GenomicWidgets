@@ -26,15 +26,15 @@ heatmap_to_tracks_shiny <- function(heatmap,
   
   # Check regions
   
-  ui <- fluidPage(
+  ui <- shiny::fluidPage(
     
     # Application title
-    titlePanel(title),
+    shiny::titlePanel(title),
     
-    fluidRow(
+    shiny::fluidRow(
       iheatmaprOutput("heat")
     ),
-    fluidRow(
+    shiny::fluidRow(
       GenomicWidgetsOutput("tracks")
     )
   )
@@ -54,7 +54,7 @@ heatmap_to_tracks_shiny <- function(heatmap,
   }
   
   # Run the application 
-  shinyApp(ui = ui, server = server, options = options)
+  shiny::shinyApp(ui = ui, server = server, options = options)
   
 }
 

@@ -10,8 +10,15 @@
 #' rendering them in R. 
 #' 
 #' @import SummarizedExperiment
+#' @importFrom grDevices col2rgb rainbow rgb
+#' @importFrom graphics layout text
+#' @importFrom methods as is new slot slot<-
+#' @importFrom stats cutree kmeans quantile
+#' @importFrom utils modifyList
+#' 
 #' @name GenomicWidgets
 #' @rdname GenomicWidgets
 #' @author Alicia Schep, Justin Finkle, and Sarah Kummerfeld
 #' @docType package
 NULL
+
