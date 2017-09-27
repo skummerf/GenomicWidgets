@@ -45,7 +45,8 @@ samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
 data(rpkm_chr21)
 
 ## From the ranges of the rpkm object, we'll pull out the tss
-tss <- promoters(rowRanges(rpkm_chr21), up = 1, down = 1)
+tss <- promoters(SummarizedExperiment::rowRanges(rpkm_chr21),
+                 up = 1, down = 1)
 
 
 ## Make track plotter
