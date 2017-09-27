@@ -1,61 +1,3 @@
-#' @export
-setAs("ViewRange","GRanges",
-      function(from){
-        out <- GRanges(seqnames = seqnames(from),
-                strand = strand(from),
-                ranges = IRanges(start = start(from), end = end(from)),
-                seqinfo = seqinfo(from))
-        mcols(out) <- mcols(from)
-        return(out)
-      })
-
-#' @export
-setAs("GRanges","ViewRange",
-      function(from){
-        if (!("name" %in% colnames(mcols(from)))) 
-          mcols(from)$name <- as.character(seq_along(from))
-        new("ViewRange", from)
-      })
-
-#' @export
-setAs("GRanges","RelativeViewRange",
-      function(from){
-        if (!("name" %in% colnames(mcols(from)))) 
-          mcols(from)$name <- ""
-        if (!("relative" %in% colnames(mcols(from)))) 
-          mcols(from)$relative <- start(from) + width(from) %/% 2
-        new("RelativeViewRange", from)
-      })
-
-#' make_view_range
-#' 
-#' Makes a "ViewRange" object
-#' 
-#' @import BiocGenerics
-#' @importFrom IRanges IRanges
-#' @export
-make_view_range <- function(chrom,
-                       start, 
-                       end, 
-                       strand = c("*", "+", "-"),
-                       name = character(0),
-                       relative = FALSE){
-  
-  strand <- match.arg(strand)
-  gr <- GRanges(Rle(c(chrom)), IRanges(start = start, end = end), 
-                strand = strand)
-  if (!relative){
-    out <- new("ViewRange", 
-               gr, 
-               name = ifelse(length(name) == 0, as.character(gr), name))
-  } else{
-    out <- new("RelativeViewRange", 
-               gr, 
-               name = ifelse(length(name) == 0, as.character(gr), name))
-  }
-  out
-}
-
 #' fetch_view_range
 #' 
 #' Function to get a range around a gene, using an OrganismDb or TxDb object
@@ -93,7 +35,9 @@ fetch_view_range <- function(db_object,
                                   column = c("TXCHROM", "TXEND", "TXID", 
                                              "TXNAME", "TXSTART", "TXSTRAND"))
   
-  
+  if (length(unique(range_df$TXCHROM)) > 1){
+    stop("symbol mapped to multiple chromosomes")
+  }
   if (relative == "TSS"){
     if (range_df$TXSTRAND[1] == "-"){
       start_range <- min(range_df$TXEND - down)
@@ -107,12 +51,6 @@ fetch_view_range <- function(db_object,
       rel <- range_df$TXSTART
     }
     
-    out <- make_view_range(chrom = range_df$TXCHROM,
-                           start = start_range,
-                           end = end_range,
-                           strand = strand_range,
-                           name = symbol,
-                           relative)  
   } else if (relative == "TTS"){
     if (range_df$TXSTRAND[1] == "-"){
       start_range <- min(range_df$TXSTART - down)
@@ -126,13 +64,6 @@ fetch_view_range <- function(db_object,
       rel <- range_df$TXEND
     }
     
-    out <- make_view_range(chrom = range_df$TXCHROM,
-                           start = start_range,
-                           end = end_range,
-                           strand = strand_range,
-                           name = symbol,
-                           relative = rel)  
-    
   } else{
     if (range_df$TXSTRAND[1] == "-"){
       start_range <- min(range_df$TXSTART - down)
@@ -144,24 +75,29 @@ fetch_view_range <- function(db_object,
       strand_range <- "+"
     }
     
-    out <- make_view_range(chrom = range_df$TXCHROM,
-                           start = start_range,
-                           end = end_range,
-                           strand = strand_range,
-                           name = symbol) 
   }
+  out <- GRanges(range_df$TXCHROM[1], 
+                 ranges = IRanges(
+                   start = start_range,
+                   end = end_range),
+                 strand = strand_range,
+                 name = symbol) 
   
   return(out)
 }
 
 setMethod(relative_position, signature = "ViewRange",
           function(view, position){
-            position
-          })
-
-setMethod(relative_position, signature = "RelativeViewRange",
-          function(view, position){
-            position - mcols(view)$relative
+            stopifnot(length(view) == 1)
+            if (view@relative){
+              if (as.character(strand(view@range)) == "-"){
+                view@reference - position
+              } else{
+                position - view@reference 
+              }
+            } else{
+              position
+            }
           })
 
 

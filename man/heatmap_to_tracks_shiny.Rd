@@ -7,6 +7,24 @@
 heatmap_to_tracks_shiny(heatmap, track_function, link,
   title = "Heatmap linked to Genome Tracks", options = list(height = 1400))
 }
+\arguments{
+\item{heatmap}{IHeatmap object}
+
+\item{track_function}{track function generator}
+
+\item{link}{link function, linking rows of heatmap to input to track function
+generator}
+
+\item{title}{Title of shiny app}
+
+\item{options}{to pass to shiny}
+}
+\value{
+Shiny application
+}
 \description{
-heatmap_to_tracks_shiny
+Function for making shiny app linking a heatmap to genome tracks
+}
+\author{
+Alicia Schep and Justin Finkle
 }

@@ -3,6 +3,14 @@ HEATMAP_SOURCE = "HM"
 
 #' heatmap_click
 #' 
+#' Function to bind heatmap to click event
+#' @param heatmap heatmap object
+#' @param x list-like object corresponding to rows of heatmap
+#' @return function that returns appropriate element of x based on row of 
+#' heatmap clicked within \code{\link{shinyApp}}
+#' @return returns function
+#' @author Alicia Schep 
+#' 
 #' @export
 heatmap_click <- function(heatmap, x){
   out <- function(){
@@ -16,13 +24,24 @@ heatmap_click <- function(heatmap, x){
 
 #' heatmap_to_tracks_shiny
 #' 
+#' Function for making shiny app linking a heatmap to genome tracks
+#' 
+#' @param heatmap IHeatmap object
+#' @param track_function track function generator
+#' @param link link function, linking rows of heatmap to input to track function
+#' generator
+#' @param title Title of shiny app
+#' @param options to pass to shiny
+#' @return Shiny application
+#' @author Alicia Schep and Justin Finkle
+#' 
 #' @export
 heatmap_to_tracks_shiny <- function(heatmap, 
                                     track_function,
                                     link,
                                     title = "Heatmap linked to Genome Tracks",
                                     options = list(height = 1400)){
-  requireNamespace(shiny)
+  requireNamespace("shiny")
   
   # Check regions
   

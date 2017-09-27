@@ -6,6 +6,20 @@
 \usage{
 heatmap_click(heatmap, x)
 }
+\arguments{
+\item{heatmap}{heatmap object}
+
+\item{x}{list-like object corresponding to rows of heatmap}
+}
+\value{
+function that returns appropriate element of x based on row of 
+heatmap clicked within \code{\link{shinyApp}}
+
+returns function
+}
 \description{
-heatmap_click
+Function to bind heatmap to click event
+}
+\author{
+Alicia Schep
 }

@@ -15,6 +15,7 @@
 #' @importFrom methods as is new slot slot<-
 #' @importFrom stats cutree kmeans quantile
 #' @importFrom utils modifyList
+#' @importFrom S4Vectors endoapply
 #' 
 #' @name GenomicWidgets
 #' @rdname GenomicWidgets

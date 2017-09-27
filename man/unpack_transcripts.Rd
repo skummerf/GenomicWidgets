@@ -3,6 +3,9 @@
 \docType{methods}
 \name{unpack_transcripts}
 \alias{unpack_transcripts}
+\alias{unpack_transcripts,TxDb-method}
+\alias{unpack_transcripts,OrganismDbi-method}
+\alias{unpack_transcripts,NULL-method}
 \alias{unpack_transcripts,OrganismDb-method}
 \title{unpack_transcripts}
 \usage{

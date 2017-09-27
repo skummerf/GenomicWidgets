@@ -1,13 +1,4 @@
-
-
 setMethod("make_signal_track", c("GRanges","character"),
-          function(window, object, ...){
-            
-            make_signal_track(as(window,"ViewRange"), object, 
-                              ...)
-          })
-
-setMethod("make_signal_track", c("ViewRange","character"),
           function(window, object, binsize = 25, ..., 
                    track_names = ifelse(!is.null(names(object)),
                                         basename(names(object)),
@@ -55,9 +46,9 @@ setMethod(make_trace, signature = c(x = "SignalPlot"),
                                  function(i){
                                    tmp_signal = as.vector(x@signal[[i]])
                                    list(x = seq(relative_position(view,
-                                                                  start(view)), 
+                                                                  start(view@range)), 
                                                 relative_position(view, 
-                                                                  end(view)), 
+                                                                  end(view@range)), 
                                                 length.out = length(tmp_signal)),
                                         y = tmp_signal,
                                         text = names(x@signal)[i],
@@ -94,23 +85,6 @@ signal_to_plotly_list <- function(x){
   }
   out
 }
-
-
-setMethod(to_widget,
-          c("SignalPlot"),
-          function(p){
-            out <- signal_to_plotly_list(p)
-            htmlwidgets::createWidget(
-              name = "GenomicWidgets",
-              x = out,
-              width = out$layout$width,
-              height = out$layout$height,
-              sizingPolicy = htmlwidgets::sizingPolicy(browser.fill = TRUE,
-                                                       viewer.fill = TRUE,
-                                                       defaultWidth = "100%",
-                                                       defaultHeight = 400),
-              dependencies = plotly_dependency())
-          })
 
 
 

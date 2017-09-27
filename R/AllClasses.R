@@ -8,23 +8,11 @@ setClass("TranscriptParts",
           seqlevelsStyle =  "character")
 )
 
-#' @importClassesFrom GenomicRanges GRanges
+
 setClass("ViewRange",
-         contains = "GRanges")
-
-setValidity("ViewRange", 
-            function(object){
-              "name" %in% colnames(mcols(object))
-            })
-
-setClass("RelativeViewRange",
-         contains = "ViewRange")
-
-setValidity("RelativeViewRange", 
-             function(object){
-               "relative" %in% colnames(mcols(object))
-             })
-
+         slots = c(range = "GRanges",
+                   relative = "logical",
+                   reference = "numeric"))
 
 setClass("LocusPlot",
          slots = c(layout = "list",

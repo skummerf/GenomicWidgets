@@ -32,6 +32,8 @@ Combine genome track view with locus summary
 \examples{
 
 library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
 ## First we'll read in some sample chip-seq data
 genomation_dir <- system.file("extdata", package = "genomationData")
 samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
@@ -44,6 +46,7 @@ data(rpkm_chr21)
 
 ## From the ranges of the rpkm object, we'll pull out the tss
 tss <- promoters(rowRanges(rpkm_chr21), up = 1, down = 1)
+
 
 ## Make track plotter
 

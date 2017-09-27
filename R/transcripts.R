@@ -15,6 +15,8 @@
 #' @import GenomicFeatures
 #' @import GenomeInfoDb
 #' @import GenomicRanges
+#' @aliases unpack_transcripts,TxDb-method 
+#' unpack_transcripts,OrganismDbi-method unpack_transcripts,NULL-method
 #' @examples 
 #' 
 #' library(TxDb.Hsapiens.UCSC.hg19.knownGene)
@@ -60,7 +62,7 @@ setMethod("subset_transcripts", signature = c("GRanges","TxDb"),
             subset_transcripts(window, parts, no_introns = no_introns, ...)
           })
 
-
+#' @importFrom IRanges subsetByOverlaps IRanges
 setMethod("subset_transcripts", signature = c("GRanges","TranscriptParts"),
           function(window, object, no_introns = FALSE, ...){
             in_style <- seqlevelsStyle(window)[[1]]
@@ -142,30 +144,15 @@ setMethod("add_stepping", signature = c("GRanges"),
 setMethod("make_annotation_track", c("GRanges", "TxDb"),
           function(window, object, stacking = c('squish', 'dense'), ...){
             
-            make_annotation_track(as_view_range(window), 
-                                  unpack_transcripts(object), 
-                                  match.arg(stacking), ...)
-            
-          })
-
-setMethod("make_annotation_track", c("ViewRange", "TxDb"),
-          function(window, object, stacking = c('squish', 'dense'), ...){
-            
             make_annotation_track(window, 
                                   unpack_transcripts(object), 
                                   match.arg(stacking), ...)
             
           })
 
+
+
 setMethod("make_annotation_track", c("GRanges", "TranscriptParts"),
-          function(window, object, stacking = c('squish', 'dense'), ...){
-
-          make_annotation_track(as_view_range(window), object, 
-                                match.arg(stacking), ...)
-          
-          })
-
-setMethod("make_annotation_track", c("ViewRange", "TranscriptParts"),
           function(window, object, stacking = c('squish', 'dense'), 
                    name = "", ...){
             
@@ -194,18 +181,16 @@ setMethod(make_trace, signature = c(x = "AnnotationPlot"),
             #Invisible Points
             anno_data <- as.data.frame(x@transcripts, row.names = NULL)
             if (nrow(anno_data) == 0) return(NULL)
-            anno_data <- transform(anno_data,
-                               text = paste0('Tx ID: ',
-                                     transcript,
+            anno_data$text <- paste0('Tx ID: ',
+                                     anno_data$transcript,
                                      '<br>',
-                                     feature,
+                                     anno_data$feature,
                                      '<br>',
                                      "strand: ",
-                                     strand),
-                               start = relative_position(view, start),
-                               end = relative_position(view, end))
-            anno_data <- transform(anno_data,
-                               midpoint = (start + end) / 2)
+                                     anno_data$strand)
+            anno_data$start <- relative_position(view, anno_data$start)
+            anno_data$end <- relative_position(view, anno_data$end)
+            anno_data$midpoint <- (anno_data$start + anno_data$end) / 2
             
             base_list <- list(yaxis = gsub("yaxis","y",yax),
                               xaxis = gsub("xaxis","x",xax),
@@ -228,11 +213,9 @@ setMethod("make_shapes", c(x = "AnnotationPlot"),
           function(x, yax, view, ...){
             ann_ax <- gsub("yaxis","y",yax)
             tx_info <- as.data.frame(x@transcripts, row.names = NULL)
-            tx_info <- transform(tx_info,
-                              start = relative_position(view, start),
-                              end = relative_position(view, end))
-            tx_info <- transform(tx_info,
-                                 midpoint = (start + end) / 2)
+            tx_info$start <- relative_position(view, tx_info$start)
+            tx_info$end <- relative_position(view, tx_info$end)
+            tx_info$midpoint <- (tx_info$start + tx_info$end) / 2
 
             cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ],
                                   height = 0.4,
@@ -244,7 +227,7 @@ setMethod("make_shapes", c(x = "AnnotationPlot"),
                                     height=0.25,
                                     ann_ax)
             intron_arrow <- make_arrows(tx_info[tx_info$feature == 'intron', ], ann_ax,
-                                        arrowlen = width(view) * 0.01)
+                                        arrowlen = width(view@range) * 0.01)
             # Compile new shapes
             tx_shapes <- c(cds_rect, utr_rect, ncRNA_rect, intron_arrow)
 
@@ -272,6 +255,7 @@ make_plotly_color <- function(color_str){
 
 
 #' make_rect
+#' 
 #' Make the rectangle objects. These are used to display annotation features such
 #' as cds, and utr.
 #'

@@ -10,7 +10,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, figure.width = 3, figure.height = 2)
 library(iheatmapr)
 library(GenomicWidgets)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
@@ -223,7 +223,6 @@ heatmap_to_tracks_shiny(hm, combined_plotter, link_fn)
 
 ## To do
 
-* Reverse plot for negative strand
 * Easier Customization of y axis labels
 * Easier customization of x axis labels
 * add description of grouping options, fine-tune

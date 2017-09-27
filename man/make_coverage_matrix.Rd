@@ -5,13 +5,15 @@
 \title{make_coverage_matrix}
 \usage{
 make_coverage_matrix(inputs, ranges, input_names = names(inputs),
-  binsize = 1, format = c("auto", "bigwig", "bam"), up = 0, down = 0,
-  ...)
+  binsize = 1, format = c("auto", "bigwig", "bam"), up = 0, down = 0)
 }
 \arguments{
 \item{inputs}{filenames of bigwig or bam}
 
 \item{ranges}{ranges for which to compute coverage within}
+
+\item{input_names}{names to associate with input bigwig or bam files, used 
+for naming assays in resulting SummarizedExperiment object}
 
 \item{binsize}{binsize to bin coverage}
 
@@ -25,12 +27,13 @@ make_coverage_matrix(inputs, ranges, input_names = names(inputs),
 RangedSummarizedExperiment
 }
 \description{
-make_coverage_matrix
+Makes coverage matrix based on bam or bigwig inputs
 }
 \details{
-up and down are 0 by default -- if not specified, actual range is used.  All ranges
-must be of equal width.  If up and/or down are provided, then the center of the range and up 
-basepairs upstream and down basepairs downstream are used.
+up and down are 0 by default -- if not specified, actual range is
+ used.  All ranges must be of equal width.  If up and/or down are provided,
+ then the center of the range and up basepairs upstream and down basepairs
+ downstream are used.
 }
 \author{
 Alicia Schep

@@ -3,8 +3,9 @@
 \docType{methods}
 \name{iheatmap-SummarizedExperiment}
 \alias{iheatmap-SummarizedExperiment}
-\alias{iheatmap,SummarizedExperiment-method,}
-\alias{add_iheatmap,Summarized-Experiment-method}
+\alias{iheatmap,SummarizedExperiment-method}
+\alias{add_iheatmap,IHeatmapHorizontal,SummarizedExperiment-method}
+\alias{add_iheatmap,IHeatmapVertical,SummarizedExperiment-method}
 \alias{add_iheatmap,IheatmapHorizontal,SummarizedExperiment-method}
 \alias{add_iheatmap,IheatmapVertical,SummarizedExperiment-method}
 \title{Summarized Experiment iheatmap and iheatmap methods}
@@ -19,7 +20,7 @@
   cluster_cols = c("hclust", "kmeans", "none"), scale = "rows", ...)
 
 \S4method{add_iheatmap}{IheatmapVertical,SummarizedExperiment}(p, data,
-  assay = assayNames(data)[[1]], x = se_default_x(data),
+  assay = assayNames(data)[[1]], y = se_default_y(data),
   cluster_rows = c("hclust", "kmeans", "none"), scale = "rows", ...)
 }
 \arguments{
@@ -35,11 +36,11 @@
 
 \item{cluster_cols}{how to cluster columns, default is hclust}
 
+\item{scale}{scale rows, columns, both, or none}
+
 \item{...}{additional arguments to \code{\link[iheatmapr]{iheatmap}}}
 
-\item{row_annotation}{annotation data frame for rows}
-
-\item{col_annotation}{annotation data frame for columns}
+\item{p}{IHeatmap object}
 }
 \description{
 Summarized Experiment iheatmap and iheatmap methods

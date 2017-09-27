@@ -2,85 +2,13 @@ setMethod(multi_locus_view,
           c("GRanges","character"),
           function(windows, 
                    object, 
-                   ...){
-            
-            
-            if (length(windows) == 1){
-              multi_locus_view(as(windows, "ViewRange"),
-                               object,
-                               ...)
-            } else{
-              multi_locus_view(as(windows, "RelativeViewRange"),
-                               object,
-                               ...)
-            }
-          })
-
-
-setMethod(multi_locus_view,
-          c("RelativeViewRange","character"),
-          function(windows, 
-                   object, 
                    annotation = NULL, 
                    ..., 
                    track_names = ifelse(!is.null(names(object)),
                                         names(object),
                                         basename(object)),
                    name = mcols(windows)$name,
-                   share_y = FALSE,
-                   fill = c('tozeroy','none'), 
-                   showlegend = (length(object) > 1), 
-                   colors = NULL, 
-                   mode = 'lines',
-                   annotation_position = c("bottom","top"),
-                   annotation_size = 0.2){
-            
-            annotation_position <- match.arg(annotation_position)
-            
-            
-            sm <- length(object)
-            if (is.null(colors)){
-              if (sm == 1){
-                colors = "black"
-              } else if (sm <= 8){
-                colors = RColorBrewer::brewer.pal(sm,"Dark2")
-              } else if (sm <= 12){
-                colors = RColorBrewer::brewer.pal(sm,"Paired")
-              } else{
-                colors = rainbow(sm)
-              }
-            }
-            
-            single_views <- purrr::map(seq_along(windows),
-                                       function(x){
-                                         single_locus_view(windows[x],
-                                                           object = object,
-                                                           annotation = annotation,
-                                                           track_names = track_names,
-                                                           groups = rep(name[x],length(object)),
-                                                           fill = fill,
-                                                           showlegend = if (x == 1) showlegend else FALSE,
-                                                           colors = colors,
-                                                           mode = mode,
-                                                           annotation_position = annotation_position,
-                                                           annotation_size = annotation_size)
-                                       })
-            ll <- new("LocusViewList", as(single_views,"SimpleList"), share_y = share_y)
-            ll
-            #new("GenomeTrackWidget", tracks = ll)
-          })
-          
-
-setMethod(multi_locus_view,
-          c("ViewRange","character"),
-          function(windows, 
-                   object, 
-                   annotation = NULL, ..., 
-                   track_names = ifelse(!is.null(names(object)),
-                                        names(object),
-                                        basename(object)),
                    groups = NULL,
-                   name = mcols(windows)$name,
                    share_y = FALSE,
                    fill = c('tozeroy','none'), 
                    showlegend = (length(object) > 1), 
@@ -89,9 +17,7 @@ setMethod(multi_locus_view,
                    annotation_position = c("bottom","top"),
                    annotation_size = 0.2){
             
-            stopifnot(length(windows) == 1)
             annotation_position <- match.arg(annotation_position)
-            
             
             sm <- length(object)
             if (is.null(colors)){
@@ -106,21 +32,53 @@ setMethod(multi_locus_view,
               }
             }
             
-            single_views <- list(single_locus_view(windows,
-                                                   object = object,
-                                                   annotation = annotation,
-                                                   track_names = track_names,
-                                                   groups = groups,
-                                                   fill = fill,
-                                                   showlegend = showlegend ,
-                                                   colors = colors,
-                                                   mode = mode,
-                                                   annotation_position = annotation_position,
-                                                   annotation_size = annotation_size))
+            if (length(windows) == 1){
+              
+              single_views <- list(single_locus_view(windows,
+                                                     object = object,
+                                                     annotation = annotation,
+                                                     track_names = track_names,
+                                                     groups = groups,
+                                                     fill = fill,
+                                                     showlegend = showlegend ,
+                                                     colors = colors,
+                                                     mode = mode,
+                                                     annotation_position = annotation_position,
+                                                     annotation_size = annotation_size))
+
+            } else{
+
+              if (is.null(name)){
+                if (!is.null(names(windows))){
+                  name = names(windows)
+                } else{
+                  name = seq_along(windows)
+                }
+              }
+              
+              single_views <- purrr::map(seq_along(windows),
+                                         function(x){
+                                           single_locus_view(windows[x],
+                                                             object = object,
+                                                             annotation = annotation,
+                                                             track_names = track_names,
+                                                             groups = rep(name[x],length(object)),
+                                                             fill = fill,
+                                                             relative = TRUE,
+                                                             showlegend = if (x == 1) showlegend else FALSE,
+                                                             colors = colors,
+                                                             mode = mode,
+                                                             annotation_position = annotation_position,
+                                                             annotation_size = annotation_size)
+                                         })
+              
+              
+            }
             ll <- new("LocusViewList", as(single_views,"SimpleList"), share_y = share_y)
-            ll
-            #new("GenomeTrackWidget", tracks = ll)
+            return(ll)
           })
+
+
 
 
 
@@ -151,6 +109,8 @@ setMethod(multi_locus_view,
 #' @examples 
 #' 
 #' library(GenomicRanges)
+#' library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+#' 
 #' ## First we'll read in some sample data
 #' genomation_dir <- system.file("extdata", package = "genomationData")
 #' samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
@@ -244,6 +204,8 @@ setMethod(make_track_plotter,
 #' @examples 
 #' 
 #' library(GenomicRanges)
+#' library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+#' 
 #' ## First we'll read in some sample chip-seq data
 #' genomation_dir <- system.file("extdata", package = "genomationData")
 #' samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
@@ -256,6 +218,7 @@ setMethod(make_track_plotter,
 #' 
 #' ## From the ranges of the rpkm object, we'll pull out the tss
 #' tss <- promoters(rowRanges(rpkm_chr21), up = 1, down = 1)
+#' 
 #' 
 #' ## Make track plotter
 #' 
@@ -330,10 +293,10 @@ setMethod(get_layout, signature = c(object = "LocusViewList"),
             }
             
             if (length(object@xtitle) == 0){
-              if (length(object) > 1 || is(object[[1]]@view, "RelativeViewRange")){
+              if (length(object) > 1 || object[[1]]@view@relative){
                 xtitle = "Relative Position"
               } else{
-                xtitle = as.character(seqnames(object[[1]]@view))
+                xtitle = as.character(seqnames(object[[1]]@view@range))
               }
             } else{
               xtitle = object@xtitle
@@ -345,10 +308,7 @@ setMethod(get_layout, signature = c(object = "LocusViewList"),
                           zeroline = FALSE,
                           anchor = gsub("yaxis","y",
                                         ynames_flat[length(ynames_flat)]),
-                          range = c(relative_position(object[[1]]@view, 
-                                                      start(object[[1]]@view)),
-                                    relative_position(object[[1]]@view, 
-                                                      end(object[[1]]@view))),
+                          range = get_range(object[[1]]@view),
                           domain = x_domain))
             
             sizes = unlist(purrr::map(as.list(object), function(y) y@heights ))
@@ -411,14 +371,21 @@ setMethod(get_layout, signature = c(object = "LocusSummaryList"),
             layout_setting
           })
 
-
+get_range <- function(view){
+  out <- c(relative_position(view, 
+                      start(view@range)),
+    relative_position(view, 
+                      end(view@range)))
+  if (out[2] < out[1]) out <- rev(out)
+  out
+}
 
 
 multi_locus_to_plotly_list <- function(x){
   
   if (length(x@tracks) >= 1){
     
-    lengths <- sapply(x@tracks, length)
+    lengths <- vapply(x@tracks, length, 0)
     track_ynames <- purrr::map2(as.list(x@tracks),
                                 cumsum(lengths) - lengths[1] + 1,
                                 yaxis_names)
@@ -475,6 +442,7 @@ multi_locus_to_plotly_list <- function(x){
 
 
 #' @export
+#' @rdname to_widget
 setMethod(to_widget,
           c("LocusViewList"),
           function(p){
@@ -493,6 +461,7 @@ setMethod(to_widget,
           })
 
 #' @export
+#' @rdname to_widget
 setMethod(to_widget,
           c("LocusSummaryList"),
           function(p){
@@ -520,6 +489,8 @@ setMethod(to_widget,
 #' @return htmlwidgets object
 #' @name to_widget
 #' @rdname to_widget
+#' @aliases to_widget,GenomeTrackWidget-method to_widget,NULL-method 
+#' to_widget,LocusViewList-method to_widget,LocusView-method
 #' @export
 setMethod(to_widget,
           c("GenomeTrackWidget"),
@@ -537,6 +508,7 @@ setMethod(to_widget,
               dependencies = plotly_dependency())
           })
 
+#' @rdname to_widget
 setMethod(to_widget,
           c("NULL"),
           function(p){

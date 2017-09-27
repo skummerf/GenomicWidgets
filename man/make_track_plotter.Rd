@@ -50,6 +50,8 @@ Function to generate a function that takes in a range and plots coverage track
 \examples{
 
 library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
 ## First we'll read in some sample data
 genomation_dir <- system.file("extdata", package = "genomationData")
 samp.file <- file.path(genomation_dir,'SamplesInfo.txt')

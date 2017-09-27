@@ -20,16 +20,21 @@ log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
 #' coverage_heatmap
 #' 
 #' Makes an interactive coverage heatmap.
+#' @param p IHeatmap object
 #' @param data single coverage matrix or list of coverage matrices
+#' @param assay name(s) of assay to plot, if data is SummarizedExperiment
 #' @param x x axis labels
 #' @param y y axis labels
 #' @param row_order row order method
 #' @param k k to use for kmeans clustering or cutting heirarchical clustering
 #' @param groups pre-determined groups for rows
+#' @param cluster_by use "first" or "all" matrices for clustering if given 
+#' multiple matrices
 #' @param clust_dist distance function to use for clustering
 #' @param signal signal along row
 #' @param plot_signal add an annotation heatmap showing the average signal? 
 #' default is TRUE
+#' @param signal_name name for signal colorbar
 #' @param name name of colorbar
 #' @param summary make summary plot, boolean, default is TRUE
 #' @param scale_method how to scale matrix before displaying in heatmap
@@ -38,7 +43,7 @@ log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
 #' @param show_xlabels show xlabels?  default is TRUE
 #' @param start label for start of x range
 #' @param end label for end of x range
-#' @param xlab x axis label
+#' @param col_title x axis label
 #' @param layout list of layout attributes
 #' @param ... additional arguments
 #' @return iheatmap object
@@ -98,6 +103,8 @@ setGeneric("add_coverage_heatmap",
 
 
 # Method for SummarizedExperiment
+#' @export
+#' @rdname coverage_heatmap
 setMethod("coverage_heatmap", c(data = "SummarizedExperiment"),
           function(data, 
                    assay = assayNames(data), 
@@ -112,6 +119,8 @@ setMethod("coverage_heatmap", c(data = "SummarizedExperiment"),
             }
           })
 
+#' @export
+#' @rdname coverage_heatmap
 setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal",
                                     data = "SummarizedExperiment"),
           function(p,
@@ -131,6 +140,7 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal",
 
 # Method for ScoreMatrix
 #' @export
+#' @rdname coverage_heatmap
 #' @importClassesFrom genomation ScoreMatrix ScoreMatrixList
 setMethod("coverage_heatmap", c(data = "ScoreMatrix"),
           function(data, 
@@ -177,6 +187,8 @@ setMethod("coverage_heatmap", c(data = "ScoreMatrixList"),
                              end = end, ...)
           })
 
+#' @export
+#' @rdname coverage_heatmap
 setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", 
                                     data = "ScoreMatrixList"),
           function(p,
@@ -189,13 +201,14 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal",
             data_list <- lapply(data, as.matrix)
             add_coverage_heatmap(p,
                              data_list,
-                             x = x, y = y,
+                             x = x, 
                              start = start,
                              end = end, ...)
           })
 
 
-
+#' @export
+#' @rdname coverage_heatmap
 setMethod("coverage_heatmap", c(data = "matrix"),
           function(data, 
                    x = default_x(data),
@@ -293,6 +306,8 @@ setMethod("coverage_heatmap", c(data = "matrix"),
               
 })
 
+#' @export
+#' @rdname coverage_heatmap
 setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "matrix"),
           function(p,
                    data, 
@@ -368,7 +383,9 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "matrix"),
             return(p)
             
           })          
-          
+
+#' @export
+#' @rdname coverage_heatmap          
 setMethod("coverage_heatmap", c(data = "list"),
           function(data, 
                    x = default_x(data[[1]]),
@@ -398,7 +415,7 @@ setMethod("coverage_heatmap", c(data = "list"),
                    layout = list(font = list(size = 10)),
                    ...){
             
-            stopifnot(all(sapply(data, inherits, "matrix")))
+            stopifnot(all(vapply(data, inherits, TRUE, "matrix")))
             if (length(unique(lapply(data, nrow))) > 1) 
               stop("All input matrices must be of same length")
             
@@ -537,7 +554,8 @@ setMethod("coverage_heatmap", c(data = "list"),
             
           })          
 
-
+#' @export
+#' @rdname coverage_heatmap
 setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "list"),
           function(p,
                    data, 
@@ -561,7 +579,7 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "list"),
                    col_title = "Position",
                    ...){
             
-            stopifnot(all(sapply(data, inherits, "matrix")))
+            stopifnot(all(vapply(data, inherits, TRUE, "matrix")))
             if (length(unique(lapply(data, nrow))) > 1) 
               stop("All input matrices must be of same length")
             

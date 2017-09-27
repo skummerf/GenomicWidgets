@@ -32,7 +32,7 @@
 #'                                      filter = 
 #'                                        list("GENEID" = 
 #'                                                    entrez_mapping$ENTREZID)))
-#' genes_mapping$GENEID = sapply(genes_mapping$GENEID, as.character)
+#' genes_mapping$GENEID = vapply(genes_mapping$GENEID, as.character,"")
 #' 
 #' chr21 <- inner_join(entrez_mapping, genes_mapping, 
 #'                     by = c("ENTREZID" = "GENEID")) %>% 

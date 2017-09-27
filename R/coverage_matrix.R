@@ -1,26 +1,67 @@
 #' make_coverage_matrix
 #' 
+#' Makes coverage matrix based on bam or bigwig inputs
+#' 
 #' @param inputs filenames of bigwig or bam
 #' @param ranges ranges for which to compute coverage within
+#' @param input_names names to associate with input bigwig or bam files, used 
+#' for naming assays in resulting SummarizedExperiment object
 #' @param binsize binsize to bin coverage
 #' @param format format of files, default is auto 
 #' @param up basepairs upstream of center to use
 #' @param down basepairs downstream of center to use
-#' @details up and down are 0 by default -- if not specified, actual range is used.  All ranges
-#' must be of equal width.  If up and/or down are provided, then the center of the range and up 
-#' basepairs upstream and down basepairs downstream are used.
+#' @details up and down are 0 by default -- if not specified, actual range is
+#'  used.  All ranges must be of equal width.  If up and/or down are provided,
+#'  then the center of the range and up basepairs upstream and down basepairs
+#'  downstream are used.
 #' @return RangedSummarizedExperiment 
 #' @import GenomicRanges
 #' @export
 #' @author Alicia Schep
+#' @ examples
+#' 
+#' # First read in some sample data
+#' genomation_dir <- system.file("extdata", package = "genomationData")
+#'
+#' samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
+#' samp.info <- read.table(samp.file, header=TRUE, sep='\t', 
+#'                        stringsAsFactors = FALSE)
+#' samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
+#'
+#' ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
+#'                                                   "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
+#'                                                   package = "genomationData"))
+#' ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
+#' ctcf.peaks = ctcf.peaks[order(-ctcf.peaks$signalValue)]
+#' ctcf.peaks = resize(ctcf.peaks, width = 1000, fix = "center")
+#'
+#' # Make the coverage matrices
+#' mats <- make_coverage_matrix(samp.info$fileName[1:3], ctcf.peaks, 
+#'                      up = 500, down = 500, binsize = 25)
+#'
+#' # Benchmarking speed of make_coverage_matrix compared to ScoreMatrixList
+#' function from genomation
+#' \dontrun{
+#' bm <- microbenchmark::microbenchmark(ctcf_mats = 
+#'                              make_coverage_matrix(samp.info$fileName[1:3], 
+#'                                                     ctcf.peaks, 
+#'                                                    up = 500, down = 500, 
+#'                                                     binsize = 25), 
+#'                              geno = ScoreMatrixList(samp.info$fileName[1:3], 
+#'                                               ctcf.peaks, bin.num = 1000/25),
+#'                              times = 5)
+#'
+#' bm
+#'
+#' plot(bm)}
+#'
 make_coverage_matrix <- function(inputs, 
                                  ranges, 
                                  input_names = names(inputs),
                                  binsize = 1, 
                                  format = c("auto","bigwig","bam"),
                                  up = 0,
-                                 down = 0,
-                                 ...){
+                                 down = 0){
   
   format = match.arg(format)
   
@@ -108,6 +149,10 @@ make_coverage_matrix <- function(inputs,
 #' "localNonZeroMean", "PercentileMax", "scalar", and "none".  
 #' @export
 #' @rdname nromalize_coverage_matrix
+#' @name normalize_coverage_matrix
+#' @aliases normalize_coverage_matrix,list-method
+#' normalize_coverage_matrix,matrix-method
+#' normalize_coverage_matrix,SummarizedExperiment-method
 #' @author Alicia Schep
 setMethod(normalize_coverage_matrix, "list",
           function(mats, 
@@ -160,8 +205,10 @@ setMethod(normalize_coverage_matrix, "SummarizedExperiment",
 
 ## Modified from gChipseq package
 ## not exported
-normalize_coverage_matrix_single <- function(mat, method = c("localRms", "localMean", 
-                                     "localNonZeroMean", "PercentileMax", "scalar", "none"), 
+normalize_coverage_matrix_single <- function(mat, method = c("localRms", 
+                                                             "localMean", 
+                                     "localNonZeroMean", "PercentileMax", 
+                                     "scalar", "none"), 
           pct = 0.95, scalar = NULL) 
 {
   method <- match.arg(method)
@@ -200,7 +247,9 @@ normalize_coverage_matrix_single <- function(mat, method = c("localRms", "localM
 
 #Function to reduce size of matrix by binning columns
 bin_mat <- function(mat, binsize){
-  out <- sapply(seq(1, ncol(mat),binsize), function(x) rowMeans(mat[,x:(x+binsize - 1),drop =FALSE]))
+  out <- vapply(seq(1, ncol(mat),binsize), 
+                function(x) rowMeans(mat[,x:(x+binsize - 1),drop =FALSE]),
+                rep(0,nrow(mat)))
   if (dim(mat)[1] == 1) out <- matrix(out, nrow = 1)
   return(out)
 }
@@ -274,16 +323,6 @@ convert_to_full_path <- function(x){
   x
 }
 
-bin_track_mat <- function(track_mat, target_range, tiled_range, scaling_factors){
-  w <- width(tiled_range)
-  wcs <- c(0,cumsum(w))
-  out <- sapply(seq_along(tiled_range), function(x){
-    s <- wcs[x] + 1
-    e <- wcs[x + 1]
-    colMeans(track_mat[s:e,, drop = FALSE], na.rm = TRUE)
-  } )
-  out <- t(out / scaling_factors)
-  return(out)
-}
+
 
 

@@ -2,9 +2,7 @@
 % Please edit documentation in R/transcripts.R
 \name{make_rect}
 \alias{make_rect}
-\title{make_rect
-Make the rectangle objects. These are used to display annotation features such
-as cds, and utr.}
+\title{make_rect}
 \usage{
 make_rect(df, height, yref, fillcolor = "lightslateblue")
 }
@@ -23,7 +21,6 @@ make_rect(df, height, yref, fillcolor = "lightslateblue")
 list of rectangle shapes
 }
 \description{
-make_rect
 Make the rectangle objects. These are used to display annotation features such
 as cds, and utr.
 }

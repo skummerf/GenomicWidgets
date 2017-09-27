@@ -1,37 +1,7 @@
+
+          
 setMethod(single_locus_view,
           c("GRanges","character"),
-          function(window, 
-                   object, 
-                   annotation = NULL, 
-                   ..., 
-                   track_names = ifelse(!is.null(names(object)),
-                                        names(object),
-                                        basename(object)),
-                   groups = NULL,
-                   share_y = FALSE,
-                   fill = c('tozeroy','none'), 
-                   relative = FALSE, 
-                   showlegend = !is.null(groups), 
-                   colors = NULL, 
-                   mode = 'lines',
-                   annotation_position = c("top","bottom"),
-                   annotation_size = 0.5){
-            
-            window <- as(window, "ViewRange")
-            single_locus_view(window, object, annotation = annotation,
-                              ...,
-                              track_names = track_names, groups = groups,
-                              share_y = share_y, fill = match.arg(fill),
-                              relative = relative, showlegend = showlegend,
-                              colors = colors, mode = mode, 
-                              annotation_position = match.arg(annotation_position),
-                              annotation_size = annotation_size)
-            
-          })
-            
-
-setMethod(single_locus_view,
-          c("ViewRange","character"),
           function(window, object, annotation = NULL, 
                    ..., 
                    track_names = ifelse(!is.null(names(object)),
@@ -41,6 +11,7 @@ setMethod(single_locus_view,
                    share_y = FALSE,
                    fill = c('tozeroy','none'), 
                    relative = FALSE, 
+                   offset = width(window) %/% 2,
                    showlegend = TRUE, 
                    colors = NULL, 
                    mode = 'lines',
@@ -105,8 +76,22 @@ setMethod(single_locus_view,
               heights = rep(1, length(tracks))
             }
             
+            if (relative){
+             
+              if (as.character(strand(window)) == "-"){
+                reference = end(window) - offset
+              } else{
+                reference = start(window) + offset
+              }
+                
+              view = new("ViewRange", range = window, relative = TRUE, 
+                         reference = reference)
+            } else{
+              view = new("ViewRange", range = window, relative = FALSE)
+            }
+            
             out <- new("LocusView", as(tracks,"SimpleList"), share_y = share_y,
-                         view = window, heights = heights)
+                         view = view, heights = heights)
             
             return(out)  
             
@@ -163,10 +148,20 @@ setMethod(get_layout, "SignalPlot",
 setMethod(min, "SignalPlot",
           function(x, na.rm = TRUE){
             
-          min(sapply(x@signal, min, na.rm = na.rm))
+          min(vapply(x@signal, min, 0, na.rm = na.rm))
             
           })
 
+#' max, min for GenomicWidgets objects
+#' 
+#' @param x
+#' @param na.rm remove na
+#' @param ... additional arguments
+#' @return numeric
+#' @aliases min,AnnotationPlot-method max,AnnotationPlot-method
+#' min,SignalPlot-method max,SignalPlot-method min,LocusView-method 
+#' max,LocusView-method min,LocusViewList-method max,LocusViewList-method
+#' @keywords internal
 setMethod(min, "AnnotationPlot",
           function(x, ...){
             NA
@@ -174,7 +169,7 @@ setMethod(min, "AnnotationPlot",
 
 setMethod(max, "SignalPlot",
           function(x, na.rm = TRUE){
-            max(sapply(x@signal, max, na.rm = na.rm))
+            max(vapply(x@signal, max, 0, na.rm = na.rm))
           })
 
 setMethod(max, "AnnotationPlot",
@@ -184,22 +179,22 @@ setMethod(max, "AnnotationPlot",
 
 setMethod(max, "LocusView",
           function(x){
-            max(sapply(x, max, na.rm = TRUE), na.rm = TRUE)
+            max(vapply(x, max, 0, na.rm = TRUE), na.rm = TRUE)
           })
 
 setMethod(min, "LocusView",
           function(x){
-            min(sapply(x, min, na.rm = TRUE), na.rm = TRUE)
+            min(vapply(x, min, 0, na.rm = TRUE), na.rm = TRUE)
           })
 
 setMethod(max, "LocusViewList",
           function(x){
-            max(sapply(x, max, na.rm = TRUE), na.rm = TRUE)
+            max(vapply(x, max, 0, na.rm = TRUE), na.rm = TRUE)
           })
 
 setMethod(min, "LocusViewList",
           function(x){
-            min(sapply(x, min, na.rm = TRUE), na.rm = TRUE)
+            min(vapply(x, min, 0, na.rm = TRUE), na.rm = TRUE)
           })
 
 
