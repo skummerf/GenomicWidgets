@@ -118,9 +118,7 @@ make_coverage_matrix <- function(inputs,
       out <- lapply(out, function(x) {rownames(x) = rn; x})
     }
   } else if (format == "bam"){
-    # bam input
-    #inputs = convert_to_full_path(inputs) #bamsignals seems to fail with symlinks
-    #
+
     if (length(inputs) == 1){
       out <- coverage_mat_from_bam(inputs, ranges, binsize, coln)
       rownames(out) <- rn
@@ -315,13 +313,6 @@ bamCoverageFrags <- function(bampath, gr, fragLength=200, ss = TRUE, ...) {
   invisible(prf)
 }
 
-
-convert_to_full_path <- function(x){
-  for (i in 1:length(x)){
-    x[[i]] = system(paste0("readlink -f ", x[[i]]), intern = TRUE)
-  }
-  x
-}
 
 
 

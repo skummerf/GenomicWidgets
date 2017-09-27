@@ -110,68 +110,6 @@ choose_discrete_palette <- function(x, existing = c()){
 }
 
 
-# ccolorscale <- function(z, palette = "Reds", mid = NULL, zmin = min(z), zmax = max(z)){
-#   vals <- unique(scales::rescale(c(z)))
-#   if (!is.null(mid)){
-#     if (sym){
-#       domain <- c(min(zmin, mid - (zmax - mid)),
-#                   max(zmaxz, mid + zmaxz))
-#       vals2 <- unique(scales::rescale_mid(z, from = domain,
-#                                           mid = mid))
-#     } else {
-#       vals2 <- unique(scales::rescale_mid(z, mid = mid))
-#     }
-#   } else {
-#     domain <- min()
-#     vals2 <- vals
-#   }
-#   o <- order(vals, decreasing = FALSE)
-#   cols <- scales::col_numeric(palette)(vals2)
-#   colz <- setNames(data.frame(vals[o], cols[o]), NULL) 
-#  return(colz)
-# }
-
-
-# choose_continuous_palette(signal, existing){
-#   if (min(scale) < 0 && max(scale) > 0){
-#     cont_colors <- RColorBrewer::brewer.pal.info[which(RColorBrewer::brewer.pal.info$category == "seq"),]
-#   }
-#   
-#   
-#   new <- which(rownames(cont_colors) %ni% existing)
-#   if (length(new) == 0){
-#     existing_factors <- as.factor(existing)
-#     existing_tab <- tabulate(existing_factors)
-#     new <- which(rownames(cont_colors) %in% levels(existing_factors)[which(existing_tab < max(existing_tab))])
-#   }
-#   enough <- which(cont_colors$maxcolors >= x)
-#   if (length(intersect(new,enough)) > 0){
-#     cont_colors <- cont_colors[intersect(new,enough),]
-#     cbs <- which(cont_colors$colorblind)
-#     if (length(cbs) > 0){
-#       cont_colors <- cont_colors[cbs,]
-#     }
-#   } else if (length(enough) > 0){
-#     cont_colors <- cont_colors[enough,]
-#     cbs <- which(cont_colors$colorblind)
-#     if (length(cbs) > 0){
-#       cont_colors <- cont_colors[cbs,]
-#     }
-#   } else if (length(new) > 0){
-#     cont_colors <- cont_colors[new,]
-#     cbs <- which(cont_colors$colorblind)
-#     if (length(cbs) > 0){
-#       cont_colors <- cont_colors[cbs,]
-#     }
-#   } else{
-#     cbs <- which(cont_colors$colorblind)
-#     if (length(cbs) > 0){
-#       cont_colors <- cont_colors[cbs,]
-#     }
-#   }
-#   return(rownames(cont_colors)[1])  
-# }
-
 
 # makes x based on colnames of mat if available
 # if not available, just uses 1 to number of columns
