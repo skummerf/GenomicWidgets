@@ -82,12 +82,12 @@ samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
 Then we'll read in the location of CTCF peaks.  We'll plot the coverage at these peaks.
 
 ```{r}
-ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
+ctcf.peaks <- genomation::readBroadPeak(system.file("extdata",
                          "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
                          package = "genomationData"))
-ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
-ctcf.peaks = ctcf.peaks[order(-ctcf.peaks$signalValue)]
-ctcf.peaks = resize(ctcf.peaks, width = 501, fix = "center")
+ctcf.peaks <- ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
+ctcf.peaks <- ctcf.peaks[order(-ctcf.peaks$signalValue)]
+ctcf.peaks <- resize(ctcf.peaks, width = 501, fix = "center")
 ```
 
 ### Making coverage matrices
@@ -117,7 +117,8 @@ coverage_heatmap(ctcf_mats, "Ctcf")
 ### Adding coverage heatmap
 
 ```{r}
-coverage_heatmap(ctcf_mats, "Ctcf") %>% add_coverage_heatmap(ctcf_mats, "Znf143")
+coverage_heatmap(ctcf_mats, "Ctcf") %>% 
+  add_coverage_heatmap(ctcf_mats, "Znf143")
 ```
 
 
@@ -162,8 +163,9 @@ GenomicWidgets also has functions for interactive local views of genomic signals
 
 ```{r}
 track_plotter <- make_track_plotter(samp.info$fileName[1:3], 
-                                    annotation = TxDb.Hsapiens.UCSC.hg19.knownGene, 
-                                    track_names = samp.info$sampleName[1:3] , 
+                                    annotation = 
+                                      TxDb.Hsapiens.UCSC.hg19.knownGene, 
+                                    track_names = samp.info$sampleName[1:3], 
                                     share_y = TRUE)
 ```
 

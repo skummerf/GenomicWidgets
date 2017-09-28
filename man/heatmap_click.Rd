@@ -13,7 +13,7 @@ heatmap_click(heatmap, x)
 }
 \value{
 function that returns appropriate element of x based on row of 
-heatmap clicked within \code{\link{shinyApp}}
+heatmap clicked within \code{\link[shiny]{shinyApp}}
 
 returns function
 }

@@ -15,6 +15,8 @@
 \S4method{min}{AnnotationPlot}(x, ..., na.rm = FALSE)
 }
 \arguments{
+\item{x}{object}
+
 \item{...}{additional arguments}
 
 \item{na.rm}{remove na}

@@ -79,7 +79,8 @@ setMethod("add_iheatmap", c(p = "IheatmapHorizontal",
 
 #' @rdname iheatmap-SummarizedExperiment
 #' @export
-setMethod("add_iheatmap", c(p = "IheatmapVertical", data = "SummarizedExperiment"),
+setMethod("add_iheatmap", c(p = "IheatmapVertical", 
+                            data = "SummarizedExperiment"),
           function(p,
                    data, 
                    assay = assayNames(data)[[1]],

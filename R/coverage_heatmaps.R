@@ -274,11 +274,11 @@ setMethod("coverage_heatmap", c(data = "matrix"),
             
             if (show_xlabels){
               if ("0" %in% x || 0 %in% x){
-                ticktext = c(start, "0",end)
-                tickvals = as.numeric(c(x[1], 0, x[length(x)]))
+                ticktext <- c(start, "0",end)
+                tickvals <- as.numeric(c(x[1], 0, x[length(x)]))
               } else{
-                ticktext = c(start, end)
-                tickvals = as.numeric(c(x[1], x[length(x)]))
+                ticktext <- c(start, end)
+                tickvals <- as.numeric(c(x[1], x[length(x)]))
               }
               
               p <- add_col_labels(p,
@@ -351,11 +351,11 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "matrix"),
            
             if (show_xlabels){
               if ("0" %in% x || 0 %in% x){
-                ticktext = c(start, "0",end)
-                tickvals = as.numeric(c(x[1], 0, x[length(x)]))
+                ticktext <- c(start, "0",end)
+                tickvals <- as.numeric(c(x[1], 0, x[length(x)]))
               } else{
-                ticktext = c(start, end)
-                tickvals = as.numeric(c(x[1], x[length(x)]))
+                ticktext <- c(start, end)
+                tickvals <- as.numeric(c(x[1], x[length(x)]))
               }
               
               p <- add_col_labels(p,
@@ -481,11 +481,11 @@ setMethod("coverage_heatmap", c(data = "list"),
             
             if (show_xlabels){
               if ("0" %in% x || 0 %in% x){
-                ticktext = c(start, "0",end)
-                tickvals = as.numeric(c(x[1], 0, x[length(x)]))
+                ticktext <- c(start, "0",end)
+                tickvals <- as.numeric(c(x[1], 0, x[length(x)]))
               } else{
-                ticktext = c(start, end)
-                tickvals = as.numeric(c(x[1], x[length(x)]))
+                ticktext <- c(start, end)
+                tickvals <- as.numeric(c(x[1], x[length(x)]))
               }
               
               p <- add_col_labels(p,
@@ -506,7 +506,7 @@ setMethod("coverage_heatmap", c(data = "list"),
                                   signal_name)
             }
             if (summary){
-              summary_yaxis = "summary"
+              summary_yaxis <- "summary"
               p <- add_col_summary(p,
                                    groups = groups, 
                                    showlegend = FALSE,
@@ -597,11 +597,11 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "list"),
             summary_yaxis <- paste0("summary", length(plots(p)))
             if (show_xlabels){
               if ("0" %in% x || 0 %in% x){
-                ticktext = c(start, "0",end)
-                tickvals = as.numeric(c(x[1], 0, x[length(x)]))
+                ticktext <- c(start, "0",end)
+                tickvals <- as.numeric(c(x[1], 0, x[length(x)]))
               } else{
-                ticktext = c(start, end)
-                tickvals = as.numeric(c(x[1], x[length(x)]))
+                ticktext <- c(start, end)
+                tickvals <- as.numeric(c(x[1], x[length(x)]))
               }
             }
             
@@ -646,7 +646,7 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal", data = "list"),
 
 default_end <- function(x){
   stopifnot(length(x) > 2)
-  end = as.numeric(x[length(x)]) + as.numeric(x[2]) - as.numeric(x[1])
+  end <- as.numeric(x[length(x)]) + as.numeric(x[2]) - as.numeric(x[1])
   as.character(end)
 }
 

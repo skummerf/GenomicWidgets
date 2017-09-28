@@ -10,7 +10,8 @@ setGeneric("add_stepping",
            function(object,  ...) standardGeneric("add_stepping"))
 
 setGeneric("make_annotation_track",
-           function(window, object, ...) standardGeneric("make_annotation_track"))
+           function(window, object, ...) 
+             standardGeneric("make_annotation_track"))
 
 setGeneric("make_signal_track",
            function(window, object, ...) standardGeneric("make_signal_track"))

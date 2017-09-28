@@ -22,13 +22,13 @@ setMethod(multi_locus_view,
             sm <- length(object)
             if (is.null(colors)){
               if (sm == 1){
-                colors = "black"
+                colors <- "black"
               } else if (sm <= 8){
-                colors = RColorBrewer::brewer.pal(sm,"Dark2")
+                colors <- RColorBrewer::brewer.pal(sm,"Dark2")
               } else if (sm <= 12){
-                colors = RColorBrewer::brewer.pal(sm,"Paired")
+                colors <- RColorBrewer::brewer.pal(sm,"Paired")
               } else{
-                colors = rainbow(sm)
+                colors <- rainbow(sm)
               }
             }
             
@@ -43,38 +43,45 @@ setMethod(multi_locus_view,
                                                      showlegend = showlegend ,
                                                      colors = colors,
                                                      mode = mode,
-                                                     annotation_position = annotation_position,
-                                                     annotation_size = annotation_size))
+                                                     annotation_position = 
+                                                       annotation_position,
+                                                     annotation_size = 
+                                                       annotation_size))
 
             } else{
 
               if (is.null(name)){
                 if (!is.null(names(windows))){
-                  name = names(windows)
+                  name <- names(windows)
                 } else{
-                  name = seq_along(windows)
+                  name <- seq_along(windows)
                 }
               }
               
-              single_views <- purrr::map(seq_along(windows),
-                                         function(x){
-                                           single_locus_view(windows[x],
-                                                             object = object,
-                                                             annotation = annotation,
-                                                             track_names = track_names,
-                                                             groups = rep(name[x],length(object)),
-                                                             fill = fill,
-                                                             relative = TRUE,
-                                                             showlegend = if (x == 1) showlegend else FALSE,
-                                                             colors = colors,
-                                                             mode = mode,
-                                                             annotation_position = annotation_position,
-                                                             annotation_size = annotation_size)
-                                         })
+              single_views <- 
+                purrr::map(seq_along(windows),
+                           function(x){
+                             single_locus_view(
+                               windows[x],
+                               object = object,
+                               annotation = annotation,
+                               track_names = track_names,
+                               groups = rep(name[x],
+                                            length(object)),
+                               fill = fill,
+                               relative = TRUE,
+                               showlegend = 
+                                 if (x == 1) showlegend else FALSE,
+                               colors = colors,
+                               mode = mode,
+                               annotation_position = annotation_position,
+                               annotation_size = annotation_size)
+                           })
               
               
             }
-            ll <- new("LocusViewList", as(single_views,"SimpleList"), share_y = share_y)
+            ll <- new("LocusViewList", as(single_views,"SimpleList"), 
+                      share_y = share_y)
             return(ll)
           })
 
@@ -154,8 +161,8 @@ setMethod(make_track_plotter,
                    annotation_position = c("bottom","top"),
                    annotation_size = 0.25){
             
-            fill = match.arg(fill)
-            annotation_position = match.arg(annotation_position)
+            fill <- match.arg(fill)
+            annotation_position <- match.arg(annotation_position)
             
             default_arglist <- list(
               object = object,
@@ -288,19 +295,19 @@ setMethod(get_layout, signature = c(object = "LocusViewList"),
             ynames_flat <- unlist(ynames)
             
             if (object@share_y){
-              range = c(min(object), max(object))
+              range <- c(min(object), max(object))
             } else{
-              range = NULL
+              range <- NULL
             }
             
             if (length(object@xtitle) == 0){
               if (length(object) > 1 || object[[1]]@view@relative){
-                xtitle = "Relative Position"
+                xtitle <- "Relative Position"
               } else{
-                xtitle = as.character(seqnames(object[[1]]@view@range))
+                xtitle <- as.character(seqnames(object[[1]]@view@range))
               }
             } else{
-              xtitle = object@xtitle
+              xtitle <- object@xtitle
             }
             
             layout_setting <- 
@@ -312,15 +319,15 @@ setMethod(get_layout, signature = c(object = "LocusViewList"),
                           range = get_range(object[[1]]@view),
                           domain = x_domain))
             
-            sizes = unlist(purrr::map(as.list(object), function(y) y@heights ))
+            sizes <- unlist(purrr::map(as.list(object), function(y) y@heights ))
             
-            sizes = sizes / sum(sizes)
+            sizes <- sizes / sum(sizes)
             
-            domains = list()
+            domains <- list()
             start_domain <- 0
             k <- length(sizes)
             for (i in rev(seq_along(object))){
-              domains[[i]] =  list()
+              domains[[i]] <-  list()
               for (j in rev(seq_along(object[[i]]))){
                 domains[[i]][[j]] <- c(start_domain, start_domain +
                                          (sizes[k]*0.95))
@@ -347,14 +354,14 @@ setMethod(get_layout, signature = c(object = "LocusSummaryList"),
             
 
             layout_setting <- list()
-            layout_setting[[xax]] = list(zeroline = FALSE,
+            layout_setting[[xax]] <- list(zeroline = FALSE,
                                           #showline = FALSE,
                                           anchor = gsub("yaxis","y",
                                                         ynames[length(ynames)]),
                                          domain = x_domain)
             
-            sizes = rep(1 / length(object), length(object))
-            domains = list()
+            sizes <- rep(1 / length(object), length(object))
+            domains <- list()
             start_domain <- 0
             for (i in rev(seq_along(object))){
               domains[[i]] <- c(start_domain, start_domain + (sizes[i]*0.95))
@@ -362,7 +369,8 @@ setMethod(get_layout, signature = c(object = "LocusSummaryList"),
             }
             
             layout_setting <- c(layout_setting, 
-                                unlist(purrr::pmap(list(object = as.list(object), 
+                                unlist(purrr::pmap(list(object = 
+                                                          as.list(object), 
                                                         yname = ynames,
                                                         domain = domains),
                                                    get_layout,
@@ -394,9 +402,9 @@ multi_locus_to_plotly_list <- function(x){
     traces <- make_trace(x@tracks, track_ynames)
     
     if (length(x@summaries) == 0){
-      x_domain = c(0,1)
+      x_domain <- c(0,1)
     } else{
-      x_domain = c(0, (1 - x@summary_width) * 0.95)
+      x_domain <- c(0, (1 - x@summary_width) * 0.95)
     }
     
     layout_setting <- get_layout(x@tracks, 

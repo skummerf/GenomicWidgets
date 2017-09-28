@@ -33,13 +33,13 @@ setMethod(single_locus_view,
               sm <- length(object)
               if (is.null(colors)){
                 if (sm == 1){
-                  colors = "black"
+                  colors <- "black"
                 } else if (sm <= 8){
-                  colors = RColorBrewer::brewer.pal(sm,"Dark2")
+                  colors <- RColorBrewer::brewer.pal(sm,"Dark2")
                 } else if (sm <= 12){
-                  colors = RColorBrewer::brewer.pal(sm,"Paired")
+                  colors <- RColorBrewer::brewer.pal(sm,"Paired")
                 } else{
-                  colors = rainbow(sm)
+                  colors <- rainbow(sm)
                 }
               }
               
@@ -54,7 +54,7 @@ setMethod(single_locus_view,
                                          name = names(object_grouped)), 
                                     track_maker)
             } else{
-              if (is.null(colors)){ colors = rep("black",length(object))}
+              if (is.null(colors)){ colors <- rep("black",length(object))}
               
               tracks <- purrr::pmap(list(object = object,
                                          track_names = track_names,
@@ -65,29 +65,30 @@ setMethod(single_locus_view,
             
             if (!is.null(annotation)){
               if (match.arg(annotation_position) == "top"){
-                heights = c(annotation_size, rep(1, length(tracks)))
-                tracks = c(make_annotation_track(window,annotation),
+                heights <- c(annotation_size, rep(1, length(tracks)))
+                tracks <- c(make_annotation_track(window,annotation),
                            unname(tracks))
               } else{
-                heights = c(rep(1, length(tracks)), annotation_size)
-                tracks = c(unname(tracks),make_annotation_track(window,annotation))
+                heights <- c(rep(1, length(tracks)), annotation_size)
+                tracks <- c(unname(tracks),make_annotation_track(window,
+                                                                 annotation))
               }
             } else{
-              heights = rep(1, length(tracks))
+              heights <- rep(1, length(tracks))
             }
             
             if (relative){
              
               if (as.character(strand(window)) == "-"){
-                reference = end(window) - offset
+                reference <- end(window) - offset
               } else{
-                reference = start(window) + offset
+                reference <- start(window) + offset
               }
                 
-              view = new("ViewRange", range = window, relative = TRUE, 
+              view <- new("ViewRange", range = window, relative = TRUE, 
                          reference = reference)
             } else{
-              view = new("ViewRange", range = window, relative = FALSE)
+              view <- new("ViewRange", range = window, relative = FALSE)
             }
             
             out <- new("LocusView", as(tracks,"SimpleList"), share_y = share_y,
@@ -103,7 +104,7 @@ setMethod(single_locus_view,
 
 yaxis_names <- function(x, start = 1L){
  stopifnot(length(x) >= 1)
- end = start + length(x) - 1
+ end <- start + length(x) - 1
  out <- paste0("yaxis", seq(start, end))
  if (start == 1L) out[1] <- "yaxis"
  out
@@ -115,7 +116,7 @@ setMethod(get_layout, "AnnotationPlot",
             out <- list()
             
             # y axis settings
-            out[[yname]] = list(title = object@trackname,
+            out[[yname]] <- list(title = object@trackname,
                                 domain = domain,
                                 zeroline = FALSE,
                                 showline = FALSE,
@@ -132,7 +133,7 @@ setMethod(get_layout, "SignalPlot",
             out <- list()
             
             # y axis settings
-            out[[yname]] = list(title = object@trackname,
+            out[[yname]] <- list(title = object@trackname,
                                 domain = domain,
                                 zeroline = FALSE,
                                 showgrid = FALSE,
@@ -154,7 +155,7 @@ setMethod(min, "SignalPlot",
 
 #' max, min for GenomicWidgets objects
 #' 
-#' @param x
+#' @param x object
 #' @param na.rm remove na
 #' @param ... additional arguments
 #' @return numeric
@@ -201,7 +202,8 @@ setMethod(min, "LocusViewList",
 
 setMethod(make_trace, signature = c(x = "LocusView"),
           definition = function(x, ynames, ...){
-            traces <- unlist(purrr::map2(as.list(x), ynames, make_trace, view = x@view), 
+            traces <- unlist(purrr::map2(as.list(x), ynames, make_trace, 
+                                         view = x@view), 
                              recursive = FALSE)
             
             traces
@@ -209,7 +211,8 @@ setMethod(make_trace, signature = c(x = "LocusView"),
 
 setMethod(make_shapes, signature = c(x = "LocusView"),
           definition = function(x, ynames, ...){
-            shapes <- unlist(purrr::map2(as.list(x), ynames, make_shapes, view = x@view), 
+            shapes <- unlist(purrr::map2(as.list(x), ynames, make_shapes, 
+                                         view = x@view), 
                              recursive = FALSE)
             
             shapes

@@ -47,9 +47,10 @@ unpack_transcripts_inner <- function(db_object){
                  intron = intronsByTranscript(db_object, use.names=TRUE),
                   utr5 = fiveUTRsByTranscript(db_object, use.names=TRUE),
                   utr3 = threeUTRsByTranscript(db_object, use.names=TRUE),
-                  cds = cdsBy(db_object, by='tx', use.names=TRUE),
-                  exon = exonsBy(db_object, by='tx', use.names=TRUE),
-                  transcripts = transcripts(db_object, columns = c("TXID","TXNAME")),
+                  cds = cdsBy(db_object, by="tx", use.names=TRUE),
+                  exon = exonsBy(db_object, by="tx", use.names=TRUE),
+                  transcripts = transcripts(db_object, 
+                                            columns = c("TXID","TXNAME")),
                   seqlevelsStyle =  seqlevelsStyle(db_object))
   return(tx_data)
 }
@@ -74,10 +75,10 @@ setMethod("subset_transcripts", signature = c("GRanges","TranscriptParts"),
             if(length(gr)){
               seqlevelsStyle(gr) <- in_style
               if(no_introns){
-                gr <- gr[mcols(gr)[['feature']]!='intron']
+                gr <- gr[mcols(gr)[["feature"]]!="intron"]
               }
             }
-            # Some tx only partially overlap and some tx parts outside the window get included
+            # some tx parts outside the window get included
             gr <- subsetByOverlaps(gr, window)
             return(gr)
           })
@@ -93,35 +94,36 @@ get_tx_parts <- function(tx_names, tx_data){
       if (length(part_gr)){
         part_gr$transcript <- names(part_gr)
         part_gr$feature <- n
-        if(!('exon_name' %in% colnames(mcols(part_gr)))){
+        if(!("exon_name" %in% colnames(mcols(part_gr)))){
           part_gr$exon_name <- NA
         }
-        part_gr <- part_gr[, c('transcript', 'feature', 'exon_name')]
+        part_gr <- part_gr[, c("transcript", "feature", "exon_name")]
         parts <- c(parts, part_gr)
       }
     }
   }
 
   # Find ncRNA in exons
-  exon_tx <- unique(parts$transcript[parts$feature=='exon'])
-  coding_tx <- unique(parts$transcript[parts$feature!='intron' & parts$feature!='exon'])
+  exon_tx <- unique(parts$transcript[parts$feature=="exon"])
+  coding_tx <- unique(parts$transcript[parts$feature!="intron" & 
+                                         parts$feature!="exon"])
 
   # ncRNA are exons that aren't in CDS or UTRs
   nc_tx <- setdiff(exon_tx, coding_tx)
-  parts$feature[parts$transcript %in% nc_tx & parts$feature=='exon'] <-'ncRNA'
+  parts$feature[parts$transcript %in% nc_tx & parts$feature=="exon"] <- "ncRNA"
 
   # Remove the now redudant exons
-  parts <- parts[parts$feature != 'exon']
+  parts <- parts[parts$feature != "exon"]
 
   return(parts)
 }
 
 
 setMethod("add_stepping", signature = c("GRanges"),
-          function(object, stacking = c('squish', 'dense'), ...){
+          function(object, stacking = c("squish", "dense"), ...){
             stacking <- match.arg(stacking)
             if(length(object)){
-              if(stacking == 'squish'){
+              if(stacking == "squish"){
                 stopifnot("transcript" %in% colnames(mcols(object)))
                 obj.lst <- split(object, as.character(seqnames(object)))
                 lv <- endoapply(obj.lst, function(x) {
@@ -130,11 +132,12 @@ setMethod("add_stepping", signature = c("GRanges"),
                       irs.new <- resize(irs, fix = "center", width = width(irs))
                       irs.new <- sort(irs.new)
                       .lvs <- disjointBins(irs.new)
-                      values(x)$stepping <- .lvs[as.character(values(x)[,"transcript"])]
+                      values(x)$stepping <- 
+                        .lvs[as.character(values(x)[,"transcript"])]
                       x
                 })
                 object <- unlist(lv)
-              } else if(stacking == 'dense'){
+              } else if(stacking == "dense"){
                 # The simple solution for now
                 mcols(object)$stepping <- 1
               }}
@@ -142,7 +145,7 @@ setMethod("add_stepping", signature = c("GRanges"),
             })
 
 setMethod("make_annotation_track", c("GRanges", "TxDb"),
-          function(window, object, stacking = c('squish', 'dense'), ...){
+          function(window, object, stacking = c("squish", "dense"), ...){
             
             make_annotation_track(window, 
                                   unpack_transcripts(object), 
@@ -153,7 +156,7 @@ setMethod("make_annotation_track", c("GRanges", "TxDb"),
 
 
 setMethod("make_annotation_track", c("GRanges", "TranscriptParts"),
-          function(window, object, stacking = c('squish', 'dense'), 
+          function(window, object, stacking = c("squish", "dense"), 
                    name = "", ...){
             
             stacking <- match.arg(stacking)
@@ -181,11 +184,11 @@ setMethod(make_trace, signature = c(x = "AnnotationPlot"),
             #Invisible Points
             anno_data <- as.data.frame(x@transcripts, row.names = NULL)
             if (nrow(anno_data) == 0) return(NULL)
-            anno_data$text <- paste0('Tx ID: ',
+            anno_data$text <- paste0("Tx ID: ",
                                      anno_data$transcript,
-                                     '<br>',
+                                     "<br>",
                                      anno_data$feature,
-                                     '<br>',
+                                     "<br>",
                                      "strand: ",
                                      anno_data$strand)
             anno_data$start <- relative_position(view, anno_data$start)
@@ -194,11 +197,11 @@ setMethod(make_trace, signature = c(x = "AnnotationPlot"),
             
             base_list <- list(yaxis = gsub("yaxis","y",yax),
                               xaxis = gsub("xaxis","x",xax),
-                              hoverinfo = 'x+text',
+                              hoverinfo = "x+text",
                               opacity = 0,
-                              type='scatter',
+                              type = "scatter",
                               showlegend = FALSE,
-                              mode = 'markers')
+                              mode = "markers")
             traces <- lapply(unique(anno_data$transcript), function(tname){
               ix <- which(anno_data$transcript == tname)
               c(base_list, list(x = anno_data$midpoint[ix],
@@ -217,16 +220,17 @@ setMethod("make_shapes", c(x = "AnnotationPlot"),
             tx_info$end <- relative_position(view, tx_info$end)
             tx_info$midpoint <- (tx_info$start + tx_info$end) / 2
 
-            cds_rect <- make_rect(tx_info[tx_info$feature == 'cds', ],
+            cds_rect <- make_rect(tx_info[tx_info$feature == "cds", ],
                                   height = 0.4,
                                   ann_ax)
             utr_rect <- make_rect(tx_info[grep("utr", tx_info$feature), ],
                                   height=0.25,
                                   ann_ax)
-            ncRNA_rect <- make_rect(tx_info[tx_info$feature == 'ncRNA', ],
+            ncRNA_rect <- make_rect(tx_info[tx_info$feature == "ncRNA", ],
                                     height=0.25,
                                     ann_ax)
-            intron_arrow <- make_arrows(tx_info[tx_info$feature == 'intron', ], ann_ax,
+            intron_arrow <- make_arrows(tx_info[tx_info$feature == "intron", ],
+                                        ann_ax,
                                         arrowlen = width(view@range) * 0.01)
             # Compile new shapes
             tx_shapes <- c(cds_rect, utr_rect, ncRNA_rect, intron_arrow)
@@ -273,17 +277,22 @@ make_plotly_color <- function(color_str){
 make_rect <- function(df, 
                       height, 
                       yref,
-                      fillcolor = 'lightslateblue'){
+                      fillcolor = "lightslateblue"){
   fillcolor <- make_plotly_color(fillcolor)
   yref <- gsub("yaxis", "y", yref)
   if(nrow(df)>0){
     rect_list <- vector("list", nrow(df))
-    for(e in 1:nrow(df)){
+    for(e in seq_len(nrow(df))){
       row <- df[e, ]
-      rect_list[[e]] <- list(type = "rect", fillcolor = fillcolor, opacity = 1, 
+      rect_list[[e]] <- list(type = "rect", 
+                             fillcolor = fillcolor, 
+                             opacity = 1, 
                              line=list(width=0),
-                             x0 = row$start, x1 = row$end, xref = "x",
-                             y0 = row$stepping-height, y1 = row$stepping+height, 
+                             x0 = row$start, 
+                             x1 = row$end, 
+                             xref = "x",
+                             y0 = row$stepping-height, 
+                             y1 = row$stepping+height, 
                              yref = yref)
     }
   } else {
@@ -317,7 +326,7 @@ make_arrows <- function(df,
   if(nrow(df)>0){
     line_list <- vector("list", nrow(df))
     arrow_list <- vector("list", nrow(df))
-    for(i in 1:nrow(df)){
+    for(i in seq_len(nrow(df))){
       row <- df[i, ]
       
       # Make the intron line

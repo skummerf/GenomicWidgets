@@ -7,7 +7,8 @@ setMethod("make_signal_track", c("GRanges","character"),
                    showlegend = TRUE, 
                    colors = NULL, 
                    mode = 'lines',
-                   name = ifelse(length(track_names) > 1, "Coverage", track_names)){
+                   name = if (length(track_names) > 1) "Coverage" else 
+                     track_names){
             
             fill <- match.arg(fill)
             
@@ -18,13 +19,13 @@ setMethod("make_signal_track", c("GRanges","character"),
             
             if (is.null(colors)){
               if (length(sm == 1)){
-                colors = "black"
+                colors <- "black"
               } else if (length(sm <= 8)){
-                colors = RColorBrewer::brewer.pal(length(sm),"Dark2")
+                colors <- RColorBrewer::brewer.pal(length(sm),"Dark2")
               } else if (length(sm <= 12)){
-                colors = RColorBrewer::brewer.pal(length(sm),"Paired")
+                colors <- RColorBrewer::brewer.pal(length(sm),"Paired")
               } else{
-                colors = rainbow(length(sm))
+                colors <- rainbow(length(sm))
               }
             }
             
@@ -44,23 +45,26 @@ setMethod(make_trace, signature = c(x = "SignalPlot"),
             
             trace_data <- lapply(seq_len(length(x@signal)),
                                  function(i){
-                                   tmp_signal = as.vector(x@signal[[i]])
-                                   list(x = seq(relative_position(view,
-                                                                  start(view@range)), 
-                                                relative_position(view, 
-                                                                  end(view@range)), 
-                                                length.out = length(tmp_signal)),
-                                        y = tmp_signal,
-                                        text = names(x@signal)[i],
-                                        name = names(x@signal)[i],
-                                        hoverinfo = 'x+y+text',
-                                        line = list(color = x@color[i]),
-                                        fill = x@fill,
-                                        mode = x@mode,
-                                        legendgroup = names(x@signal)[i],
-                                        showlegend = x@showlegend,
-                                        yaxis = gsub("yaxis","y",yax),
-                                        xaxis = gsub("xaxis","x",xax))
+                                   tmp_signal <- as.vector(x@signal[[i]])
+                                   list(
+                                     x = 
+                                       seq(
+                                         relative_position(view,
+                                                           start(view@range)), 
+                                         relative_position(view, 
+                                                           end(view@range)), 
+                                         length.out = length(tmp_signal)),
+                                     y = tmp_signal,
+                                     text = names(x@signal)[i],
+                                     name = names(x@signal)[i],
+                                     hoverinfo = 'x+y+text',
+                                     line = list(color = x@color[i]),
+                                     fill = x@fill,
+                                     mode = x@mode,
+                                     legendgroup = names(x@signal)[i],
+                                     showlegend = x@showlegend,
+                                     yaxis = gsub("yaxis","y",yax),
+                                     xaxis = gsub("xaxis","x",xax))
                                  })
             trace_data
             })

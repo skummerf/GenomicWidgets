@@ -1,5 +1,5 @@
 
-HEATMAP_SOURCE = "HM"
+HEATMAP_SOURCE <- "HM"
 
 #' heatmap_click
 #' 
@@ -7,7 +7,7 @@ HEATMAP_SOURCE = "HM"
 #' @param heatmap heatmap object
 #' @param x list-like object corresponding to rows of heatmap
 #' @return function that returns appropriate element of x based on row of 
-#' heatmap clicked within \code{\link{shinyApp}}
+#' heatmap clicked within \code{\link[shiny]{shinyApp}}
 #' @return returns function
 #' @author Alicia Schep 
 #' 
@@ -41,7 +41,8 @@ heatmap_to_tracks_shiny <- function(heatmap,
                                     link,
                                     title = "Heatmap linked to Genome Tracks",
                                     options = list(height = 1400)){
-  requireNamespace("shiny")
+  
+  if (!(requireNamespace("shiny"))) stop("Must have shiny package installed!")
   
   # Check regions
   

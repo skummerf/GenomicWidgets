@@ -12,13 +12,14 @@ setMethod("make_locus_summary", c("SummarizedExperiment"),
                    pointpos = 0,
                    ytitle = "Expression"){
             
-            boxpoints = match.arg(boxpoints)
+            boxpoints <- match.arg(boxpoints)
             
             # Check groups
             if (is.null(groups)){
               groups <- ""
             } else if (length(groups) == 1){
-              if (groups %in% colnames(colData(object))) groups <- colData(object)[,groups]
+              if (groups %in% colnames(colData(object))) 
+                groups <- colData(object)[,groups]
             } else{
               stopifnot(length(groups) == ncol(object))
             }
@@ -36,8 +37,9 @@ setMethod("make_locus_summary", c("SummarizedExperiment"),
                          marker = list(color = colors),
                          ...))
             } else{
-              y = assay(object,assay_name)[row_name,]
-              data <- purrr::pmap(list(split(y, groups), colors, levels(as.factor(groups))),
+              y <- assay(object,assay_name)[row_name,]
+              data <- purrr::pmap(list(split(y, groups), colors, 
+                                       levels(as.factor(groups))),
                                    function(j,k,l){
                                      list(y = j,
                                           x = l,
@@ -69,7 +71,7 @@ setMethod("make_locus_summaries", c("SummarizedExperiment"),
                    pointpos = 0,
                    ytitle = "Expression"){
             
-            boxpoints = match.arg(boxpoints)
+            boxpoints <- match.arg(boxpoints)
             
             if (is.null(colors)){
               colors <- "blue"
@@ -137,7 +139,7 @@ setMethod("make_summary_plotter", c("SummarizedExperiment"),
                    pointpos = 0,
                    ytitle = "Expression"){
             
-            boxpoints = match.arg(boxpoints)
+            boxpoints <- match.arg(boxpoints)
             purrr::partial(make_locus_summaries,
                            object = object,
                            assay_name = assay_name,
@@ -158,7 +160,7 @@ setMethod(get_layout, "LocusSummary",
             out <- list()
             
             # y axis settings
-            out[[yname]] = modifyList(object@layout,
+            out[[yname]] <- modifyList(object@layout,
                                       list(zeroline = FALSE,
                                            domain = domain,
                                            anchor = gsub("xaxis","x",anchor),
@@ -173,8 +175,8 @@ setMethod(get_layout, "LocusSummary",
 setMethod(make_trace, signature = c(x = "LocusSummary"),
           definition = function(x, yax, xax, ...){
             lapply(x@data, function(y){ 
-              y$yaxis = gsub("yaxis","y",yax)
-              y$xaxis = gsub("xaxis","x",xax)
+              y$yaxis <- gsub("yaxis","y",yax)
+              y$xaxis <- gsub("xaxis","x",xax)
               y})
           })
 

@@ -35,6 +35,45 @@ up and down are 0 by default -- if not specified, actual range is
  then the center of the range and up basepairs upstream and down basepairs
  downstream are used.
 }
+\examples{
+
+library(GenomicRanges)
+# First read in some sample data
+genomation_dir <- system.file("extdata", package = "genomationData")
+
+samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
+samp.info <- read.table(samp.file, header=TRUE, sep='\\t', 
+                       stringsAsFactors = FALSE)
+samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
+
+ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
+                                                  "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
+                                                  package = "genomationData"))
+ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
+ctcf.peaks = ctcf.peaks[order(-ctcf.peaks$signalValue)]
+ctcf.peaks = resize(ctcf.peaks, width = 1000, fix = "center")
+
+# Make the coverage matrices
+mats <- make_coverage_matrix(samp.info$fileName[1:3], ctcf.peaks, 
+                     up = 500, down = 500, binsize = 25)
+
+# Benchmarking speed of make_coverage_matrix compared to ScoreMatrixList
+function from genomation
+\dontrun{
+bm <- microbenchmark::microbenchmark(ctcf_mats = 
+                             make_coverage_matrix(samp.info$fileName[1:3], 
+                                                    ctcf.peaks, 
+                                                   up = 500, down = 500, 
+                                                    binsize = 25), 
+                             geno = ScoreMatrixList(samp.info$fileName[1:3], 
+                                              ctcf.peaks, bin.num = 1000/25),
+                             times = 5)
+
+bm
+
+plot(bm)}
+
+}
 \author{
 Alicia Schep
 }

@@ -19,14 +19,14 @@
 #' fetch_view_range(Homo.sapiens,"GLI2")
 fetch_view_range <- function(db_object, 
                  symbol, 
-                 keytype = c('SYMBOL', 'TXNAME'),
+                 keytype = c("SYMBOL", "TXNAME"),
                  relative = c("TSS", "TTS", "full"),
                  up = 1000,
                  down = 1000){
   
-  relative = match.arg(relative)
-  keytype = match.arg(keytype)
-  if (keytype == 'SYMBOL' && !inherits(db_object, "OrganismDb")){
+  relative <- match.arg(relative)
+  keytype <- match.arg(keytype)
+  if (keytype == "SYMBOL" && !inherits(db_object, "OrganismDb")){
     stop("keytype of 'SYMBOL' requires input db_object to be OrganismDb object")
   }
   range_df <- OrganismDbi::select(db_object, 
