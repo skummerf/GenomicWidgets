@@ -92,7 +92,7 @@ setMethod("add_iheatmap", c(p = "IheatmapVertical",
             stopifnot(length(assay) == 1)
             stopifnot(assay %in% assayNames(data))
             mat <- assays(data)[[assay]]
-            add_iheatmap(mat, y, cluster_rows = match.arg(cluster_rows),
+            add_iheatmap(p, mat, y, cluster_rows = match.arg(cluster_rows),
                       scale = scale,
                      ...)  
             

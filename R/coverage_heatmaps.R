@@ -176,7 +176,7 @@ setMethod("coverage_heatmap", c(data = "ScoreMatrixList"),
           function(data, 
                    start, 
                    end, 
-                   x = seq(start, end, length.out = ncol(data)),
+                   x = seq(start, end, length.out = ncol(data[[1]])),
                    y = default_y(data[[1]]), 
                    ...){
             
@@ -195,7 +195,7 @@ setMethod("add_coverage_heatmap", c(p = "IheatmapHorizontal",
                    data, 
                    start, 
                    end, 
-                   x = seq(start, end, length.out = ncol(data)),
+                   x = seq(start, end, length.out = ncol(data[[1]])),
                    ...){
             
             data_list <- lapply(data, as.matrix)
