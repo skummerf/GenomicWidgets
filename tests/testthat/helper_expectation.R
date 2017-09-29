@@ -43,7 +43,6 @@ expect_iheatmap <- function(test_plot, ref_name,
 
 expect_genomic_widget <- function(test_plot, ref_name){
   test_widget <- test_plot %>% to_widget()
-  expect_is(test_plot,"GenomicTrackWidget")
   expect_is(test_widget,"htmlwidget")
   expect_is(test_widget,"GenomicWidgets")
   expect_gw_equal_to_reference(test_widget, paste0("reference/",
