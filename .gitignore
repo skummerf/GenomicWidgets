@@ -5,3 +5,4 @@
 *.Rproj
 .DS_Store
 inst/doc
+tests/view_reference.html
