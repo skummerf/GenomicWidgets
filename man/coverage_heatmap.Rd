@@ -38,7 +38,7 @@ add_coverage_heatmap(p, data, ...)
   length.out = ncol(data)), y = default_y(data), ...)
 
 \S4method{add_coverage_heatmap}{IheatmapHorizontal,ScoreMatrixList}(p, data,
-  start, end, x = seq(start, end, length.out = ncol(data)), ...)
+  start, end, x = seq(start, end, length.out = ncol(data[[1]])), ...)
 
 \S4method{coverage_heatmap}{matrix}(data, x = default_x(data),
   y = default_y(data), row_order = c("signal", "hclust", "kmeans", "groups",
