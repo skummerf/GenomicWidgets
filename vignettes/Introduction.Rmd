@@ -11,16 +11,35 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, figure.width = 3, figure.height = 2)
-library(iheatmapr)
-library(GenomicWidgets)
-library(TxDb.Hsapiens.UCSC.hg19.knownGene)
-library(GenomicRanges)
-library(SummarizedExperiment)
+
 ```
 
 # Package goals
 
 The GenomicWidgets package enables the creation of interactive visualizations for functional genomics data in R. These interactive visualizations can be included in stand-alone Rmarkdown HTML documents, or can be linked in shiny applications. These visualization are intended to highlight the data at different scales, from a single locus to hundreds of regions along the genome, and to enable the views at different scales to be linked together.    
+
+## Packages for running vignette
+
+In addition to GenomicWidgets, we will load a few other packages for use in this vignette. 
+
+```{r}
+library(GenomicWidgets)
+library(iheatmapr)
+library(GenomicRanges)
+library(SummarizedExperiment)
+
+# If TxDb.Hsapiens.UCSC.hg19.knownGene is not installed, you can install it via
+# source("https://bioconductor.org/biocLite.R")
+# biocLite("TxDb.Hsapiens.UCSC.hg19.knownGene")
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+```
+
+We will also use data from the genomationData package. If not installed, can be installed via:
+
+```{r, eval = FALSE}
+source("https://bioconductor.org/biocLite.R")
+biocLite("genomationData")
+```
 
 # Genomics Heatmaps
 
@@ -36,17 +55,18 @@ The package includes a small subset of the expression data from the Roadmap Epig
 data("rpkm_chr21")
 ```
 
-Here is what the `iheatmap` method applied to the matrix of RPKM values looks like:
+If we call the `iheatmap` method on a SummarizedExperiment object, we obtain the following heatmap:
+
+```{r}
+iheatmap(rpkm_chr21,"rpkm")
+```
+
+If instead we had applied the `iheatmap` method applied to the plain matrix of RPKM values, the basic iheatmap method is used with defaults that are not as suitable, leading to a less interesting heatmap:
 
 ```{r}
 iheatmap(assays(rpkm_chr21)[["rpkm"]])
 ```
 
-If instead we apply it to the SummarizedExperiment object, we see the result is different:
-
-```{r}
-iheatmap(rpkm_chr21,"rpkm")
-```
 
 For SummarizedExperiment, hierarchical clustering and standardization of rows is the default.  
 
@@ -104,7 +124,9 @@ ctcf_mats <- make_coverage_matrix(samp.info$fileName[1:5],
 
 ```
 
-You can also use your own preferred  method for making a coverage matrix.  The `coverage_heatmap` method shown below can accept either a SummarizedExperiment, a plain matrix, a list of matrices, or a ScoreMatrix or ScoreMatrixList object (objects from the genomation package).  
+With bam input, the make_coverage_matrix function computes the coverage based on the basepairs covered by the actual reads; no extending or shifting is done. With bigwig input, the function assumes the bigwig file contains the coverage track.
+
+You can also use your own preferred  method for making a coverage matrix. The `coverage_heatmap` method shown below can accept either a SummarizedExperiment, a plain matrix, a list of matrices, or a ScoreMatrix or ScoreMatrixList object (objects from the genomation package).  The genomation package includes the `ScoreMatrix`, `ScoreMatrixBin`, and `ScoreMatrixList` functions to read in coverage and make coverage matrices.  
 
 ### Single coverage
 
