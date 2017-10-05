@@ -113,7 +113,8 @@ default is TRUE}
 
 \item{summary}{make summary plot, boolean, default is TRUE}
 
-\item{scale_method}{how to scale matrix before displaying in heatmap}
+\item{scale_method}{how to scale matrix before displaying in heatmap, see
+Details section}
 
 \item{pct}{percentile to use if scale_method is "PercentileMax"}
 
@@ -133,6 +134,16 @@ iheatmap object
 }
 \description{
 Makes an interactive coverage heatmap.
+}
+\details{
+scale_method choices are "localRms", "localMean", 
+"localNonZeroMean", "PercentileMax", "scalar", and "none".  localRMS will 
+divide each row by the root mean squared values of that row.  localMean will
+divide each row by the mean of that row.  localNonZeroMean will divide each 
+row by nonzero values in that row.  PercentileMax will divide values based on 
+percentile (given by pct argument) of the entire matrix.  scalar will divide
+entire matrix by a scalar, given by scalar argument.  This scalar could for 
+example be a measure of the sequencing depth.
 }
 \examples{
 

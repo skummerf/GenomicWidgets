@@ -37,7 +37,8 @@ log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
 #' @param signal_name name for signal colorbar
 #' @param name name of colorbar
 #' @param summary make summary plot, boolean, default is TRUE
-#' @param scale_method how to scale matrix before displaying in heatmap
+#' @param scale_method how to scale matrix before displaying in heatmap, see
+#' Details section
 #' @param pct percentile to use if scale_method is "PercentileMax"
 #' @param scale_factor scale_factor to use if scale_method is "scalar"
 #' @param show_xlabels show xlabels?  default is TRUE
@@ -51,6 +52,14 @@ log10rowMeans <- function(x, na.rm = TRUE, pseudo = 1){
 #' @author Alicia Schep
 #' @rdname coverage_heatmap
 #' @name coverage_heatmap
+#' @details scale_method choices are "localRms", "localMean", 
+#' "localNonZeroMean", "PercentileMax", "scalar", and "none".  localRMS will 
+#' divide each row by the root mean squared values of that row.  localMean will
+#' divide each row by the mean of that row.  localNonZeroMean will divide each 
+#' row by nonzero values in that row.  PercentileMax will divide values based on 
+#' percentile (given by pct argument) of the entire matrix.  scalar will divide
+#' entire matrix by a scalar, given by scalar argument.  This scalar could for 
+#' example be a measure of the sequencing depth.  
 #' @aliases coverage_heatmap,matrix-method coverage_heatmap,list-method
 #' coverage_heatmap,SummarizedExperiment-method 
 #' coverage_heatmap,ScoreMatrix-method
