@@ -26,6 +26,7 @@ setMethod("show", "LocusSummaryList",
           })
 
 
+
 #' knit_print.GenomeTrackWidget
 #' 
 #' @param x GenomeTrackWidget object

@@ -265,6 +265,7 @@ make_track_plus_summary_plotter <- function(track_function,
     new("GenomeTrackWidget", tracks = tracks, summaries = summaries, 
         summary_width = summary_width)
   }
+  
   return(out)
 }
 
