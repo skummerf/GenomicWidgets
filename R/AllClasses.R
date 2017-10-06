@@ -57,6 +57,47 @@ setClass("LocusSummaryList",
          prototype = list(elementType = "LocusSummary"),
          contains = c("SimpleList"))
 
+setClassUnion("TranscriptPartsOrNull", c("TranscriptParts", "NULL"))
+
+
+
+setClass("SummaryParameters",
+         prototype = list(
+           data = "SummarizedExperiment",
+           assay_name = "character",
+           groups = "factor",
+           showlegend = "logical",
+           colors = "character",
+           boxpoints = "character",
+           pointpos = "numeric",
+           ytitle = "character",
+           width = "numeric"
+         ))
+
+setClassUnion("SummaryParametersOrNull", c("SummaryParameters", "NULL"))
+
+setClass("TrackParameters",
+         slots = list(
+           data = "character",
+           annotation = "TranscriptPartsOrNull",
+           track_names = "character",
+           groups = "factor",
+           share_y = "logical",
+           showlegend = "logical",
+           colors = "character",
+           fill = "character",
+           mode = "character",
+           annotation_position = "character",
+           annotation_size = "numeric",
+           summary = "SummaryParametersOrNull",
+           layout = "list"
+         ))
+
+
+
+
+
+
 setClass("GenomeTrackWidget",
          slots = c(tracks = "LocusViewList",
                    summaries = "LocusSummaryList",
