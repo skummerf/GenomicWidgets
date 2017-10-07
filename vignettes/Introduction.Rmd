@@ -319,9 +319,6 @@ track_plus_summary_params <-  set_track_parameters(samp.info$fileName[1:3],
                                     summary = summary_params)
 ```
 
-We use the function `make_track_plus_summary_plotter` to link our track plotter and our summary plotter.  We give both of the plot generators, as well as the ranges that correspond to all the rows of the expression data and the rownames of the expression data.  
-
-
 Calling `plot_tracks` with our new track parameters including the summary parameters creates a plot of the ChIP-seq signal around the TSS of those genes as well as a boxplot of the gene expression for different samples for that gene on the right. We can call it using GenomicRanges, but they must match ranges we gave to `set_summary_parameters`. 
 
 ```{r}
