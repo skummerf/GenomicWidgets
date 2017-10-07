@@ -4,16 +4,16 @@
 \alias{heatmap_to_tracks_shiny}
 \title{heatmap_to_tracks_shiny}
 \usage{
-heatmap_to_tracks_shiny(heatmap, track_function, link,
+heatmap_to_tracks_shiny(heatmap, track_params, link,
   title = "Heatmap linked to Genome Tracks", options = list(height = 1400))
 }
 \arguments{
 \item{heatmap}{IHeatmap object}
 
-\item{track_function}{track function generator}
+\item{track_params}{output from \code{\link{set_track_parameters}}}
 
 \item{link}{link function, linking rows of heatmap to input to track function
-generator}
+generator, result from \code{\link{heatmap_click}}}
 
 \item{title}{Title of shiny app}
 

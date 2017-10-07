@@ -6,7 +6,7 @@
 #' @docType data
 #' @examples 
 #' 
-#' #Axess data via:
+#' # Access data via:
 #' data(rpkm_chr21)
 #' 
 #' # Code showing how data was created:

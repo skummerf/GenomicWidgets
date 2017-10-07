@@ -1,4 +1,5 @@
-# SummarizedExperiment Method
+# Helper methods for making the locus summaries
+# Not exported
 
 setMethod("make_locus_summary", c("SummarizedExperiment"),
           function(object,  
@@ -92,63 +93,6 @@ setMethod("make_locus_summaries", c("SummarizedExperiment"),
             
             new("LocusSummaryList", as(summaries,"SimpleList"))
             
-          })
-
-#' make_summary_plotter
-#' 
-#' Makes a summary plot for a genomic region. For use with make_track_plotter
-#' and make_track_plus_summary_plotter.
-#' @param object SummarizedExperiment
-#' @param assay_name name of assay to use
-#' @param ... additional arguments
-#' @param groups either vector of group assignments of name of column in object 
-#' colData that corresponds to vector of group assignments
-#' @param showlegend show the legend?
-#' @param colors colors to use
-#' @param boxpoints plot individual points?
-#' @param pointpos relative position of points to boxes
-#' @param ytitle name for yaxis
-#' @export
-#' 
-#' @author Alicia Schep and Justin Finkle
-#' @rdname make_summary_plotter
-#' @name make_summary_plotter
-#' @aliases make_summary_plotter,SummarizedExperiment-method
-#' @examples 
-#' 
-#' ## we'll read in some RNA counts
-#' data(rpkm_chr21)
-#' 
-#' ## Make summary plotter
-#' 
-#' summary_plotter <- make_summary_plotter(rpkm_chr21,
-#'   groups = "GROUP") 
-#'   
-#' if (interactive()){
-#'   summary_plotter(rownames(rpkm_chr21)[1:3])
-#' }   
-#' 
-setMethod("make_summary_plotter", c("SummarizedExperiment"),
-          function(object,  
-                   assay_name = assayNames(object)[1],
-                   ..., 
-                   groups = NULL,
-                   showlegend = !is.null(colors), 
-                   colors = NULL,
-                   boxpoints = c("all","Outliers","false"),
-                   pointpos = 0,
-                   ytitle = "Expression"){
-            
-            boxpoints <- match.arg(boxpoints)
-            purrr::partial(make_locus_summaries,
-                           object = object,
-                           assay_name = assay_name,
-                           ...,
-                           groups = groups,
-                           showlegend = showlegend,
-                           boxpoints = boxpoints,
-                           pointpos = pointpos,
-                           ytitle = ytitle)
           })
 
 

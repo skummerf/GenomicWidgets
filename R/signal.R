@@ -1,3 +1,6 @@
+# Helper methods for making the signal tracks
+# Not exported
+
 setMethod("make_signal_track", c("GRanges","character"),
           function(window, object, binsize = 25, ..., 
                    track_names = ifelse(!is.null(names(object)),
@@ -74,21 +77,7 @@ setMethod("make_shapes", c(x = "SignalPlot"),
             return(NULL)
           })
 
-signal_to_plotly_list <- function(x){
-  traces <- make_trace(x, "yaxis")
-  layout_setting <- list()#get_layout(x)
-  out <- list(data = traces,
-              layout = layout_setting,
-              source = "Annotation Track",#,x@source,
-              config = list(modeBarButtonsToRemove =
-                              c("sendDataToCloud",
-                                "autoScale2d")))
-  attr(out, "TOJSON_FUNC") <- function(x, ...) {
-    jsonlite::toJSON(x, digits = 50, auto_unbox = TRUE, force = TRUE,
-                     null = "null", na = "null", ...)
-  }
-  out
-}
+
 
 
 

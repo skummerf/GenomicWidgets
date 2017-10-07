@@ -62,7 +62,7 @@ setClassUnion("TranscriptPartsOrNull", c("TranscriptParts", "NULL"))
 
 
 setClass("SummaryParameters",
-         prototype = list(
+         slots = list(
            data = "SummarizedExperiment",
            assay_name = "character",
            groups = "factor",
@@ -71,7 +71,8 @@ setClass("SummaryParameters",
            boxpoints = "character",
            pointpos = "numeric",
            ytitle = "character",
-           width = "numeric"
+           width = "numeric",
+           ranges = "GenomicRanges"
          ))
 
 setClassUnion("SummaryParametersOrNull", c("SummaryParameters", "NULL"))

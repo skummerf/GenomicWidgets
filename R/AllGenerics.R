@@ -1,3 +1,11 @@
+setGeneric("plot_tracks",
+           function(windows, ...) standardGeneric("plot_tracks"))
+
+setGeneric("set_summary_parameters",
+           function(object, ...) standardGeneric("set_summary_parameters"))
+
+setGeneric("set_track_parameters",
+           function(object, ...) standardGeneric("set_track_parameters"))
 
 
 setGeneric("unpack_transcripts", 

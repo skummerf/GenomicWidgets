@@ -16,7 +16,7 @@ Subset of expression data from Roadmap Epigenomics data for use in examples
 }
 \examples{
 
-#Axess data via:
+# Access data via:
 data(rpkm_chr21)
 
 # Code showing how data was created:

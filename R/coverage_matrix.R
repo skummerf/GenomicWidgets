@@ -30,8 +30,8 @@
 #' samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
 #'
 #' ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
-#'                                                   "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
-#'                                                   package = "genomationData"))
+#'                "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
+#'                package = "genomationData"))
 #' ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
 #' ctcf.peaks = ctcf.peaks[order(-ctcf.peaks$signalValue)]
 #' ctcf.peaks = resize(ctcf.peaks, width = 1000, fix = "center")
@@ -41,7 +41,7 @@
 #'                      up = 500, down = 500, binsize = 25)
 #'
 #' # Benchmarking speed of make_coverage_matrix compared to ScoreMatrixList
-#' function from genomation
+#' # function from genomation
 #' \dontrun{
 #' bm <- microbenchmark::microbenchmark(ctcf_mats = 
 #'                              make_coverage_matrix(samp.info$fileName[1:3], 

@@ -17,6 +17,7 @@
 #' @import GenomicRanges
 #' @aliases unpack_transcripts,TxDb-method 
 #' unpack_transcripts,OrganismDbi-method unpack_transcripts,NULL-method
+#' unpack_transcripts,TranscriptParts-method
 #' @examples 
 #' 
 #' library(TxDb.Hsapiens.UCSC.hg19.knownGene)
@@ -38,6 +39,11 @@ setMethod("unpack_transcripts", signature = "OrganismDb",
 setMethod("unpack_transcripts", signature = "NULL",
           function(object){
             NULL
+          })
+
+setMethod("unpack_transcripts", signature = "TranscriptParts",
+          function(object){
+            object
           })
 
 
