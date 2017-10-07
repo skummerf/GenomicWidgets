@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE, figure.width = 6, figure.height = 5)
 
 # Package goals
 
-The GenomicWidgets package enables the creation of interactive visualizations for functional genomics data in R. These interactive visualizations can be included in stand-alone Rmarkdown HTML documents, or can be linked in shiny applications. These visualization are intended to highlight the data at different scales, from a single locus to hundreds of regions along the genome, and to enable the views at different scales to be linked together.    
+The GenomicWidgets package enables the creation of interactive visualizations for functional genomics data in R. These interactive visualizations can be included in stand-alone Rmarkdown HTML documents, or can be linked in shiny applications. These visualization are intended to highlight the data at different scales, from a single locus to a few loci to hundreds of regions along the genome, and to enable the views at different scales to be linked together.    
 
 ## Packages for running vignette
 
@@ -85,7 +85,24 @@ iheatmap(rpkm_chr21, "rpkm",
          col_annotation = colData(rpkm_chr21)[,c("TYPE","SEX")])
 ```
 
-There is also an `add_iheatmap` method defined for SummarizedExperiment for adding a heatmap based on a SummarizedExperiment to an existing heatmap.
+There is also an `add_iheatmap` method defined for SummarizedExperiment for adding a heatmap based on a SummarizedExperiment to an existing heatmap. Here we will separate our samples into two groups to demonstrate the `add_iheatmap` function:
+
+```{r}
+rpkm_group1 <- rpkm_chr21[,which(colData(rpkm_chr21)$TYPE == "PrimaryCulture")]
+rpkm_group2 <- rpkm_chr21[,which(colData(rpkm_chr21)$TYPE == "ESCDerived")]
+
+iheatmap(rpkm_group1, "rpkm",
+         x = colData(rpkm_group1)$STD_NAME, 
+         y = rowData(rpkm_group1)$SYMBOL, 
+         col_annotation = colData(rpkm_group1)[,c("SEX")],
+         col_title = "Primary Culture") %>% 
+  add_iheatmap(rpkm_group2, "rpkm",
+         x = colData(rpkm_group2)$STD_NAME, 
+         col_annotation = colData(rpkm_group2)[,c("SEX")],
+         col_title = "ESCDerived")
+```
+
+Note that in practice this might not make sense to do, as the rows are now scaled separately. The `add_iheatmap` function can be useful for juxtaposing a different data type. If a name for the colorbar is not given (via the `name` argument), the two main heatmaps are put on the same color scale.    
 
 ## Coverage heatmaps
 
