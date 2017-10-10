@@ -10,7 +10,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, fig.width = 6, fig.height = 5)
+knitr::opts_chunk$set(echo = TRUE, fig.width = 7, fig.height = 5)
 ```
 
 # Package goals
@@ -94,11 +94,9 @@ rpkm_group2 <- rpkm_chr21[,which(colData(rpkm_chr21)$TYPE == "ESCDerived")]
 iheatmap(rpkm_group1, "rpkm",
          x = colData(rpkm_group1)$STD_NAME, 
          y = rowData(rpkm_group1)$SYMBOL, 
-         col_annotation = colData(rpkm_group1)[,c("SEX")],
          col_title = "Primary Culture") %>% 
   add_iheatmap(rpkm_group2, "rpkm",
          x = colData(rpkm_group2)$STD_NAME, 
-         col_annotation = colData(rpkm_group2)[,c("SEX")],
          col_title = "ESCDerived")
 ```
 

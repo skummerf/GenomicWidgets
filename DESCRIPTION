@@ -27,7 +27,7 @@ Imports:
     htmltools,
     jsonlite,
     purrr,
-    iheatmapr,
+    iheatmapr (>= 0.4.1),
     bamsignals,
     OrganismDbi,
     SummarizedExperiment,
