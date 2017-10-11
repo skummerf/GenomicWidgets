@@ -15,7 +15,20 @@ setMethod(multi_locus_view,
                    colors = NULL, 
                    mode = 'lines',
                    annotation_position = c("bottom","top"),
-                   annotation_size = 0.2){
+                   annotation_size = 0.2,
+                   offset = width(windows[1]) %/% 2,
+                   xtitle =  if (length(windows) > 1) 
+                     "Relative Position" 
+                   else 
+                     seqnames(windows)){
+            
+            if (!all(width(windows) == width(windows[1])))
+              stop("All windows must be equal width")
+            
+            if (length(offset) > 1){
+              warning("offset should be length 1; only first value being used")
+              offset <- offset[1]
+            }
             
             annotation_position <- match.arg(annotation_position)
             
@@ -75,13 +88,15 @@ setMethod(multi_locus_view,
                                colors = colors,
                                mode = mode,
                                annotation_position = annotation_position,
-                               annotation_size = annotation_size)
+                               annotation_size = annotation_size,
+                               offset = offset)
                            })
               
               
             }
             ll <- new("LocusViewList", as(single_views,"SimpleList"), 
-                      share_y = share_y)
+                      share_y = share_y, 
+                      xtitle = as.character(xtitle))
             return(ll)
           })
 
@@ -119,15 +134,7 @@ setMethod(get_layout, signature = c(object = "LocusViewList"),
               range <- NULL
             }
             
-            if (length(object@xtitle) == 0){
-              if (length(object) > 1 || object[[1]]@view@relative){
-                xtitle <- "Relative Position"
-              } else{
-                xtitle <- as.character(seqnames(object[[1]]@view@range))
-              }
-            } else{
-              xtitle <- object@xtitle
-            }
+            xtitle <- object@xtitle
             
             layout_setting <- 
               list(xaxis = 

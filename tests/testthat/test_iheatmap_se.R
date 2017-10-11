@@ -1,8 +1,8 @@
 context("iheatmap")
 
-data(rpkm_chr21)
-
+data("rpkm_chr21", package = "GenomicWidgets")
 rpkm_sub <- rpkm_chr21[1:20,1:10]
+
 
 test_that("iheatmap works with SummarizedExperiment and minimal args",{
   

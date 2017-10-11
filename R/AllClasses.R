@@ -38,6 +38,7 @@ setClass("LocusSummary",
          slots = c(data = "list",
                    layout = "list"))
 
+#' @importClassesFrom S4Vectors SimpleList
 setClass("LocusView",
          slots = c(view = "ViewRange",
                    layout = "list",

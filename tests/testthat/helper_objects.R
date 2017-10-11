@@ -1,4 +1,6 @@
-#data("rpkm_chr21", package = "GenomicWidgets")
+library("GenomicRanges")
+library("SummarizedExperiment")
+
 
 genomation_dir <- system.file("extdata", package = "genomationData")
 

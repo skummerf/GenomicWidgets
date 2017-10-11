@@ -9,11 +9,13 @@
 \title{plot_tracks}
 \usage{
 \S4method{plot_tracks}{GenomicRanges}(windows, params,
-  locus_names = mcols(windows)$name, offset = width(windows)\%/\%2, ...,
-  summary_args = list())
+  locus_names = mcols(windows)$name, offset = width(windows[1])\%/\%2,
+  xtitle = if (length(windows) > 1) "Relative Position" else
+  seqnames(windows), ..., summary_args = list())
 
 \S4method{plot_tracks}{character}(windows, params, locus_names = windows,
-  offset = width(windows)\%/\%2, ..., summary_args = list())
+  offset = width(windows)\%/\%2, xtitle = if (length(windows) > 1)
+  "Relative Position" else seqnames(windows), ..., summary_args = list())
 }
 \arguments{
 \item{windows}{GenomicRanges or rownames for summary object}
@@ -24,6 +26,8 @@
 
 \item{offset}{offset to use for center of region, used when plotting multiple 
 regions}
+
+\item{xtitle}{title for x axis}
 
 \item{...}{additional arguments from \code{\link{set_track_parameters}}}
 

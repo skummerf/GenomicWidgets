@@ -248,9 +248,12 @@ setMethod("plot_tracks", c("GenomicRanges"),
           function(windows, 
                    params, 
                    locus_names = mcols(windows)$name,
-                   offset = width(windows) %/% 2, 
+                   offset = width(windows[1]) %/% 2, 
+                   xtitle = if (length(windows) > 1) "Relative Position" else seqnames(windows),
                    ..., 
                    summary_args = list()){
+            
+
             
             default_arglist <- list(
               object = params@data,
@@ -264,7 +267,9 @@ setMethod("plot_tracks", c("GenomicRanges"),
               mode = params@mode,
               annotation_position = params@annotation_position,
               annotation_size = params@annotation_size,
-              layout = params@layout
+              layout = params@layout,
+              offset = offset,
+              xtitle = xtitle
             )
             
             arglist <- modifyList(default_arglist, list(...))
@@ -311,6 +316,7 @@ setMethod("plot_tracks", c("GenomicRanges"),
 #' @param locus_names names for each genomic locus represented by windows
 #' @param offset offset to use for center of region, used when plotting multiple 
 #' regions
+#' @param xtitle title for x axis
 #' @param ... additional arguments from \code{\link{set_track_parameters}}
 #' @param summary_args lof arguments to override  from 
 #' \code{\link{set_summary_parameters}}
@@ -369,6 +375,7 @@ setMethod("plot_tracks", c("character"),
                    params, 
                    locus_names = windows,
                    offset = width(windows) %/% 2, 
+                   xtitle = if (length(windows) > 1) "Relative Position" else seqnames(windows),
                    ..., 
                    summary_args = list()){
             
@@ -390,7 +397,9 @@ setMethod("plot_tracks", c("character"),
               mode = params@mode,
               annotation_position = params@annotation_position,
               annotation_size = params@annotation_size,
-              layout = params@layout
+              layout = params@layout,
+              offset = offset,
+              xtitle = xtitle
             )
             
             ix <- match(windows, rownames(params@summary@data))

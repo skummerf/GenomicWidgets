@@ -261,6 +261,18 @@ plot_tracks(resize(ctcf.peaks[2], width = 10000, fix = "center"),
               showlegend = FALSE)
 ```
 
+### x axis labels for multiple windows
+
+When plotting mutliple windows, by default the x axis reflects the relative position to the center of the window. This can be modified by setting the offset argument, which tells the function what position should be used as the center anchor. The xaxis title can also be modified via the xtitle argument.  
+
+```{r}
+plot_tracks(resize(ctcf.peaks[1:4], width = 10000, fix = "center"), 
+            track_params, 
+            offset = 0,
+            xtitle = "CTCF peaks")
+```
+
+
 ### Annotation position
 
 ```{r}
@@ -378,11 +390,6 @@ Note: The following code has to be run interactively!
 ```{r, eval= FALSE}
 heatmap_to_tracks_shiny(hm, track_plus_summary_params, link_fn)
 ```
-
-
-## To do
-
-* Easier customization of x axis labels
 
 
 
