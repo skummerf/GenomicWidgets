@@ -14,8 +14,8 @@
   seqnames(windows), ..., summary_args = list())
 
 \S4method{plot_tracks}{character}(windows, params, locus_names = windows,
-  offset = width(windows)\%/\%2, xtitle = if (length(windows) > 1)
-  "Relative Position" else seqnames(windows), ..., summary_args = list())
+  offset = NULL, xtitle = if (length(windows) > 1) "Relative Position" else
+  NULL, ..., summary_args = list())
 }
 \arguments{
 \item{windows}{GenomicRanges or rownames for summary object}

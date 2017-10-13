@@ -76,6 +76,7 @@ heatmap_click <- function(heatmap, x){
 #' generator, result from \code{\link{heatmap_click}}
 #' @param title Title of shiny app
 #' @param options to pass to shiny
+#' @param ... additional arguments to \code{\link{plot_tracks}}
 #' @return Shiny application
 #' @author Alicia Schep and Justin Finkle
 #' 
@@ -129,7 +130,8 @@ heatmap_to_tracks_shiny <- function(heatmap,
                                     track_params,
                                     link,
                                     title = "Heatmap linked to Genome Tracks",
-                                    options = list(height = 1400)){
+                                    options = list(height = 1400),
+                                    ...){
   
   if (!(requireNamespace("shiny"))) stop("Must have shiny package installed!")
   
@@ -157,7 +159,7 @@ heatmap_to_tracks_shiny <- function(heatmap,
     
     output$tracks <- renderGenomicWidgets({
       linker <- link() 
-      if (is.null(linker)) NULL else plot_tracks(linker, track_params) 
+      if (is.null(linker)) NULL else plot_tracks(linker, track_params, ...) 
     })
     
   }

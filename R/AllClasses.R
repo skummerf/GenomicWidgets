@@ -105,7 +105,7 @@ setClass("GenomeTrackWidget",
          slots = c(tracks = "LocusViewList",
                    summaries = "LocusSummaryList",
                    summary_width = "numeric",
-                   layout = list()))
+                   layout = "list"))
 
 
 

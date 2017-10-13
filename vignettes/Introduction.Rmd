@@ -19,7 +19,7 @@ The GenomicWidgets package enables the creation of interactive visualizations fo
 
 ## Packages for running vignette
 
-In addition to GenomicWidgets, we will load a few other packages for use in this vignette. 
+In addition to `GenomicWidgets`, we will load a few other packages for use in this vignette. 
 
 ```{r, message = FALSE}
 library(GenomicWidgets)
@@ -33,7 +33,7 @@ library(SummarizedExperiment)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 ```
 
-We will also use data from the genomationData package. If not installed, can be installed via:
+We will also use data from the `genomationData` package. If not installed, can be installed via:
 
 ```{r, eval = FALSE}
 source("https://bioconductor.org/biocLite.R")
@@ -42,11 +42,11 @@ biocLite("genomationData")
 
 # Genomics Heatmaps
 
-The GenomicWidgets package builds on the iheatmapr package to enable creation of complex, interactive heatmaps for genomics data.  
+The GenomicWidgets package builds on the `iheatmapr` package to enable creation of complex, interactive heatmaps for genomics data.  
 
 ## Expression heatmap
 
-GenomicWidgets includes an `iheatmap` method for SummarizedExperiment objects, which are often used for storing expression data.  Compared to the `iheatmap` method for a matrix, the method for SummarizedExperiment has some different default settings that are often appropriate for expression or epigenomics data.  
+`GenomicWidgets` includes an `iheatmap` method for SummarizedExperiment objects, which are often used for storing expression data.  Compared to the `iheatmap` method for a matrix, the method for SummarizedExperiment has some different default settings that are often appropriate for expression or epigenomics data.  
 
 The package includes a small subset of the expression data from the Roadmap Epigenomics project.  
 
@@ -54,7 +54,7 @@ The package includes a small subset of the expression data from the Roadmap Epig
 data("rpkm_chr21")
 ```
 
-We'll subset to use just the first 50 genes, and only samples from Primary Culture or Tissue.
+We'll subset further to use just the first 50 genes, and only samples from Primary Culture or Tissue.
 
 ```{r}
 rpkm_chr21 <- 
@@ -106,11 +106,11 @@ Note that in practice this might not make sense to do, as the rows are now scale
 
 ## Coverage heatmaps
 
-GenomicWidgets also has methods for making coverage heatmaps.  
+`GenomicWidgets` also has methods for making coverage heatmaps.  
 
 ### The data
 
-For demonstration of coverage heatmaps, we'll use ChIP-seq data for the H1 ESC cell line from the ENCODE project included in the genomationData Bioconductor package.  We'll first read in a sample table and get the correct paths to the files.  
+For demonstration of coverage heatmaps, we'll use ChIP-seq data for the H1 ESC cell line from the ENCODE project included in the `genomationData` Bioconductor package. We'll first read in a sample table and get the correct paths to the files.  
 
 ```{r}
 genomation_dir <- system.file("extdata", package = "genomationData")
@@ -141,7 +141,7 @@ ctcf.peaks <- ctcf.peaks[1:50]
 
 ### Making coverage matrices
 
-We first will make coverage matrices.  These will be returned as RangedSummarizedExperiment objects.  
+We first will make coverage matrices. These will be returned as RangedSummarizedExperiment objects.  
 
 ```{r}
 ctcf_mats <- make_coverage_matrix(samp.info$fileName[1:5], 
@@ -155,7 +155,7 @@ ctcf_mats <- make_coverage_matrix(samp.info$fileName[1:5],
 
 With bam input, the make_coverage_matrix function computes the coverage based on the basepairs covered by the actual reads; no extending or shifting is done. With bigwig input, the function assumes the bigwig file contains the coverage track.
 
-You can also use your own preferred  method for making a coverage matrix. The `coverage_heatmap` method shown below can accept either a SummarizedExperiment, a plain matrix, a list of matrices, or a ScoreMatrix or ScoreMatrixList object (objects from the genomation package).  The genomation package includes the `ScoreMatrix`, `ScoreMatrixBin`, and `ScoreMatrixList` functions to read in coverage and make coverage matrices.  
+You can also use your own preferred  method for making a coverage matrix. The `coverage_heatmap` method shown below can accept either a SummarizedExperiment, a plain matrix, a list of matrices, or a ScoreMatrix or ScoreMatrixList object (objects from the genomation package).  The `genomation` package includes the `ScoreMatrix`, `ScoreMatrixBin`, and `ScoreMatrixList` functions to read in coverage and make coverage matrices.  
 
 ### Single coverage
 
@@ -177,13 +177,6 @@ You can obained the scaled coverage matrices by using the `normalize_coverage_ma
 
 ```{r}
 normed_ctcf_mats <- normalize_coverage_matrix(ctcf_mats, method = "PercentileMax")
-```
-
-### Adding coverage heatmap
-
-```{r}
-coverage_heatmap(ctcf_mats, "Ctcf") %>% 
-  add_coverage_heatmap(ctcf_mats, "Znf143")
 ```
 
 
@@ -222,7 +215,7 @@ iheatmap(rpkm_chr21, "rpkm",
 
 # Interactive genome tracks
 
-GenomicWidgets also has functions for interactive local views of genomic signals.  
+`GenomicWidgets` also has functions for interactive local views of genomic signals.  
 
 ## Set track parameters
 
@@ -302,11 +295,6 @@ plot_tracks(resize(ctcf.peaks[2], width = 5000, fix = "center"),
 
 Note that at the moment grouping is ignored when plotting multiple loci -- all tracks for the locus will be grouped together.
 
-```{r}
-plot_tracks(resize(ctcf.peaks[1:3], width = 5000, fix = "center"), 
-            track_params_grouped)
-```
-
 ### Locus names
 
 When plotting multiple regions, by default the name is taken from "name" column in the ranges (if it exists). You can alter that by passing something to the locus_names argument.
@@ -327,14 +315,26 @@ plot_tracks(resize(ctcf.peaks[1], width = 5000, fix = "center"),
             colors = c("red","blue","black"))
 ```
 
+## Adjusting layout parameters
+
+You can alter `plotly` layout parameters by passing a list to the layout argument. Use caution with this argument, as this could disrupt the intended layout if used incorrectly. Consult the `plotly.js` documentation for layout options.  Here we will demonstrate adjusting two of the margins:
+
+```{r}
+plot_tracks(resize(ctcf.peaks[1], width = 5000, fix = "center"),
+            track_params,
+            layout = list(margin = list(r = 200, t = 20)))
+```
+
+
 ## Add in gene or locus level summaries
 
 We can add a boxplot next to each region summarizing the gene expression levels (or any other feature of the locus) for some group of samples.  We do that by first specifying the parameters to generate such a summary based on a SummarizedExperiment object.  We pass along to the `group` argument the name of a column in the colData of the SummarizedExperiment object that we will use to group the expression values along the x axis. The ranges argument tells what ranges correspond to what rows of the SummarizedExperiment. By default, if the SummarizedExperiment is a RangedSummarizedExperiment then the rowRanges are used.  
 
 ```{r}
-summary_params <- set_summary_parameters(rpkm_chr21,
-                                        groups = "GROUP",
-                                        ranges = resize(tss, width = 5000, fix = "center"))
+summary_params <- 
+  set_summary_parameters(rpkm_chr21,
+                         groups = "GROUP",
+                         ranges = resize(tss, width = 5000, fix = "center"))
 ```
 
 We pass the summary parameters to our track parameters, via the summary argument.
@@ -351,7 +351,8 @@ track_plus_summary_params <-  set_track_parameters(samp.info$fileName[1:3],
 Calling `plot_tracks` with our new track parameters including the summary parameters creates a plot of the ChIP-seq signal around the TSS of those genes as well as a boxplot of the gene expression for different samples for that gene on the right. We can call it using GenomicRanges, but they must match ranges we gave to `set_summary_parameters`. 
 
 ```{r}
-plot_tracks(resize(tss, width = 5000, fix = "center")[1:3], track_plus_summary_params)
+plot_tracks(resize(tss, width = 5000, fix = "center")[1:3], 
+            track_plus_summary_params)
 ```
 
 We can also instead call `plot_tracks` with rownames of the SummarizedExperiment we passed to `set_summary_parameters`.
@@ -369,6 +370,13 @@ plot_tracks(resize(tss, width = 5000, fix = "center")[1:3],
             track_plus_summary_params,
             summary_args = list(colors = "black"))
 
+```
+
+Sometimes there can be issues with spacing of legend and margin.  These can be addressed by passing margin and legend positions to layout argument:
+
+```{r}
+plot_tracks(rownames(rpkm_chr21)[1:2], track_plus_summary_params, 
+            layout = list(margin = list(r = 200), legend = list(x = 1.2)))
 ```
 
 

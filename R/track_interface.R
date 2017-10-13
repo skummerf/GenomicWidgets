@@ -8,8 +8,7 @@
 #' @param ... additional arguments
 #' @param track_names names to associate with each file
 #' @param groups vector of group assignments.  traces will be grouped onto 
-#' subplots
-#' based on group assignments (if only showing 1 region)
+#' subplots based on group assignments (if only showing 1 region)
 #' @param share_y share the y axis?
 #' @param fill fillmode for line plot
 #' @param showlegend show the legend?
@@ -249,29 +248,16 @@ setMethod("plot_tracks", c("GenomicRanges"),
                    ..., 
                    summary_args = list()){
             
-
             
-            default_arglist <- list(
-              object = params@data,
-              annotation = params@annotation,
-              track_names = params@track_names,
-              groups = params@groups,
-              share_y = params@share_y,
-              fill = params@fill,
-              showlegend = params@showlegend,
-              colors = params@colors,
-              mode = params@mode,
-              annotation_position = params@annotation_position,
-              annotation_size = params@annotation_size,
-              layout = params@layout,
-              offset = offset,
-              xtitle = xtitle
-            )
-            
-            arglist <- modifyList(default_arglist, list(...))
+            arglist <- modify_param_args(params, xtitle, offset, locus_names,
+                                         ...)
             tracks <- do.call(multi_locus_view, 
                               c(list(windows = windows), arglist))
             
+            out <- new("GenomeTrackWidget", 
+                       tracks = tracks, 
+                       summary_width = 0,
+                       layout = arglist$layout)
             
             if (!is.null(params@summary)){
               ix <- match(windows, params@summary@ranges)
@@ -279,28 +265,24 @@ setMethod("plot_tracks", c("GenomicRanges"),
                 warning("Windows don't match ranges stored in TrackParameters ",
                         "for summary.  Not plotting summaries.")
               } else{
-                default_summary_arglist <- 
-                  list(object = params@summary@data,
-                       assay_name = params@summary@assay_name,
-                       groups = params@summary@groups,
-                       showlegend = params@summary@showlegend,
-                       boxpoints = params@summary@boxpoints,
-                       pointpos = params@summary@pointpos,
-                       ytitle = params@summary@ytitle)
                 
-                summary_arglist <- modifyList(default_summary_arglist, 
-                                              summary_args)
+                summary_arglist <- modify_summary_args(params,summary_args)
                 
                 summary_arglist[["row_names"]] <- 
                   rownames(params@summary@data)[ix]
                 
                 summaries <- do.call(make_locus_summaries, summary_arglist)
-                out <- new("GenomeTrackWidget", tracks = tracks, 
+                out <- new("GenomeTrackWidget",
+                           tracks = tracks, 
                            summaries = summaries, 
-                           summary_width = params@summary@width)
+                           summary_width = params@summary@width,
+                           layout = arglist$layout)
               }
             } else{
-              out <- tracks
+              out <- new("GenomeTrackWidget",
+                         tracks = tracks, 
+                         summary_width = 0,
+                         layout = arglist$layout)
             }
             out
           })
@@ -365,12 +347,13 @@ setMethod("plot_tracks", c("character"),
           function(windows, 
                    params, 
                    locus_names = windows,
-                   offset = width(windows) %/% 2, 
+                   offset = NULL, 
                    xtitle = 
                      if (length(windows) > 1) "Relative Position" 
-                      else seqnames(windows),
+                      else NULL,
                    ..., 
                    summary_args = list()){
+            
             
             
             if (is.null(params@summary)){
@@ -378,27 +361,21 @@ setMethod("plot_tracks", c("character"),
                    "plot_tracks via a character vector")
             }
             
-            default_arglist <- list(
-              object = params@data,
-              annotation = params@annotation,
-              track_names = params@track_names,
-              groups = params@groups,
-              share_y = params@share_y,
-              fill = params@fill,
-              showlegend = params@showlegend,
-              colors = params@colors,
-              mode = params@mode,
-              annotation_position = params@annotation_position,
-              annotation_size = params@annotation_size,
-              layout = params@layout,
-              offset = offset,
-              xtitle = xtitle
-            )
             
             ix <- match(windows, rownames(params@summary@data))
             ranges <- params@summary@ranges[ix]
             
-            arglist <- modifyList(default_arglist, list(...))
+            if (is.null(offset)){offset <- width(ranges[1]) %/% 2}
+            if (is.null(xtitle)){
+              if (length(windows) > 1){
+                xtitle <- ""
+              } else{
+                xtitle <- seqnames(ranges)
+              }
+            }
+            
+            arglist <- modify_param_args(params, xtitle, offset, locus_names,
+                                         ...)
             tracks <- do.call(multi_locus_view, 
                               c(list(windows = ranges), arglist))
             
@@ -407,17 +384,8 @@ setMethod("plot_tracks", c("character"),
               warning("Windows don't match ranges stored in TrackParameters ","
                         for summary.  Not plotting summaries.")
             } else{
-              default_summary_arglist <- 
-                list(object = params@summary@data,
-                     assay_name = params@summary@assay_name,
-                     groups = params@summary@groups,
-                     showlegend = params@summary@showlegend,
-                     boxpoints = params@summary@boxpoints,
-                     pointpos = params@summary@pointpos,
-                     ytitle = params@summary@ytitle)
               
-              summary_arglist <- modifyList(default_summary_arglist, 
-                                            summary_args)
+              summary_arglist <- modify_summary_args(params,summary_args)
               
               summary_arglist[["row_names"]] <- 
                 windows
@@ -425,9 +393,56 @@ setMethod("plot_tracks", c("character"),
               summaries <- do.call(make_locus_summaries, summary_arglist)
               out <- new("GenomeTrackWidget", tracks = tracks, 
                          summaries = summaries, 
-                         summary_width = params@summary@width)
+                         summary_width = params@summary@width,
+                         layout = arglist$layout)
             }
             out
           })
 
+modify_param_args <- function(params, xtitle, offset, locus_names, ...){
+  
+  new_args <- list(...)
+  
+  new_layout <- if ("layout" %in% names(new_args)){
+    modifyList(params@layout, new_args[["layout"]])
+  } else{
+    params@layout
+  }
+  
+  default_arglist <- list(
+    object = params@data,
+    annotation = params@annotation,
+    track_names = params@track_names,
+    name = locus_names,
+    groups = params@groups,
+    share_y = params@share_y,
+    fill = params@fill,
+    showlegend = params@showlegend,
+    colors = params@colors,
+    mode = params@mode,
+    annotation_position = params@annotation_position,
+    annotation_size = params@annotation_size,
+    layout = new_layout,
+    offset = offset,
+    xtitle = xtitle
+  )
+  
+  modifyList(default_arglist, new_args)
+  
+}
 
+modify_summary_args <- function(params, summary_args){
+  
+  default_summary_arglist <- 
+    list(object = params@summary@data,
+         assay_name = params@summary@assay_name,
+         groups = params@summary@groups,
+         showlegend = params@summary@showlegend,
+         boxpoints = params@summary@boxpoints,
+         pointpos = params@summary@pointpos,
+         ytitle = params@summary@ytitle)
+  
+  modifyList(default_summary_arglist, 
+                                summary_args)
+  
+}

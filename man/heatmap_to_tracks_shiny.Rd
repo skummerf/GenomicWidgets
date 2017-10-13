@@ -5,7 +5,8 @@
 \title{heatmap_to_tracks_shiny}
 \usage{
 heatmap_to_tracks_shiny(heatmap, track_params, link,
-  title = "Heatmap linked to Genome Tracks", options = list(height = 1400))
+  title = "Heatmap linked to Genome Tracks", options = list(height = 1400),
+  ...)
 }
 \arguments{
 \item{heatmap}{IHeatmap object}
@@ -18,6 +19,8 @@ generator, result from \code{\link{heatmap_click}}}
 \item{title}{Title of shiny app}
 
 \item{options}{to pass to shiny}
+
+\item{...}{additional arguments to \code{\link{plot_tracks}}}
 }
 \value{
 Shiny application

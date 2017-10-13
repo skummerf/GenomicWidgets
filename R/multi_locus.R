@@ -227,7 +227,7 @@ multi_locus_to_plotly_list <- function(x){
     
     traces <- make_trace(x@tracks, track_ynames)
     
-    if (length(x@summaries) == 0){
+    if (length(x@summaries) == 0 || x@summary_width == 0){
       x_domain <- c(0,1)
     } else{
       x_domain <- c(0, (1 - x@summary_width) * 0.95)
@@ -261,6 +261,8 @@ multi_locus_to_plotly_list <- function(x){
                                                 1)))
     
   }
+  
+  layout_setting <- modifyList(layout_setting, x@layout)
   
   out <- list(data = traces,
               layout = layout_setting,

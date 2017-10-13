@@ -1,7 +1,7 @@
 Package: GenomicWidgets
 Type: Package
 Title: interactive visualization of genomics data
-Version: 0.4.0
+Version: 0.4.1
 Authors@R: c(person("Alicia", "Schep", email = "aschep@gmail.com",
                   role = c("aut", "cre")),
               person("Justin", "Finkle", 

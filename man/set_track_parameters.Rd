@@ -21,8 +21,7 @@
 \item{track_names}{names to associate with each file}
 
 \item{groups}{vector of group assignments.  traces will be grouped onto 
-subplots
-based on group assignments (if only showing 1 region)}
+subplots based on group assignments (if only showing 1 region)}
 
 \item{share_y}{share the y axis?}
 
