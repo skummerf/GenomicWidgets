@@ -20,6 +20,51 @@ returns function
 \description{
 Function to bind heatmap to click event
 }
+\examples{
+
+library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
+  
+## We'll also read in some track data to plot
+genomation_dir <- system.file("extdata", package = "genomationData")
+samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
+samp.info <- read.table(samp.file, header=TRUE, sep="\\t", 
+                        stringsAsFactors = FALSE)
+samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
+ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
+                         "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
+                          package = "genomationData"))
+ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
+
+## resize peaks to size 1000
+ctcf.peaks = resize(ctcf.peaks, width = 10000, fix = "center")
+
+## Make track plotter using summary parametrs
+
+track_params <- set_track_parameters(samp.info$fileName[1:3], 
+  annotation = TxDb.Hsapiens.UCSC.hg19.knownGene, 
+  track_names = samp.info$sampleName[1:3], 
+  share_y = TRUE)
+
+# Make coverage heamap
+
+ctcf_mats <- make_coverage_matrix(samp.info$fileName[1:5], 
+                                  ctcf.peaks, 
+                                  input_names = samp.info$sampleName[1:5],
+                                  up = 250, 
+                                  down = 250, 
+                                  binsize = 25)
+                                  
+hm <- coverage_heatmap(ctcf_mats, "Ctcf") 
+
+link_fn <- heatmap_click(hm, ctcf.peaks)
+      
+if (interactive()){
+  heatmap_to_tracks_shiny(hm, track_params, link_fn)
+}   
+
+}
 \author{
 Alicia Schep
 }

@@ -27,6 +27,7 @@ setClass("AnnotationPlot",
 
 setClass("SignalPlot",
          slots = c(signal = "SimpleList",
+                   x = "numeric",
                    mode = "character",
                    fill = "character",
                    color = "character",

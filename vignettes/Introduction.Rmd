@@ -54,10 +54,12 @@ The package includes a small subset of the expression data from the Roadmap Epig
 data("rpkm_chr21")
 ```
 
-We'll subset to use just the first 100 genes.
+We'll subset to use just the first 50 genes, and only samples from Primary Culture or Tissue.
 
 ```{r}
-rpkm_chr21 <- rpkm_chr21[1:100,]
+rpkm_chr21 <- 
+  rpkm_chr21[1:50,which(colData(rpkm_chr21)$TYPE %in% c("PrimaryCulture",
+                                                        "PrimaryTissue"))]
 ```
 
 
@@ -88,16 +90,16 @@ iheatmap(rpkm_chr21, "rpkm",
 There is also an `add_iheatmap` method defined for SummarizedExperiment for adding a heatmap based on a SummarizedExperiment to an existing heatmap. Here we will separate our samples into two groups to demonstrate the `add_iheatmap` function:
 
 ```{r}
-rpkm_group1 <- rpkm_chr21[,which(colData(rpkm_chr21)$TYPE == "PrimaryCulture")]
-rpkm_group2 <- rpkm_chr21[,which(colData(rpkm_chr21)$TYPE == "ESCDerived")]
+rpkm_group1 <- rpkm_chr21[,which(colData(rpkm_chr21)$TYPE == "PrimaryTissue")]
+rpkm_group2 <- rpkm_chr21[,which(colData(rpkm_chr21)$TYPE == "PrimaryCulture")]
 
 iheatmap(rpkm_group1, "rpkm",
          x = colData(rpkm_group1)$STD_NAME, 
          y = rowData(rpkm_group1)$SYMBOL, 
-         col_title = "Primary Culture") %>% 
+         col_title = "Primary Tissue") %>% 
   add_iheatmap(rpkm_group2, "rpkm",
          x = colData(rpkm_group2)$STD_NAME, 
-         col_title = "ESCDerived")
+         col_title = "Primary Culture")
 ```
 
 Note that in practice this might not make sense to do, as the rows are now scaled separately. The `add_iheatmap` function can be useful for juxtaposing a different data type. If a name for the colorbar is not given (via the `name` argument), the two main heatmaps are put on the same color scale.    
@@ -131,10 +133,10 @@ ctcf.peaks <- ctcf.peaks[order(-ctcf.peaks$signalValue)]
 ctcf.peaks <- resize(ctcf.peaks, width = 501, fix = "center")
 ```
 
-We'll limit ourselves to considering 100 of the peaks.
+We'll limit ourselves to considering 50 of the peaks.
 
 ```{r}
-ctcf.peaks <- ctcf.peaks[1:100]
+ctcf.peaks <- ctcf.peaks[1:50]
 ```
 
 ### Making coverage matrices
@@ -237,7 +239,7 @@ track_params <- set_track_parameters(samp.info$fileName[1:3],
 Those parameters can then be passed along with a range to generate the interactive genome track plot.  
 
 ```{r}
-plot_tracks(resize(ctcf.peaks[2], width = 10000, fix = "center"), track_params)
+plot_tracks(resize(ctcf.peaks[2], width = 5000, fix = "center"), track_params)
 ```
 
 ## Multiple regions
@@ -245,7 +247,7 @@ plot_tracks(resize(ctcf.peaks[2], width = 10000, fix = "center"), track_params)
 You can easily plot multiple regions by passing along several ranges rather than a single range.  
 
 ```{r}
-plot_tracks(resize(ctcf.peaks[1:4], width = 10000, fix = "center"), track_params)
+plot_tracks(resize(ctcf.peaks[1:4], width = 5000, fix = "center"), track_params)
 ```
 
 
@@ -256,7 +258,7 @@ plot_tracks(resize(ctcf.peaks[1:4], width = 10000, fix = "center"), track_params
 You can over-ride parameters set by set_track_parameters by passing them again to plot_tracks
 
 ```{r}
-plot_tracks(resize(ctcf.peaks[2], width = 10000, fix = "center"),
+plot_tracks(resize(ctcf.peaks[2], width = 5000, fix = "center"),
             track_params,
               showlegend = FALSE)
 ```
@@ -266,7 +268,7 @@ plot_tracks(resize(ctcf.peaks[2], width = 10000, fix = "center"),
 When plotting mutliple windows, by default the x axis reflects the relative position to the center of the window. This can be modified by setting the offset argument, which tells the function what position should be used as the center anchor. The xaxis title can also be modified via the xtitle argument.  
 
 ```{r}
-plot_tracks(resize(ctcf.peaks[1:4], width = 10000, fix = "center"), 
+plot_tracks(resize(ctcf.peaks[1:4], width = 5000, fix = "center"), 
             track_params, 
             offset = 0,
             xtitle = "CTCF peaks")
@@ -276,7 +278,7 @@ plot_tracks(resize(ctcf.peaks[1:4], width = 10000, fix = "center"),
 ### Annotation position
 
 ```{r}
-plot_tracks(resize(ctcf.peaks[2], width = 10000, fix = "center"),
+plot_tracks(resize(ctcf.peaks[2], width = 5000, fix = "center"),
             track_params,
               annotation_position = "top")
 ```
@@ -294,14 +296,14 @@ track_params_grouped <-
                        groups = c("CTCF & cohesin","P300","Suz12",
                                   "CTCF & cohesin"))
 
-plot_tracks(resize(ctcf.peaks[2], width = 10000, fix = "center"), 
+plot_tracks(resize(ctcf.peaks[2], width = 5000, fix = "center"), 
             track_params_grouped)
 ```
 
 Note that at the moment grouping is ignored when plotting multiple loci -- all tracks for the locus will be grouped together.
 
 ```{r}
-plot_tracks(resize(ctcf.peaks[1:3], width = 10000, fix = "center"), 
+plot_tracks(resize(ctcf.peaks[1:3], width = 5000, fix = "center"), 
             track_params_grouped)
 ```
 
@@ -310,7 +312,7 @@ plot_tracks(resize(ctcf.peaks[1:3], width = 10000, fix = "center"),
 When plotting multiple regions, by default the name is taken from "name" column in the ranges (if it exists). You can alter that by passing something to the locus_names argument.
 
 ```{r}
-plot_tracks(resize(ctcf.peaks[1:2], width = 10000, fix = "center"),
+plot_tracks(resize(ctcf.peaks[1:2], width = 5000, fix = "center"),
             track_params,
             locus_names = c("Peak 1","Peak 2"))
 ```
@@ -320,7 +322,7 @@ plot_tracks(resize(ctcf.peaks[1:2], width = 10000, fix = "center"),
 You can change the colors of the tracks by passing a `colors` argument.  
 
 ```{r}
-plot_tracks(resize(ctcf.peaks[1], width = 10000, fix = "center"),
+plot_tracks(resize(ctcf.peaks[1], width = 5000, fix = "center"),
             track_params,
             colors = c("red","blue","black"))
 ```

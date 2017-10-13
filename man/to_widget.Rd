@@ -29,3 +29,41 @@ htmlwidgets object
 \description{
 Method to convert GenomeTrackWidget to htmlwidgets objects
 }
+\examples{
+
+library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
+## First we'll read in some sample data
+genomation_dir <- system.file("extdata", package = "genomationData")
+samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
+samp.info <- read.table(samp.file, header=TRUE, sep="\\t", 
+                        stringsAsFactors = FALSE)
+samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
+ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
+                         "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
+                          package = "genomationData"))
+ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
+
+## resize peaks to size 1000
+ctcf.peaks = resize(ctcf.peaks, width = 10000, fix = "center")
+
+## Make track plotter
+
+track_params <- set_track_parameters(samp.info$fileName[1:3], 
+  annotation = TxDb.Hsapiens.UCSC.hg19.knownGene, 
+  track_names = samp.info$sampleName[1:3] , 
+  share_y = TRUE)
+  
+example_plot <-  plot_tracks(ctcf.peaks[1], track_params)
+class(example_plot)
+
+example_widtet <- to_widget(example_plot)
+class(example_plot)   
+  
+if (interactive()){
+  example_plot
+  example_widget
+}   
+
+}

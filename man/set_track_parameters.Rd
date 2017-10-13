@@ -46,7 +46,7 @@ traces}
 \item{...}{additional arguments}
 }
 \value{
-function to make interactive track plots
+object storing track parameters, for use in \code{\link{plot_tracks}}
 }
 \description{
 Setup parameters for plotting coverage signals along genome tracks.

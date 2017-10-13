@@ -18,6 +18,9 @@ setMethod("make_signal_track", c("GRanges","character"),
             names(object) <- track_names
             sm <- make_coverage_matrix(object, as(window,"GRanges"),
                                        binsize = binsize, ...)
+            
+            adj_range <- adjust_ranges_for_bin(window, binsize)
+            xvals <- seq(start(adj_range),end(adj_range),binsize)
 
             
             if (is.null(colors)){
@@ -35,6 +38,7 @@ setMethod("make_signal_track", c("GRanges","character"),
             # Make SignalPlot object
             new("SignalPlot",
                 signal = assays(sm),
+                 x = xvals,
                 color = colors,
                 mode = mode,
                 fill = fill,
@@ -50,13 +54,7 @@ setMethod(make_trace, signature = c(x = "SignalPlot"),
                                  function(i){
                                    tmp_signal <- as.vector(x@signal[[i]])
                                    list(
-                                     x = 
-                                       seq(
-                                         relative_position(view,
-                                                           start(view@range)), 
-                                         relative_position(view, 
-                                                           end(view@range)), 
-                                         length.out = length(tmp_signal)),
+                                     x = relative_position(view, x@x),
                                      y = tmp_signal,
                                      text = names(x@signal)[i],
                                      name = names(x@signal)[i],

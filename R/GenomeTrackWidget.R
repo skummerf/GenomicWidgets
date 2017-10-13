@@ -27,12 +27,16 @@ setMethod("show", "LocusSummaryList",
 
 
 
-#' knit_print.GenomeTrackWidget
+#' knit_print for GenomicWidgets objects
 #' 
+#' knit_print method for objects that generate GenomicWidgets
 #' @param x GenomeTrackWidget object
 #' @param options knitr options
+#' @return htmlwidgets object
 #' @keywords internal
 #' @export
+#' @rdname knit_print_GenomicWidgets
+#' @name knit_print_GenomeWidgets
 #' @importFrom knitr knit_print
 knit_print.GenomeTrackWidget <- function(x, options){
   knit_print(to_widget(x), options = options)
@@ -40,24 +44,16 @@ knit_print.GenomeTrackWidget <- function(x, options){
 
 
 
-#' knit_print.LocusViewList
-#' 
-#' @param x LocusViewList object
-#' @param options knitr options
-#' @keywords internal
+#' @rdname knit_print_GenomicWidgets
+#' @name knit_print_GenomeWidgets#' 
 #' @export
-#' @importFrom knitr knit_print
 knit_print.LocusViewList <- function(x, options){
   knit_print(to_widget(x), options = options)
 }
 
-#' knit_print.LocusSummaryList
-#' 
-#' @param x LocusSummaryList object
-#' @param options knitr options
-#' @keywords internal
+#' @rdname knit_print_GenomicWidgets
+#' @name knit_print_GenomeWidgets#' 
 #' @export
-#' @importFrom knitr knit_print
 knit_print.LocusSummaryList <- function(x, options){
   knit_print(to_widget(x), options = options)
 }

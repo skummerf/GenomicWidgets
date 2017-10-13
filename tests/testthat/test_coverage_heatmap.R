@@ -10,7 +10,7 @@ test_that("Coverage heatmap works with one assay from SummarizedExperiment",{
   
 })
 
-test_that("Coverage heatmap works with multiple assays from SummarizedExperiment",{
+test_that("Coverage heatmap works with 2 assays from SummarizedExperiment",{
   
   cov_hm <- coverage_heatmap(test_mats,c("Ctcf","P300"))
   
@@ -59,7 +59,7 @@ test_that("Coverage heatmap works with ScoreMatrixList",{
 
 ## Add coverage heatmap
 
-test_that("Adding Coverage heatmap works with one assay from SummarizedExperiment",{
+test_that("Add Coverage heatmap works with 1 assay from SummarizedExperiment",{
   
   cov_hm <- coverage_heatmap(test_mats,"Ctcf")
   
@@ -69,7 +69,7 @@ test_that("Adding Coverage heatmap works with one assay from SummarizedExperimen
   
 })
 
-test_that("Adding Coverage heatmap works with 2 assays from SummarizedExperiment",{
+test_that("Add Coverage heatmap works with 2 assays from SummarizedExperiment",{
   
   cov_hm <- coverage_heatmap(test_mats,"Ctcf")
   
@@ -94,7 +94,8 @@ test_that("Adding Coverage heatmap works with list of matrices",{
   
   cov_hm <- coverage_heatmap(test_mats,"Ctcf")
   
-  add_hm <- add_coverage_heatmap(cov_hm, as.list(assays(test_mats)[c("P300","Znf143")]))
+  add_hm <- add_coverage_heatmap(cov_hm,
+                                 as.list(assays(test_mats)[c("P300","Znf143")]))
   
   expect_iheatmap(add_hm, "add_coverage_matrix_list")
   

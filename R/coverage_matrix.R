@@ -66,16 +66,14 @@ make_coverage_matrix <- function(inputs,
   
   format <- match.arg(format)
   
+  strand(ranges) <- ifelse(strand(ranges) == "-", "-","+")
   if (up > 0 || down > 0){
     ranges <- resize(ranges, fix = "center", width = 1)
     ranges <- promoters(ranges, upstream = up, downstream = down)
   } 
   #check for equal widths
   stopifnot(sum(width(ranges) == width(ranges[1])) == length(ranges)) 
-  if (binsize > 1 && width(ranges[1]) %% binsize != 0){
-    ranges <- resize(ranges, fix = "center", 
-                     width = (width(ranges[1]) %/% binsize +1)*binsize)
-  }
+  ranges <- adjust_ranges_for_bin(ranges, binsize)
   
   rn <- paste(as.character(seqnames(ranges)), 
               paste(end(ranges),start(ranges), sep="-"), 
@@ -136,6 +134,15 @@ make_coverage_matrix <- function(inputs,
   return(SummarizedExperiment::SummarizedExperiment(out, rowRanges = ranges))
 }
 
+adjust_ranges_for_bin <- function(ranges, binsize){
+  if (binsize > 1 && width(ranges[1]) %% binsize != 0){
+    ranges <- resize(ranges, fix = "center", 
+                     width = (width(ranges[1]) %/% binsize +1)*binsize)
+  }
+  return(ranges)
+}
+
+
 #' normalize_coverage_matrix
 #' 
 #' Normalizes coverage matrices using one of several methods.
@@ -144,6 +151,7 @@ make_coverage_matrix <- function(inputs,
 #' @param pct Percentile, only used if PercentileMax is method
 #' @param scalar vector of scalars used for normalizing each mat, only 
 #' used if scalar is method
+#' @param digits number of significant digits of result to keep.
 #' @param ... additional arguments to normalize_coverage_matrix
 #' @details Normalization choices are "localRms", "localMean", 
 #' "localNonZeroMean", "PercentileMax", "scalar", and "none".  localRMS will 
@@ -153,6 +161,8 @@ make_coverage_matrix <- function(inputs,
 #' percentile (given by pct argument) of the entire matrix.  scalar will divide
 #' entire matrix by a scalar, given by scalar argument.  This scalar could for 
 #' example be a measure of the sequencing depth.  
+#' @return Should return data in the same format as input, but now with values
+#' normalized according to the method chosen.
 #' @export
 #' @rdname normalize_coverage_matrix
 #' @name normalize_coverage_matrix
@@ -160,27 +170,59 @@ make_coverage_matrix <- function(inputs,
 #' normalize_coverage_matrix,matrix-method
 #' normalize_coverage_matrix,SummarizedExperiment-method
 #' @author Alicia Schep
+#' 
+#' @examples
+#' ## First we'll make some coverage matrices
+#' 
+#' library(GenomicRanges)
+#' # First read in some sample data
+#' genomation_dir <- system.file("extdata", package = "genomationData")
+#'
+#' samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
+#' samp.info <- read.table(samp.file, header=TRUE, sep='\t', 
+#'                        stringsAsFactors = FALSE)
+#' samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
+#'
+#' ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
+#'                "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
+#'                package = "genomationData"))
+#' ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
+#' ctcf.peaks = ctcf.peaks[order(-ctcf.peaks$signalValue)]
+#' ctcf.peaks = resize(ctcf.peaks, width = 1000, fix = "center")
+#'
+#' # Make the coverage matrices
+#' mats <- make_coverage_matrix(samp.info$fileName[1:3], ctcf.peaks, 
+#'                      up = 500, down = 500, binsize = 25)
+#'                      
+#' # Now normalize:
+#' norm_mats <- normalize_coverage_matrix(mats)                    
+#'                      
 setMethod(normalize_coverage_matrix, "list",
           function(mats, 
                    method = c("localRms", 
                               "localMean", 
                               "localNonZeroMean", 
                               "PercentileMax", 
-                              "scalar", "none"), 
+                              "scalar", 
+                              "none"), 
                    pct = 0.95, 
-                   scalar = NULL){
+                   scalar = NULL,
+                   digits = 3){
             method <- match.arg(method)
             if (method == "scalar"){
               stopifnot(!is.null(scalar))
               out <- lapply(seq_len(length(mats)), function(x) {
                 normalize_coverage_matrix_single(mats[[x]],
                                                  method = "scalar",
-                                                 scalar = scalar[x])
+                                                 scalar = scalar[x],
+                                                 digits = digits)
               })
               names(out) <- names(mats)
             } else{
               out <- lapply(mats, normalize_coverage_matrix_single, 
-                            method = method, pct = pct)
+                            method = method, 
+                            pct = pct,
+                            digits = digits)
             }
             
             return(out)
@@ -195,9 +237,11 @@ setMethod(normalize_coverage_matrix, "matrix",
                               "PercentileMax", 
                               "scalar", "none"), 
                    pct = 0.95, 
-                   scalar = NULL){
+                   scalar = NULL,
+                   digits = 3){
             method <- match.arg(method)
-            out <- normalize_coverage_matrix_single(mats, method, pct, scalar)
+            out <- normalize_coverage_matrix_single(mats, method, pct, scalar,
+                                                    digits)
             return(out)
           })
 
@@ -221,23 +265,25 @@ normalize_coverage_matrix_single <- function(mat,
                                                         "PercentileMax", 
                                                         "scalar", 
                                                         "none"), 
-                                             pct = 0.95, scalar = NULL) 
+                                             pct = 0.95, 
+                                             scalar = NULL,
+                                             digits = 3) 
 {
   method <- match.arg(method)
   if (method == "localRms") {
     scaler <- sqrt(rowSums(mat^2))
     scaler[scaler == 0] <- 1
-    return(mat/scaler)
+    res <- mat/scaler
   } else if (method == "localMean") {
     scaler <- rowMeans(mat)
     scaler[scaler == 0] <- 1
-    return(mat/scaler)
+    res <- mat/scaler
   } else if (method == "localNonZeroMean") {
     scaler <- apply(mat, 1, function(x) {
       mean(x[x != 0])
     })
     scaler[is.nan(scaler)] <- 1
-    return(mat/scaler)
+    res <- mat/scaler
   } else if (method == "PercentileMax") {
     scaler <- quantile(mat, pct)
     if (scaler == 0) {
@@ -245,12 +291,13 @@ normalize_coverage_matrix_single <- function(mat,
     }
     res <- mat/scaler
     res[res[] > 1] <- 1
-    return(res)
   } else if (method == "scalar") {
-    return(mat/scalar)
+    res <- mat/scalar
   } else if (method == "none") {
-    return(mat)
+    res <- mat
   }
+  #res <- signif(res, digits = digits)
+  return(res)
 }
 
 
@@ -258,10 +305,11 @@ normalize_coverage_matrix_single <- function(mat,
 #### Helper Functions (not exported) ---------------------------------------------------------
 
 #Function to reduce size of matrix by binning columns
-bin_mat <- function(mat, binsize){
+bin_mat <- function(mat, binsize, digits = 3){
   out <- vapply(seq(1, ncol(mat),binsize), 
                 function(x) rowMeans(mat[,x:(x+binsize - 1),drop =FALSE]),
                 rep(0,nrow(mat)))
+  out <- signif(out, digits = digits)
   if (dim(mat)[1] == 1) out <- matrix(out, nrow = 1)
   return(out)
 }

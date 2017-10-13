@@ -34,6 +34,10 @@ regions}
 \item{summary_args}{lof arguments to override  from 
 \code{\link{set_summary_parameters}}}
 }
+\value{
+GenomeTrackWidgets object, which is displayed as htmlwidgets. To 
+convert manually to htmlwidgets, use to_widget
+}
 \description{
 plot_tracks
 }
@@ -60,13 +64,6 @@ samp.file <- file.path(genomation_dir,'SamplesInfo.txt')
 samp.info <- read.table(samp.file, header=TRUE, sep="\\t", 
                         stringsAsFactors = FALSE)
 samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
-ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
-                         "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
-                          package = "genomationData"))
-ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
-
-## resize peaks to size 1000
-ctcf.peaks = resize(ctcf.peaks, width = 10000, fix = "center")
 
 ## Make track plotter using summary parametrs
 

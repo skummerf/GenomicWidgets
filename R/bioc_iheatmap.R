@@ -22,6 +22,10 @@ se_default_y <- function(se, assay){
 
 #' Summarized Experiment iheatmap and iheatmap methods
 #' 
+#' iheatmap methods that take as input a SummarizedExperiment object.  With
+#' SummarizedExperiment input, the defaults are different than with a plain 
+#' matrix input, and more likely to be suitable for functional genomics data.  
+#' 
 #' @param p IHeatmap object
 #' @param data SummarizedExperiment
 #' @param assay name of assay in data to plot
@@ -31,12 +35,26 @@ se_default_y <- function(se, assay){
 #' @param cluster_cols how to cluster columns, default is hclust
 #' @param scale scale rows, columns, both, or none
 #' @param ... additional arguments to \code{\link[iheatmapr]{iheatmap}}
+#' @return \code{\link[iheatmapr]{Iheatmap-class}} object
 #' @rdname iheatmap-SummarizedExperiment
 #' @name iheatmap-SummarizedExperiment
 #' @aliases iheatmap,SummarizedExperiment-method
 #' add_iheatmap,IHeatmapHorizontal,SummarizedExperiment-method
 #' add_iheatmap,IHeatmapVertical,SummarizedExperiment-method
 #' @export
+#' @examples 
+#' 
+#' library(SummarizedExperiment)
+#' data(rpkm_chr21)
+#' 
+#' hm <- iheatmap(rpkm_chr21, "rpkm",
+#'                x = colData(rpkm_chr21)$STD_NAME, 
+#'                y = rowData(rpkm_chr21)$SYMBOL, 
+#'                col_annotation = colData(rpkm_chr21)[,c("TYPE","SEX")])
+#'                
+#' if (interactive()) {
+#'   hm
+#' }                
 setMethod("iheatmap", c(data = "SummarizedExperiment"),
           function(data, 
                    assay = assayNames(data)[[1]],

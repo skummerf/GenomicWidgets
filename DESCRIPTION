@@ -1,7 +1,7 @@
 Package: GenomicWidgets
 Type: Package
 Title: interactive visualization of genomics data
-Version: 0.3.1.9999
+Version: 0.4.0
 Authors@R: c(person("Alicia", "Schep", email = "aschep@gmail.com",
                   role = c("aut", "cre")),
               person("Justin", "Finkle", 
@@ -15,8 +15,10 @@ Description: Package for creating interactive visualizations of ChIP-seq,
   app linking heatmaps to local track views. 
 License: file GNE_LICENSE
 Depends:
-  R (>= 2.10)
+  R (>= 3.4)
 Imports:
+    grDevices,
+    utils,
     rtracklayer,
     GenomicRanges,
     IRanges,
@@ -49,5 +51,10 @@ Suggests:
     AnnotationHub,
     dplyr,
     shiny
+biocViews:
+  Visualization,
+  FunctionalGenomics,
+  Sequencing,
+  Coverage
 VignetteBuilder: knitr
 ByteCompile: TRUE

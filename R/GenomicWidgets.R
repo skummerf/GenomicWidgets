@@ -10,6 +10,7 @@
 #' rendering them in R. 
 #' 
 #' @import SummarizedExperiment
+#' @import BiocGenerics
 #' @importFrom grDevices col2rgb rainbow rgb
 #' @importFrom graphics layout text
 #' @importFrom methods as is new slot slot<-

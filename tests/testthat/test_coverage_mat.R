@@ -17,9 +17,9 @@ test_that("Coverage matrix works with bam file",{
   
   expect_is(test_mats, "SummarizedExperiment")
   
-  expect_equivalent(assays(test_mats)[[1]], geno_mats[[1]]@.Data)
-  expect_equivalent(assays(test_mats)[[2]], geno_mats[[2]]@.Data)
-  expect_equivalent(assays(test_mats)[[3]], geno_mats[[3]]@.Data)
+  expect_equivalent(assays(test_mats)[[1]], signif(geno_mats[[1]]@.Data,3))
+  expect_equivalent(assays(test_mats)[[2]], signif(geno_mats[[2]]@.Data,3))
+  expect_equivalent(assays(test_mats)[[3]], signif(geno_mats[[3]]@.Data,3))
   
 })
 
@@ -34,9 +34,9 @@ test_that("Coverage matrix works with bigwig file",{
   
   expect_is(test_mats, "SummarizedExperiment")
   
-  expect_equivalent(assays(test_mats)[[1]], geno_mats[[1]]@.Data)
-  expect_equivalent(assays(test_mats)[[2]], geno_mats[[2]]@.Data)
-  expect_equivalent(assays(test_mats)[[3]], geno_mats[[3]]@.Data)
+  expect_equivalent(assays(test_mats)[[1]], signif(geno_mats[[1]]@.Data,3))
+  expect_equivalent(assays(test_mats)[[2]], signif(geno_mats[[2]]@.Data,3))
+  expect_equivalent(assays(test_mats)[[3]], signif(geno_mats[[3]]@.Data,3))
   
 })
 

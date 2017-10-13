@@ -253,7 +253,6 @@ setMethod("make_shapes", c(x = "AnnotationPlot"),
 #' @param color_str 
 #'
 #' @return color rgb value
-#' @export
 #'
 #' @keywords internal
 #' @author Justin Finkle

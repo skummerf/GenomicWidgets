@@ -42,6 +42,25 @@
 
 \item{p}{IHeatmap object}
 }
+\value{
+\code{\link[iheatmapr]{Iheatmap-class}} object
+}
 \description{
-Summarized Experiment iheatmap and iheatmap methods
+iheatmap methods that take as input a SummarizedExperiment object.  With
+SummarizedExperiment input, the defaults are different than with a plain 
+matrix input, and more likely to be suitable for functional genomics data.
+}
+\examples{
+
+library(SummarizedExperiment)
+data(rpkm_chr21)
+
+hm <- iheatmap(rpkm_chr21, "rpkm",
+               x = colData(rpkm_chr21)$STD_NAME, 
+               y = rowData(rpkm_chr21)$SYMBOL, 
+               col_annotation = colData(rpkm_chr21)[,c("TYPE","SEX")])
+               
+if (interactive()) {
+  hm
+}                
 }

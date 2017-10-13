@@ -8,7 +8,10 @@
 #'   string and have \code{"px"} appended.
 #' @param quoted Is \code{expr} a quoted expression (with \code{quote()})? This 
 #'   is useful if you want to save an expression in a variable.
-#'   
+#' @return analagous to \code{\link[shiny]{renderPlot}} and 
+#'   \code{\link[shiny]{plotOutput}} from shiny package, renderGenomicWidgets 
+#'   is used in server side code to render the plot, and GenomicWidgetsOutput
+#'   is used within the ui code.
 #' @importFrom htmlwidgets shinyWidgetOutput shinyRenderWidget
 #' @name GenomicWidgets-shiny
 #'

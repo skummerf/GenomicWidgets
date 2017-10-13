@@ -26,7 +26,7 @@
 #' @aliases set_track_parameters,character-method
 #' 
 #' @author Alicia Schep and Justin Finkle
-#' @return function to make interactive track plots
+#' @return object storing track parameters, for use in \code{\link{plot_tracks}}
 #' @examples 
 #' 
 #' library(GenomicRanges)
@@ -112,7 +112,8 @@ setMethod("set_track_parameters", c("character"),
 #' @param ranges ranges corresponding to rows of object
 #' @param width relative width of summary plots when plotting tracks
 #' @export
-#' 
+#' @return object storing summary parameters, for use in
+#'  \code{\link{set_track_parameters}}
 #' @author Alicia Schep and Justin Finkle
 #' @rdname set_summary_parameters
 #' @name set_summary_parameters
@@ -142,13 +143,6 @@ setMethod("set_track_parameters", c("character"),
 #' samp.info <- read.table(samp.file, header=TRUE, sep="\t", 
 #'                         stringsAsFactors = FALSE)
 #' samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
-#' ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
-#'                          "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
-#'                           package = "genomationData"))
-#' ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
-#' 
-#' ## resize peaks to size 1000
-#' ctcf.peaks = resize(ctcf.peaks, width = 10000, fix = "center")
 #' 
 #' ## Make track plotter using summary parametrs
 #' 
@@ -249,7 +243,9 @@ setMethod("plot_tracks", c("GenomicRanges"),
                    params, 
                    locus_names = mcols(windows)$name,
                    offset = width(windows[1]) %/% 2, 
-                   xtitle = if (length(windows) > 1) "Relative Position" else seqnames(windows),
+                   xtitle = 
+                     if (length(windows) > 1) "Relative Position" 
+                      else seqnames(windows),
                    ..., 
                    summary_args = list()){
             
@@ -325,6 +321,8 @@ setMethod("plot_tracks", c("GenomicRanges"),
 #' @author Alicia Schep and Justin Finkle
 #' @rdname plot_tracks
 #' @name plot_tracks
+#' @return GenomeTrackWidgets object, which is displayed as htmlwidgets. To 
+#' convert manually to htmlwidgets, use to_widget
 #' 
 #' @examples 
 #' 
@@ -349,13 +347,6 @@ setMethod("plot_tracks", c("GenomicRanges"),
 #' samp.info <- read.table(samp.file, header=TRUE, sep="\t", 
 #'                         stringsAsFactors = FALSE)
 #' samp.info$fileName <- file.path(genomation_dir, samp.info$fileName)
-#' ctcf.peaks = genomation::readBroadPeak(system.file("extdata",
-#'                          "wgEncodeBroadHistoneH1hescCtcfStdPk.broadPeak.gz",
-#'                           package = "genomationData"))
-#' ctcf.peaks = ctcf.peaks[seqnames(ctcf.peaks) == "chr21"]
-#' 
-#' ## resize peaks to size 1000
-#' ctcf.peaks = resize(ctcf.peaks, width = 10000, fix = "center")
 #' 
 #' ## Make track plotter using summary parametrs
 #' 
@@ -375,7 +366,9 @@ setMethod("plot_tracks", c("character"),
                    params, 
                    locus_names = windows,
                    offset = width(windows) %/% 2, 
-                   xtitle = if (length(windows) > 1) "Relative Position" else seqnames(windows),
+                   xtitle = 
+                     if (length(windows) > 1) "Relative Position" 
+                      else seqnames(windows),
                    ..., 
                    summary_args = list()){
             
