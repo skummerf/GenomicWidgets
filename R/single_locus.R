@@ -19,12 +19,22 @@ setMethod(single_locus_view,
                    annotation_size = 0.5){
 
             
-            track_maker <- purrr::partial(make_signal_track, 
-                                          window = window,
-                                          fill = fill, 
-                                          mode = mode, 
-                                          showlegend = showlegend
-            )
+            #track_maker <- purrr::partial(make_signal_track, 
+            #                              window = window,
+            #                              fill = fill, 
+            #                              mode = mode, 
+            #                              showlegend = showlegend
+            #)
+            
+            partial <- function(make_signal_track, ...){
+              l <- list(...)
+              function(...){
+                do.call(make_signal_track,c(l,list(...)))
+              }
+            }
+            track_maker <- partial(make_signal_track,window = window,fill = fill,mode = mode,showlegend = showlegend)
+              
+              
             
             if (!is.null(groups)){
               object_grouped <- split(object, groups)
@@ -48,18 +58,27 @@ setMethod(single_locus_view,
                                          colors[x]
                                        })
               
-              tracks <- purrr::pmap(list(object = object_grouped,
+              #tracks <- purrr::pmap(list(object = object_grouped,
+              #                           track_names = track_names_grouped,
+              #                           colors = colors_grouped,
+              #                           name = names(object_grouped)), 
+              #                      track_maker)
+              tracks <- mapply(track_maker, object = object_grouped,
                                          track_names = track_names_grouped,
-                                         colors = colors_grouped,
-                                         name = names(object_grouped)), 
-                                    track_maker)
+                                        colors = colors_grouped,
+                                         name = names(object_grouped), SIMPLIFY = FALSE)
+              
             } else{
               if (is.null(colors)){ colors <- rep("black",length(object))}
               
-              tracks <- purrr::pmap(list(object = object,
+              #tracks <- purrr::pmap(list(object = object,
+              #                           track_names = track_names,
+              #                           colors = colors), 
+              #                      track_maker)
+              
+              tracks <- mapply(track_maker, object = object,
                                          track_names = track_names,
-                                         colors = colors), 
-                                    track_maker)
+                                       colors = colors, SIMPLIFY = FALSE)
               
             }
             
@@ -149,8 +168,11 @@ setMethod(get_layout, "SignalPlot",
 
 setMethod(make_trace, signature = c(x = "LocusView"),
           definition = function(x, ynames, ...){
-            traces <- unlist(purrr::map2(as.list(x), ynames, make_trace, 
-                                         view = x@view), 
+            #traces <- unlist(purrr::map2(as.list(x), ynames, make_trace, 
+            #                             view = x@view), 
+            #                 recursive = FALSE)
+            traces <- unlist(mapply(make_trace,as.list(x), ynames, 
+                                        MoreArgs = list(view = x@view), SIMPLIFY = FALSE), 
                              recursive = FALSE)
             
             traces
@@ -158,8 +180,11 @@ setMethod(make_trace, signature = c(x = "LocusView"),
 
 setMethod(make_shapes, signature = c(x = "LocusView"),
           definition = function(x, ynames, ...){
-            shapes <- unlist(purrr::map2(as.list(x), ynames, make_shapes, 
-                                         view = x@view), 
+            #shapes <- unlist(purrr::map2(as.list(x), ynames, make_shapes, 
+            #                             view = x@view), 
+            #                 recursive = FALSE)
+            shapes <- unlist(mapply(make_shapes,as.list(x), ynames, 
+                                       MoreArgs =   list(view = x@view), SIMPLIFY = FALSE), 
                              recursive = FALSE)
             
             shapes
@@ -167,11 +192,16 @@ setMethod(make_shapes, signature = c(x = "LocusView"),
 
 setMethod(get_layout, signature = c(object = "LocusView"),
           definition = function(object, ynames, domains, range = NULL, ...){
-            unlist(purrr::pmap(list(object = as.list(object), 
+            #unlist(purrr::pmap(list(object = as.list(object), 
+            #                        yname = ynames,
+            #                        domain = domains),
+            #                   get_layout,
+            #                   range = range), recursive = FALSE)
+            
+            unlist(mapply(get_layout,object = as.list(object), 
                                     yname = ynames,
-                                    domain = domains),
-                               get_layout,
-                               range = range), recursive = FALSE)
+                                    domain = domains,
+                            MoreArgs = list(range = range),SIMPLIFY = FALSE), recursive = FALSE)
           })
 
 

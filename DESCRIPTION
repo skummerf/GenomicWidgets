@@ -28,7 +28,6 @@ Imports:
     S4Vectors,
     htmltools,
     jsonlite,
-    purrr,
     iheatmapr (>= 0.4.1),
     bamsignals,
     OrganismDbi,

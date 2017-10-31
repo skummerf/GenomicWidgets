@@ -72,7 +72,8 @@ setMethod(multi_locus_view,
               }
               
               single_views <- 
-                purrr::map(seq_along(windows),
+                #purrr::map(seq_along(windows),
+                lapply(seq_along(windows),
                            function(x){
                              single_locus_view(
                                windows[x],
@@ -104,23 +105,28 @@ setMethod(multi_locus_view,
 
 setMethod(make_trace, signature = c(x = "LocusViewList"),
           definition = function(x, ynames, ...){
-            unlist(purrr::map2(as.list(x),
-                               ynames,
-                               make_trace), recursive = FALSE)
+            #unlist(purrr::map2(as.list(x),
+            #                   ynames,
+            #                   make_trace), recursive = FALSE)
+            unlist(mapply(make_trace, as.list(x), ynames, SIMPLIFY = FALSE), recursive = FALSE)
           })
 
 setMethod(make_trace, signature = c(x = "LocusSummaryList"),
           definition = function(x, ynames, xaxis = "xaxis2", ...){
-            unlist(purrr::map2(as.list(x),
-                               ynames,
-                               make_trace, 
-                               xax = xaxis), recursive = FALSE)
+            #unlist(purrr::map2(as.list(x),
+            #                   ynames,
+            #                   make_trace, 
+            #                   xax = xaxis), recursive = FALSE)
+            unlist(mapply(make_trace, as.list(x), ynames, MoreArgs = list(xax=xaxis), SIMPLIFY = FALSE), recursive = FALSE)
+            
           })
 
 setMethod(make_shapes, signature = c(x = "LocusViewList"),
           definition = function(x, ynames, ...){
-            unlist(purrr::map2(as.list(x), ynames, make_shapes), 
-                   recursive = FALSE)
+            #unlist(purrr::map2(as.list(x), ynames, make_shapes), 
+            #       recursive = FALSE)
+            unlist(mapply(make_shapes, as.list(x),ynames, SIMPLIFY = FALSE),recursive = FALSE)
+                  
           })
 
 setMethod(get_layout, signature = c(object = "LocusViewList"),
@@ -145,7 +151,7 @@ setMethod(get_layout, signature = c(object = "LocusViewList"),
                           range = get_range(object[[1]]@view),
                           domain = x_domain))
             
-            sizes <- unlist(purrr::map(as.list(object), function(y) y@heights ))
+            sizes <- unlist(lapply(as.list(object), function(y) y@heights ))
             
             sizes <- sizes / sum(sizes)
             
@@ -162,15 +168,22 @@ setMethod(get_layout, signature = c(object = "LocusViewList"),
               }
             }
             
-            layout_setting <- c(layout_setting, 
-                                unlist(purrr::pmap(list(object = 
-                                                          as.list(object), 
-                                                        yname = ynames,
-                                                        domain = domains),
-                                                   get_layout,
-                                                   range = range), 
-                                       recursive = FALSE))
+            # layout_setting <- c(layout_setting,
+            #                     unlist(purrr::pmap(list(object =
+            #                                               as.list(object),
+            #                                             yname = ynames,
+            #                                             domain = domains),
+            #                                        get_layout,
+            #                                        range = range),
+            #                            recursive = FALSE))
             
+            layout_setting <- c(layout_setting,
+                                unlist(mapply(get_layout, object =
+                                                          as.list(object),
+                                                        yname = ynames,
+                                                        domain=domains,
+                                                  MoreArgs = list(range = range), SIMPLIFY = FALSE), recursive = FALSE))
+
             layout_setting
           })
 
@@ -194,15 +207,21 @@ setMethod(get_layout, signature = c(object = "LocusSummaryList"),
               start_domain <- start_domain + sizes[i]
             }
             
-            layout_setting <- c(layout_setting, 
-                                unlist(purrr::pmap(list(object = 
-                                                          as.list(object), 
-                                                        yname = ynames,
-                                                        domain = domains),
-                                                   get_layout,
-                                                   anchor = xax), 
-                                                   recursive = FALSE))
-            
+            # layout_setting <- c(layout_setting,
+            #                     unlist(purrr::pmap(list(object =
+            #                                               as.list(object),
+            #                                             yname = ynames,
+            #                                             domain = domains),
+            #                                        get_layout,
+            #                                        anchor = xax),
+            #                                        recursive = FALSE))
+
+            layout_setting <- c(layout_setting,
+                                unlist(mapply(get_layout, as.list(object),
+                                                        yname = ynames,domain = domains,
+                                                  MoreArgs = list(anchor = xax), SIMPLIFY = FALSE),
+                                       recursive = FALSE))
+
             layout_setting
           })
 
@@ -221,9 +240,11 @@ multi_locus_to_plotly_list <- function(x){
   if (length(x@tracks) >= 1){
     
     lengths <- vapply(x@tracks, length, 0)
-    track_ynames <- purrr::map2(as.list(x@tracks),
-                                cumsum(lengths) - lengths[1] + 1,
-                                yaxis_names)
+    #track_ynames <- purrr::map2(as.list(x@tracks),
+    #                            cumsum(lengths) - lengths[1] + 1,
+    #                            yaxis_names)
+    track_ynames <- mapply(yaxis_names,as.list(x@tracks),
+                                cumsum(lengths) - lengths[1] + 1, SIMPLIFY = FALSE)
     
     traces <- make_trace(x@tracks, track_ynames)
     

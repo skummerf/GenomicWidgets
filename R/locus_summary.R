@@ -39,18 +39,32 @@ setMethod("make_locus_summary", c("SummarizedExperiment"),
                          ...))
             } else{
               y <- assay(object,assay_name)[row_name,]
-              data <- purrr::pmap(list(split(y, groups), colors, 
-                                       levels(as.factor(groups))),
-                                   function(j,k,l){
-                                     list(y = j,
-                                          x = l,
-                                          name = ytitle,
-                                          type = "box",
-                                          pointpos = pointpos,
-                                          boxpoints = boxpoints,
-                                          marker = list(color = k),
-                                          ...)
-                                   })
+              data <- mapply(function(j,k,l){
+                                    list(y = j,
+                                         x = l,
+                                         name = ytitle,
+                                         type = "box",
+                                         pointpos = pointpos,
+                                         boxpoints = boxpoints,
+                                         marker = list(color = k),
+                                         ...)}, split(y, groups), colors, 
+                                                    levels(as.factor(groups)), SIMPLIFY = FALSE)
+                                    
+                                  
+              # data <- purrr::pmap(list(split(y, groups), colors, 
+              #                          levels(as.factor(groups))),
+              #                      function(j,k,l){
+              #                        list(y = j,
+              #                             x = l,
+              #                             name = ytitle,
+              #                             type = "box",
+              #                             pointpos = pointpos,
+              #                             boxpoints = boxpoints,
+              #                             marker = list(color = k),
+              #                             ...)
+              # 
+              #                      })
+              
             }
             
             # Make LocusSummary
@@ -78,7 +92,8 @@ setMethod("make_locus_summaries", c("SummarizedExperiment"),
               colors <- "blue"
             }
             
-            summaries <- purrr::map(seq_along(row_names), function(x){
+            #summaries <- purrr::map(seq_along(row_names), function(x){
+            summaries <- lapply(seq_along(row_names), function(x){
               make_locus_summary(object, 
                                  row_names[x], 
                                  assay_name = assay_name,
