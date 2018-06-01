@@ -74,8 +74,7 @@ setMethod("subset_transcripts", signature = c("GRanges","TranscriptParts"),
           function(window, object, no_introns = FALSE, ...){
             in_style <- seqlevelsStyle(window)[[1]]
             seqlevelsStyle(window) <- object@seqlevelsStyle[1]
-            tx <- subsetByOverlaps(object@transcripts, window, maxgap = 0L,
-                                   minoverlap = 1L, type = "any")
+            tx <- subsetByOverlaps(object@transcripts, window, type = "any")
             tx_names <- unlist(tx$TXNAME)
             gr <- get_tx_parts(tx_names, object)
             if(length(gr)){
